@@ -160,6 +160,19 @@ main section.panel.active{display:block}
 .meter{height:7px;border-radius:4px;background:color-mix(in srgb, var(--mc,var(--s1)) 12%, var(--page));overflow:hidden}
 .meter>i{display:block;height:100%;border-radius:4px;background:var(--mc,var(--s1));transition:width .3s ease}
 .meter-sub{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:4px}
+/* caixa rápido (lançamento em linguagem natural) */
+.quick{display:flex;flex-direction:column;gap:0;padding:0;overflow:visible;margin-bottom:14px}
+.quick .q-wrap{display:flex;align-items:center;gap:10px;padding:4px 6px}
+.quick .q-ico{width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none;margin-left:6px}
+.quick .q-ico svg{width:17px;height:17px}
+.quick input{flex:1;border:none;background:none;outline:none;font-size:14.5px;padding:14px 6px 14px 0}
+.quick input::placeholder{color:var(--muted)}
+.q-prev{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 16px 12px;font-size:12.5px}
+.q-chip{display:inline-flex;align-items:center;gap:5px;background:var(--page);border:1px solid var(--border-soft);border-radius:8px;padding:4px 9px;color:var(--ink-2);font-weight:560}
+.q-chip.q-ok{color:var(--up);border-color:color-mix(in srgb, var(--good) 30%, transparent)}
+.q-enter{margin-left:auto;font-size:11px;color:var(--muted)}
+.q-enter kbd{font-family:inherit;background:var(--page);border:1px solid var(--border-soft);border-radius:5px;padding:1px 6px}
+
 /* pendências (lista pro) */
 .pend-sub{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 2px 7px}
 .pend-sub:first-of-type{margin-top:2px}
@@ -1150,6 +1163,11 @@ function renderInicio(){
       '<div>'+projecaoSVG(ym)+'</div>'+
     '</div></div>'+
 
+    '<div class="card quick"><div class="q-wrap">'+
+      '<span class="q-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2.5 4.5 13.5H11L10 21.5 19.5 10.5H13L13 2.5z"/></svg></span>'+
+      '<input id="qAdd" placeholder="Lance rápido: “250 mercado ontem” · “recebi 3000 pablo” · “1947 condomínio”" autocomplete="off">'+
+    '</div><div class="q-prev hidden" id="qPrev"></div></div>'+
+
     '<div class="grid c4">'+
       '<button class="tile click" data-act="drill-tipo" data-v="receita"><div class="label"><span class="dot" style="background:var(--s6)"></span>Receitas</div><div class="value num amt">'+R(t.rec)+'</div>'+(ehAtualOuFuturo&&prev.recPend?'<div class="sub">previsto <span class="amt">'+R(prev.rec)+'</span></div>':'')+'</button>'+
       '<button class="tile click" data-act="drill-tipo" data-v="despesa"><div class="label"><span class="dot" style="background:var(--s8)"></span>Despesas</div><div class="value num amt">'+R(t.desp)+'</div>'+(ehAtualOuFuturo&&prev.despPend?'<div class="sub">previsto <span class="amt">'+R(prev.desp)+'</span></div>':'')+'</button>'+
@@ -1174,6 +1192,24 @@ function renderInicio(){
         (state.data.metas.length ? '<div class="card"><div class="h-row"><h2>Metas</h2><button class="link-btn" data-act="goto" data-page="metas">ver todas</button></div>'+metasHtml+'</div>' : '')+
       '</div>'+
     '</div>';
+
+  /* caixa rápido */
+  const q = $('#qAdd');
+  if (q) {
+    q.addEventListener('input', () => {
+      const pv = $('#qPrev');
+      if (!q.value.trim()) { pv.classList.add('hidden'); pv.innerHTML=''; return; }
+      pv.classList.remove('hidden');
+      pv.innerHTML = qPrevHtml(parseRapido(q.value));
+    });
+    q.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const p = parseRapido(q.value);
+        if (p) { commitRapido(p); setTimeout(() => { const nq = $('#qAdd'); if (nq) nq.focus(); }, 60); }
+        else if (q.value.trim()) shake(q);
+      } else if (e.key === 'Escape') { q.value=''; $('#qPrev').classList.add('hidden'); e.stopPropagation(); }
+    });
+  }
 }
 
 /* ---------------- lançamentos ---------------- */
@@ -1565,7 +1601,7 @@ function renderAjustes(){
     '<input type="file" id="importFile" accept="application/json" class="hidden">'+
     '<p class="muted" style="font-size:12px;margin-top:10px">'+(d.atualizadoEm ? 'Última alteração: '+new Date(d.atualizadoEm).toLocaleString('pt-BR')+'.' : '')+'</p></div>'+
     '<div class="card"><h2>Atalhos de teclado</h2>'+
-      [['Paleta de comandos','⌘K'],['Novo lançamento','N'],['Buscar','/'],['Mês anterior / próximo','← →'],['Trocar de página','1–7'],['Fechar','Esc']].map(k=>'<div class="kbd-row"><span>'+k[0]+'</span><kbd>'+k[1]+'</kbd></div>').join('')+
+      [['Paleta de comandos','⌘K'],['Novo lançamento','N'],['Lance rápido (caixa inteligente)','L'],['Buscar','/'],['Mês anterior / próximo','← →'],['Trocar de página','1–8'],['Fechar','Esc']].map(k=>'<div class="kbd-row"><span>'+k[0]+'</span><kbd>'+k[1]+'</kbd></div>').join('')+
     '</div>'+
     '</div>'+
     '<div>'+
@@ -1612,6 +1648,96 @@ function mascaraViva(str){
   let int = partes[0].replace(/^0+(?=\d)/,'');
   int = int.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
   return partes.length > 1 ? int + ',' + partes.slice(1).join('').slice(0,2) : int;
+}
+
+/* ---------------- caixa inteligente (linguagem natural, PT-BR) ---------------- */
+const semAcento = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const Q_KEYWORDS = [
+  {re:/\b(luz|energia|agua|internet|gas|condominio|faxina|limpeza|manutencao|reforma|encanador|eletricista|iptu|lavanderia)\b/, cat:'c-custos-casas'},
+  {re:/\b(mercado|feira|farmacia|padaria|restaurante|comida|lanche|ifood|uber|taxi|gasolina|combustivel|lazer|roupa|presente|viagem|bar|cinema)\b/, cat:'c-gastos-part'},
+  {re:/\b(escola|mensalidade|material|curso|faculdade|livro|apostila)\b/, cat:'c-educacao'},
+  {re:/\b(contador|taxa|tarifa|imposto|cartorio|advogado|banco|anuidade|multa)\b/, cat:'c-servicos'}
+];
+function parseRapido(texto){
+  let bruto = String(texto||'').trim();
+  if (!bruto) return null;
+  let t = ' ' + semAcento(bruto) + ' ';
+  let tipo = 'despesa';
+  if (/\+/.test(bruto) || /\b(recebi|recebido|recebimento|entrada|entrou|ganhei|receita|caiu)\b/.test(t)) tipo = 'receita';
+  t = t.replace(/\b(recebi|recebido|recebimento|entrada|entrou|ganhei|receita|caiu|paguei|pago|pagamento|gastei|gasto|comprei|de|do|da|no|na|em|para|pra|o|a)\b/g,' ').replace(/\+/g,' ');
+  /* data */
+  const agora = new Date();
+  const isoDe = d => d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+  let data = hojeISO();
+  const dm = t.match(/\b(\d{1,2})\/(\d{1,2})\b/);
+  if (/\banteontem\b/.test(t)) { const d=new Date(agora); d.setDate(d.getDate()-2); data=isoDe(d); t=t.replace(/\banteontem\b/,' '); }
+  else if (/\bontem\b/.test(t)) { const d=new Date(agora); d.setDate(d.getDate()-1); data=isoDe(d); t=t.replace(/\bontem\b/,' '); }
+  else if (/\bhoje\b/.test(t)) { t=t.replace(/\bhoje\b/,' '); }
+  else if (dm && +dm[1]>=1 && +dm[1]<=31 && +dm[2]>=1 && +dm[2]<=12) {
+    const ym = agora.getFullYear()+'-'+pad2(+dm[2]);
+    data = ym+'-'+pad2(Math.min(+dm[1], diasNoMes(ym)));
+    t = t.replace(dm[0],' ');
+  } else {
+    const dd2 = t.match(/\bdia (\d{1,2})\b/);
+    if (dd2 && +dd2[1]>=1 && +dd2[1]<=31) { data = state.month+'-'+pad2(Math.min(+dd2[1], diasNoMes(state.month))); t = t.replace(dd2[0],' '); }
+  }
+  /* valor */
+  const vm = t.match(/(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)(\s*mil\b)?/);
+  if (!vm || !vm[1]) return null;
+  let valor = parseValor(vm[1]);
+  if (vm[2]) valor *= 1000;
+  if (!valor || valor <= 0) return null;
+  t = t.replace(vm[0],' ').replace(/\br\$\s*/g,' ');
+  /* descrição + casamento com fixas */
+  const palavras = t.split(/\s+/).filter(w => w && w.length > 1 && !/^\d+$/.test(w));
+  let occ = null, categoriaId = null, descricao = palavras.join(' ');
+  let melhor = null, melhorScore = 0;
+  for (const r of state.data.recorrentes){
+    if (!r.ativa) continue;
+    const nomeTk = semAcento(r.nome).split(/\s+/);
+    let score = 0;
+    for (const w of palavras) if (nomeTk.some(nw => nw === w || (w.length > 3 && nw.startsWith(w)))) score++;
+    if (score > melhorScore){ melhorScore = score; melhor = r; }
+  }
+  if (melhor && melhorScore >= 1 && (melhorScore >= 2 || palavras.length <= 2)){
+    tipo = melhor.tipo; categoriaId = melhor.categoriaId; descricao = melhor.nome;
+    const pend = ocorrencias(mesAtual()).filter(o => !o.lanc && o.rec.id === melhor.id);
+    if (pend.length) occ = pend[0];
+  }
+  if (!categoriaId)
+    for (const c of state.data.categorias) if (c.tipo === tipo && palavras.some(w => w.length > 3 && semAcento(c.nome).includes(w))) { categoriaId = c.id; break; }
+  if (!categoriaId && tipo === 'despesa'){
+    const frase = ' '+palavras.join(' ')+' ';
+    for (const k of Q_KEYWORDS) if (k.re.test(frase)) { categoriaId = k.cat; break; }
+  }
+  if (!categoriaId){
+    const cats = state.data.categorias.filter(c => c.tipo === tipo);
+    const pref = tipo === 'despesa' ? cats.find(c => c.id === 'c-gastos-part') : cats.find(c => c.id === 'c-outras-rec');
+    categoriaId = (pref || cats[0] || {}).id || null;
+  }
+  if (!categoriaId) return null;
+  descricao = descricao ? descricao.charAt(0).toUpperCase() + descricao.slice(1) : '';
+  return { tipo, valor, data, categoriaId, descricao, occ };
+}
+function commitRapido(p){
+  const l = { id: uid('l'), tipo: p.tipo, valor: p.valor, categoriaId: p.categoriaId,
+    descricao: p.descricao || catById(p.categoriaId).nome, data: p.data,
+    recChave: p.occ ? p.occ.chave : null, criadoEm: new Date().toISOString() };
+  state.data.lancamentos.push(l);
+  touch(); renderAll();
+  toast((p.tipo==='receita'?'+':'−')+R(p.valor)+' lançado ✓'+(p.occ ? ' — '+esc(p.occ.rec.nome)+' baixada' : ''),
+    () => { state.data.lancamentos = state.data.lancamentos.filter(x => x.id !== l.id); touch(); renderAll(); });
+}
+function qPrevHtml(p){
+  if (!p) return '<span class="q-chip">continue digitando — falta o valor…</span>';
+  const c = catById(p.categoriaId);
+  return '<span class="q-chip '+(p.tipo==='receita'?'q-ok':'')+'">'+(p.tipo==='receita'?'+ Receita':'− Despesa')+'</span>'+
+    '<span class="q-chip num amt">'+R(p.valor)+'</span>'+
+    (p.descricao ? '<span class="q-chip">'+esc(p.descricao)+'</span>' : '')+
+    '<span class="q-chip"><span style="width:7px;height:7px;border-radius:50%;background:'+corVar(c)+';display:inline-block"></span>'+esc(c.nome)+'</span>'+
+    '<span class="q-chip">'+(p.data===hojeISO()?'hoje':fmtDataCurta(p.data))+'</span>'+
+    (p.occ ? '<span class="q-chip q-ok">✓ dá baixa em '+esc(p.occ.rec.nome)+'</span>' : '')+
+    '<span class="q-enter"><kbd>↵</kbd> lança</span>';
 }
 
 function sheetLancamento(l, dataIni){
@@ -1908,6 +2034,8 @@ function abrirPaleta(){
   const rodar = () => {
     const q = inp.value.toLowerCase();
     palItems = comandos().filter(c => c.lbl.toLowerCase().includes(q));
+    const pq = parseRapido(inp.value);
+    if (pq) palItems.unshift({ic:'⚡', lbl:'Lançar: '+(pq.tipo==='receita'?'+':'−')+R(pq.valor)+' · '+(pq.descricao||catById(pq.categoriaId).nome)+(pq.occ?' (dá baixa)':''), hint: pq.data===hojeISO()?'hoje':fmtDataCurta(pq.data), run:() => commitRapido(pq)});
     palIdx = 0;
     $('#palList').innerHTML = palItems.length
       ? palItems.map((c,i) => '<button class="pal-it'+(i===0?' on':'')+'" data-i="'+i+'"><span class="ic">'+c.ic+'</span><span class="lbl">'+esc(c.lbl)+'</span>'+(c.hint?'<span class="hint">'+esc(c.hint)+'</span>':'')+'</button>').join('')
@@ -2092,6 +2220,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeSheet(); fecharPaleta(); return; }
   if (typing || !state.data || $('#overlay').classList.contains('open') || $('#palette').classList.contains('open')) return;
   if (e.key === 'n' || e.key === 'N') { e.preventDefault(); sheetLancamento(null); }
+  else if (e.key === 'l' || e.key === 'L') { e.preventDefault(); state.page = 'inicio'; renderAll(); const q2 = $('#qAdd'); if (q2) q2.focus(); }
   else if (e.key === '/') { e.preventDefault(); state.page = 'lanc'; renderAll(); const b = $('#busca'); if (b) b.focus(); }
   else if (e.key === 'ArrowLeft') { state.month = addMeses(state.month, -1); renderAll(); }
   else if (e.key === 'ArrowRight') { state.month = addMeses(state.month, 1); renderAll(); }
