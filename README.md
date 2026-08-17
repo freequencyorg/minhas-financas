@@ -1,4 +1,4 @@
-# Minhas Finanças 💰
+# Minhas Finanças 💰 
 
 App pessoal de finanças — simples, em português, feito para funcionar no celular e no computador, com os dados sincronizados num repositório **privado** do GitHub.
 
