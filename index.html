@@ -65,7 +65,11 @@ aside#side{
   width:230px;flex:none;position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;
   background:var(--surface);border-right:1px solid var(--border-soft);padding:18px 12px calc(14px + env(safe-area-inset-bottom));
 }
-.side-brand{display:flex;align-items:center;gap:9px;font-size:15.5px;font-weight:750;letter-spacing:-.01em;padding:4px 10px 16px}
+.side-brand{display:flex;align-items:center;gap:9px;font-size:15.5px;font-weight:750;letter-spacing:-.01em;padding:4px 10px 12px}
+.sp-switch{display:grid;grid-template-columns:1fr 1fr;background:var(--page);border:1px solid var(--border-soft);border-radius:10px;padding:3px;gap:3px;margin:0 4px 14px}
+.sp-switch button{padding:6.5px 4px;border-radius:7px;font-size:12px;font-weight:620;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-switch button.on{background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
+body.fq{--accent:var(--s7);--accent-soft:color-mix(in srgb, var(--s7) 12%, transparent);--accent-soft-2:color-mix(in srgb, var(--s7) 18%, transparent)}
 .side-brand .logo{width:28px;height:28px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800;flex:none}
 nav#nav{display:flex;flex-direction:column;gap:2px}
 nav#nav .nav-it{
@@ -347,6 +351,35 @@ nav.tabs{display:none}
 .pal-it .hint{font-size:11px;color:var(--muted)}
 .pal-it.on{background:var(--accent-soft)}
 .pal-empty{padding:22px;text-align:center;color:var(--muted);font-size:13px}
+/* ================= assistente (IA) ================= */
+#aiDrawer{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:100vw;z-index:55;background:var(--surface);border-left:1px solid var(--border-soft);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;transform:translateX(105%);transition:transform .22s ease}
+#aiDrawer.open{transform:none}
+@media (max-width:919px){ #aiDrawer{width:100vw;border-left:none} }
+.ai-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border-soft)}
+.ai-head .ttl{font-size:14.5px;font-weight:700;flex:1}
+.ai-head .sub{font-size:11px;color:var(--muted);display:block;font-weight:500}
+.ai-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.ai-msg{max-width:88%;padding:9px 13px;border-radius:14px;font-size:13.5px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+.ai-msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.ai-msg.bot{align-self:flex-start;background:var(--page);border:1px solid var(--border-soft);border-bottom-left-radius:4px}
+.ai-act{align-self:flex-start;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:620;color:var(--up);background:color-mix(in srgb, var(--good) 9%, var(--surface));border:1px solid color-mix(in srgb, var(--good) 25%, transparent);border-radius:10px;padding:6px 11px}
+.ai-typing{align-self:flex-start;display:flex;gap:4px;padding:12px 14px}
+.ai-typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blk 1.2s infinite}
+.ai-typing i:nth-child(2){animation-delay:.2s} .ai-typing i:nth-child(3){animation-delay:.4s}
+@keyframes blk{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.ai-foot{padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border-soft)}
+.ai-inrow{display:flex;align-items:flex-end;gap:8px;background:var(--page);border:1px solid var(--border);border-radius:14px;padding:6px 6px 6px 14px}
+.ai-inrow textarea{flex:1;border:none;background:none;outline:none;resize:none;font-size:13.5px;max-height:110px;padding:7px 0;line-height:1.45}
+.ai-send{width:34px;height:34px;border-radius:10px;background:var(--accent);color:#fff;display:grid;place-items:center;flex:none}
+.ai-send:disabled{opacity:.4}
+.ai-send svg{width:16px;height:16px}
+.ai-sugg{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 8px}
+.ai-sugg button{font-size:11.5px;padding:5px 10px;border-radius:99px;background:var(--page);border:1px solid var(--border-soft);color:var(--ink-2)}
+.ai-sugg button:hover{border-color:var(--accent);color:var(--accent)}
+.ai-setup{padding:20px 16px;font-size:13px;color:var(--ink-2);line-height:1.6}
+#aiBtn{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);color:var(--ink-2);font-size:13px;font-weight:600;padding:8.5px 13px;border-radius:11px;white-space:nowrap}
+#aiBtn:hover{border-color:var(--accent);color:var(--accent)}
+#aiBtn svg{width:15px;height:15px}
 /* toasts */
 #toasts{position:fixed;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom));z-index:70;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
 .toast{pointer-events:auto;display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--page);font-size:13px;padding:10.5px 16px;border-radius:12px;box-shadow:var(--shadow-lg);animation:up .2s ease;max-width:92vw}
@@ -394,6 +427,8 @@ nav.tabs{display:none}
   #kbtn{display:none}
   .btn-primary{display:none}
   .month-nav{flex:1;justify-content:space-between}
+  #aiBtn{font-size:0;gap:0;padding:9px}
+  #aiBtn svg{width:17px;height:17px}
   .grid.c2,.grid.c4{grid-template-columns:1fr 1fr}
   .grid.c4 .tile .value{font-size:16.5px}
   .hero-wrap{grid-template-columns:1fr;gap:14px}
@@ -475,7 +510,11 @@ nav.tabs{display:none}
 <!-- ============ APP SHELL ============ -->
 <div id="shell" class="hidden">
   <aside id="side">
-    <div class="side-brand"><span class="logo">R$</span> Minhas Finanças</div>
+    <div class="side-brand"><span class="logo" id="spLogo">R$</span> Minhas Finanças</div>
+    <div class="sp-switch" id="spSwitch">
+      <button data-sp="pessoal" class="on">Pessoal</button>
+      <button data-sp="freequency">Freequency</button>
+    </div>
     <nav id="nav">
       <button class="nav-it on" data-page="inicio">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/></svg>
@@ -523,6 +562,10 @@ nav.tabs{display:none}
   <div id="content">
     <header class="page-head">
       <div class="page-title" id="pageTitle">Visão geral</div>
+      <button id="aiBtn" title="Assistente (A)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"/></svg>
+        Assistente
+      </button>
       <button id="kbtn" title="Paleta de comandos">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         Buscar ou agir… <kbd>⌘K</kbd>
@@ -577,6 +620,15 @@ nav.tabs{display:none}
 
 <div id="overlay"></div>
 <div id="palette"></div>
+<div id="aiDrawer">
+  <div class="ai-head">
+    <span class="q-ico" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg></span>
+    <span class="ttl">Assistente<span class="sub" id="aiSub">conversa e age sobre seus dados</span></span>
+    <button class="icon-sq" id="aiClose" title="Fechar (Esc)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="ai-body" id="aiBody"></div>
+  <div class="ai-foot" id="aiFoot"></div>
+</div>
 <div id="toasts"></div>
 
 <script>
@@ -585,7 +637,8 @@ nav.tabs{display:none}
    Minhas Finanças v2 — finanças pessoais em um arquivo só.
    Dados: repositório privado no GitHub (Contents API) ou localStorage.
    ================================================================ */
-const LS_CFG = 'mf_config', LS_CACHE = 'mf_cache', LS_THEME = 'mf_theme', LS_PRIV = 'mf_priv';
+const LS_CFG = 'mf_config', LS_CACHE = 'mf_cache', LS_THEME = 'mf_theme', LS_PRIV = 'mf_priv', LS_ESP = 'mf_espaco';
+const ESPACOS = { pessoal: {nome:'Pessoal', logo:'R$', arquivo:'dados.json'}, freequency: {nome:'Freequency', logo:'FQ', arquivo:'freequency.json'} };
 const SLOT = { 0:'--s0',1:'--s1',2:'--s2',3:'--s3',4:'--s4',5:'--s5',6:'--s6',7:'--s7',8:'--s8' };
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DIAS_SEM = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
@@ -634,9 +687,26 @@ const SEED = {
   orcamentos: {}, metas: [], cenarios: []
 };
 
+const SEED_FQ = {
+  versao: 1, moeda: 'BRL', atualizadoEm: null,
+  categorias: [
+    {id:'c-fq-impostos',     nome:'Impostos e taxas',        tipo:'despesa', cor:1},
+    {id:'c-fq-fornecedores', nome:'Fornecedores',            tipo:'despesa', cor:2},
+    {id:'c-fq-software',     nome:'Software e assinaturas',  tipo:'despesa', cor:3},
+    {id:'c-fq-marketing',    nome:'Marketing',               tipo:'despesa', cor:4},
+    {id:'c-fq-pessoal',      nome:'Pessoal e pró-labore',    tipo:'despesa', cor:5},
+    {id:'c-fq-outros',       nome:'Outros',                  tipo:'despesa', cor:0},
+    {id:'c-fq-vendas',       nome:'Vendas e serviços',       tipo:'receita', cor:6},
+    {id:'c-fq-outras-rec',   nome:'Outras receitas',         tipo:'receita', cor:7}
+  ],
+  lancamentos: [], recorrentes: [], orcamentos: {}, metas: [], cenarios: []
+};
+const seedDe = esp => structuredClone(esp === 'freequency' ? SEED_FQ : SEED);
+
 /* ---------------- estado ---------------- */
 const state = {
   cfg: null, data: null, sha: null,
+  espaco: 'pessoal',
   month: null, page: 'inicio',
   dirty: false, saving: false, pendingSave: false, saveTimer: null, lastLoad: 0,
   filtroTipo: 'todos', filtroCat: '', busca: '',
@@ -689,16 +759,17 @@ const corVar = c => 'var(' + (SLOT[c.cor ?? 0] || '--s0') + ')';
 /* ---------------- armazenamento ---------------- */
 function loadCfg(){ try { return JSON.parse(localStorage.getItem(LS_CFG)) } catch(e){ return null } }
 function saveCfg(c){ localStorage.setItem(LS_CFG, JSON.stringify(c)); state.cfg = c; }
-function cacheData(){ try { localStorage.setItem(LS_CACHE, JSON.stringify({data: state.data, sha: state.sha, em: Date.now()})) } catch(e){} }
-function readCache(){ try { return JSON.parse(localStorage.getItem(LS_CACHE)) } catch(e){ return null } }
+const cacheKey = () => LS_CACHE + (state.espaco === 'pessoal' ? '' : '_' + state.espaco);
+function cacheData(){ try { localStorage.setItem(cacheKey(), JSON.stringify({data: state.data, sha: state.sha, em: Date.now()})) } catch(e){} }
+function readCache(){ try { return JSON.parse(localStorage.getItem(cacheKey())) } catch(e){ return null } }
 
 /* ---------------- GitHub API ---------------- */
 function b64enc(str){ const b = new TextEncoder().encode(str); let s=''; b.forEach(c => s += String.fromCharCode(c)); return btoa(s); }
 function b64dec(b64){ const bin = atob(b64.replace(/\n/g,'')); const arr = Uint8Array.from(bin, c => c.charCodeAt(0)); return new TextDecoder().decode(arr); }
-function ghUrl(cfg){ return 'https://api.github.com/repos/' + cfg.usuario + '/' + cfg.repo + '/contents/dados.json'; }
+function ghUrl(cfg, arquivo){ return 'https://api.github.com/repos/' + cfg.usuario + '/' + cfg.repo + '/contents/' + (arquivo || 'dados.json'); }
 function ghHeaders(cfg){ return { 'Authorization':'Bearer ' + cfg.token, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' }; }
-async function ghLoad(cfg){
-  const r = await fetch(ghUrl(cfg) + '?t=' + Date.now(), { headers: ghHeaders(cfg), cache:'no-store' });
+async function ghLoad(cfg, arquivo){
+  const r = await fetch(ghUrl(cfg, arquivo) + '?t=' + Date.now(), { headers: ghHeaders(cfg), cache:'no-store' });
   if (r.status === 404) return { missing: true };
   if (r.status === 401) throw new Error('Token inválido ou vencido.');
   if (r.status === 403) throw new Error('Sem permissão — confira se o token tem acesso de escrita (Contents) a esse repositório.');
@@ -706,10 +777,10 @@ async function ghLoad(cfg){
   const j = await r.json();
   return { data: JSON.parse(b64dec(j.content)), sha: j.sha };
 }
-async function ghPut(cfg, data, sha, msg){
+async function ghPut(cfg, data, sha, msg, arquivo){
   const body = { message: msg, content: b64enc(JSON.stringify(data, null, 1)) };
   if (sha) body.sha = sha;
-  const r = await fetch(ghUrl(cfg), { method:'PUT', headers: ghHeaders(cfg), body: JSON.stringify(body) });
+  const r = await fetch(ghUrl(cfg, arquivo), { method:'PUT', headers: ghHeaders(cfg), body: JSON.stringify(body) });
   if (r.status === 409 || r.status === 422) return { conflict: true };
   if (!r.ok) throw new Error('Falha ao salvar (' + r.status + ')');
   const j = await r.json();
@@ -730,12 +801,13 @@ function touch(){
 async function doSave(){
   if (state.saving) { state.pendingSave = true; return; }
   state.saving = true;
+  const arq = ESPACOS[state.espaco].arquivo;
   try {
-    let r = await ghPut(state.cfg, state.data, state.sha, 'Atualização — ' + new Date().toLocaleString('pt-BR'));
+    let r = await ghPut(state.cfg, state.data, state.sha, 'Atualização ('+ESPACOS[state.espaco].nome+') — ' + new Date().toLocaleString('pt-BR'), arq);
     if (r.conflict) {
-      const fresh = await ghLoad(state.cfg);
+      const fresh = await ghLoad(state.cfg, arq);
       state.sha = fresh.missing ? null : fresh.sha;
-      r = await ghPut(state.cfg, state.data, state.sha, 'Atualização — ' + new Date().toLocaleString('pt-BR'));
+      r = await ghPut(state.cfg, state.data, state.sha, 'Atualização ('+ESPACOS[state.espaco].nome+') — ' + new Date().toLocaleString('pt-BR'), arq);
       if (r.conflict) throw new Error('Conflito ao salvar. Recarregue a página.');
     }
     state.sha = r.sha; state.dirty = false; cacheData();
@@ -750,13 +822,15 @@ async function doSave(){
 }
 async function loadRemote(silent){
   if (state.cfg.modo === 'local') return;
+  const esp = state.espaco, arq = ESPACOS[esp].arquivo;
   try {
     if (!silent) setSync('saving','Carregando…');
-    const r = await ghLoad(state.cfg);
+    const r = await ghLoad(state.cfg, arq);
+    if (state.espaco !== esp) return; // usuário trocou de espaço no meio
     if (r.missing) {
-      state.data = state.data || structuredClone(SEED);
+      state.data = state.data || seedDe(esp);
       state.data.atualizadoEm = new Date().toISOString();
-      const p = await ghPut(state.cfg, state.data, null, 'Início do Minhas Finanças 🎉');
+      const p = await ghPut(state.cfg, state.data, null, 'Início do espaço '+ESPACOS[esp].nome+' 🎉', arq);
       state.sha = p.sha;
     } else if (!state.data || !state.dirty) {
       const mudou = !state.data || (r.data.atualizadoEm !== state.data.atualizadoEm);
@@ -1595,13 +1669,20 @@ function renderAjustes(){
       '<button data-act="set-theme" data-v="'+v+'" class="'+((localStorage.getItem(LS_THEME)||'auto')===v?'on':'')+'">'+(v==='auto'?'Automático':v==='light'?'Claro':'Escuro')+'</button>').join('')+'</div>'+
     '<div class="set-row" style="margin-top:6px;border:none"><span class="mid"><span class="t1">Modo discreto</span><span class="t2">borra os valores na tela (ideal em público)</span></span>'+
     '<button class="btn-sm" data-act="toggle-priv">'+(document.body.classList.contains('private')?'Desativar':'Ativar')+'</button></div></div>'+
+    '<div class="card" style="margin-bottom:14px"><h2>Assistente (IA)</h2>'+
+    (aiCfg().key ?
+      '<div class="set-row"><span class="mid"><span class="t1">Ativado ✨</span><span class="t2">chave salva só neste aparelho — nunca sincroniza</span></span><button class="btn-sm" data-act="ai-logout" style="color:var(--critical)">Remover chave</button></div>'+
+      '<div class="set-row" style="border:none"><span class="mid"><span class="t1">Modelo</span><span class="t2">rápido = centavos por pergunta; inteligente = mais caro e mais capaz</span></span><select class="mini" id="aiModel" style="width:180px;text-align:left"><option value="claude-haiku-4-5"'+((aiCfg().model||'claude-haiku-4-5')==='claude-haiku-4-5'?' selected':'')+'>Rápido (Haiku)</option><option value="claude-sonnet-4-5"'+(aiCfg().model==='claude-sonnet-4-5'?' selected':'')+'>Inteligente (Sonnet)</option></select></div>'
+      :
+      '<div class="set-row" style="border:none"><span class="mid"><span class="t1">Não ativado</span><span class="t2">converse com seus dados e lance por texto livre</span></span><button class="btn-sm" data-act="ai-open" style="color:var(--accent)">Ativar</button></div>')+
+    '</div>'+
     '<div class="card" style="margin-bottom:14px"><h2>Backup</h2><div class="tools-grid">'+
     '<button class="tool-btn" data-act="exportar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m-4.5-4L12 15.5 16.5 11M5 19.5h14"/></svg>Exportar</button>'+
     '<button class="tool-btn" data-act="importar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4m-4.5 4L12 3.5 16.5 8M5 19.5h14"/></svg>Importar</button></div>'+
     '<input type="file" id="importFile" accept="application/json" class="hidden">'+
     '<p class="muted" style="font-size:12px;margin-top:10px">'+(d.atualizadoEm ? 'Última alteração: '+new Date(d.atualizadoEm).toLocaleString('pt-BR')+'.' : '')+'</p></div>'+
     '<div class="card"><h2>Atalhos de teclado</h2>'+
-      [['Paleta de comandos','⌘K'],['Novo lançamento','N'],['Lance rápido (caixa inteligente)','L'],['Buscar','/'],['Mês anterior / próximo','← →'],['Trocar de página','1–8'],['Fechar','Esc']].map(k=>'<div class="kbd-row"><span>'+k[0]+'</span><kbd>'+k[1]+'</kbd></div>').join('')+
+      [['Paleta de comandos','⌘K'],['Assistente (IA)','A'],['Novo lançamento','N'],['Lance rápido (caixa inteligente)','L'],['Buscar','/'],['Mês anterior / próximo','← →'],['Trocar de página','1–8'],['Fechar','Esc']].map(k=>'<div class="kbd-row"><span>'+k[0]+'</span><kbd>'+k[1]+'</kbd></div>').join('')+
     '</div>'+
     '</div>'+
     '<div>'+
@@ -1963,8 +2044,12 @@ function sheetMais(){
     [['cal','Calendário'],['cen','Cenários (Plano B)'],['metas','Metas'],['ajustes','Ajustes']].map(p =>
       '<button class="row" data-go="'+p[0]+'"><span class="mid"><span class="t1">'+p[1]+'</span></span><span class="muted">›</span></button>').join('')+
     '</div>'+
-    '<button class="btn ghost" id="mPriv" style="margin-top:12px">'+(document.body.classList.contains('private')?'Mostrar valores':'Modo discreto (esconder valores)')+'</button>');
+    '<button class="btn" id="mAI" style="margin-top:12px">✨ Assistente</button>'+
+    '<button class="btn ghost" id="mSp" style="margin-top:10px">⇄ Trocar para '+(state.espaco==='pessoal'?'Freequency (CNPJ)':'Pessoal')+'</button>'+
+    '<button class="btn ghost" id="mPriv" style="margin-top:10px">'+(document.body.classList.contains('private')?'Mostrar valores':'Modo discreto (esconder valores)')+'</button>');
   s.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { closeSheet(); state.page = b.dataset.go; renderAll(); window.scrollTo({top:0}); });
+  s.querySelector('#mAI').onclick = () => { closeSheet(); aiAbrir(); };
+  s.querySelector('#mSp').onclick = () => { closeSheet(); trocarEspaco(state.espaco === 'pessoal' ? 'freequency' : 'pessoal'); };
   s.querySelector('#mPriv').onclick = () => { closeSheet(); togglePriv(); };
 }
 
@@ -2008,6 +2093,163 @@ function togglePriv(){
   document.body.classList.toggle('private');
   localStorage.setItem(LS_PRIV, document.body.classList.contains('private') ? '1' : '');
   if (state.page === 'ajustes') renderAjustes();
+}
+
+/* ---------------- assistente (Claude API — chave do usuário, só local) ---------------- */
+const LS_AI = 'mf_ai';
+function aiCfg(){ try { return JSON.parse(localStorage.getItem(LS_AI)) || {} } catch(e){ return {} } }
+function aiSave(c){ localStorage.setItem(LS_AI, JSON.stringify(c)); }
+const aiChat = { msgs: [], view: [], busy: false };
+
+function aiContexto(){
+  const d = state.data, ym = mesAtual();
+  const t = totaisDoMes(ym), prev = previstoDoMes(ym);
+  const hist = []; for (let i=5;i>=0;i--){ const m=addMeses(ym,-i), tt=totaisDoMes(m); hist.push({mes:m, receitas:tt.rec, despesas:tt.desp}); }
+  const proj = projLonga(12);
+  return JSON.stringify({
+    hoje: hojeISO(),
+    categorias: d.categorias.map(c=>({id:c.id, nome:c.nome, tipo:c.tipo})),
+    fixasAtivas: d.recorrentes.filter(r=>r.ativa).map(r=>({nome:r.nome, tipo:r.tipo, valor:r.valor, freq:r.freq, dia:r.dia, diaSemana:r.diaSemana, fim:r.fim})),
+    pendentesEsteMes: ocorrencias(ym).filter(o=>!o.lanc).map(o=>({chave:o.chave, nome:o.rec.nome, tipo:o.rec.tipo, valor:o.rec.valor, data:o.data})),
+    lancamentosEsteMes: lancsDoMes(ym).map(l=>({tipo:l.tipo, valor:l.valor, categoria:catById(l.categoriaId).nome, descricao:l.descricao, data:l.data})),
+    ultimos6Meses: hist,
+    mesAtual: {receitas:t.rec, despesas:t.desp, saldo:t.saldo, previstoFimDoMes:prev.saldo},
+    projecaoAcumulada12Meses: Math.round(proj.pts[proj.pts.length-1].acc),
+    orcamentosMensais: Object.fromEntries(Object.entries(d.orcamentos).map(([k,v])=>[catById(k).nome, v])),
+    metas: d.metas.map(m=>({nome:m.nome, alvo:m.alvo, guardado:metaGuardado(m)})),
+    cenarios: d.cenarios.map(c=>({nome:c.nome}))
+  });
+}
+
+const AI_TOOLS = [
+  { name:'criar_lancamento', description:'Registra uma receita ou despesa avulsa no app.',
+    input_schema:{ type:'object', properties:{ tipo:{type:'string',enum:['receita','despesa']}, valor:{type:'number'}, data:{type:'string',description:'YYYY-MM-DD'}, categoriaId:{type:'string',description:'id de uma categoria existente'}, descricao:{type:'string'} }, required:['tipo','valor','data','categoriaId'] } },
+  { name:'dar_baixa', description:'Marca uma fixa pendente do mês como paga/recebida. Use a chave exata de pendentesEsteMes. Prefira esta ferramenta quando o pedido corresponder a uma pendência.',
+    input_schema:{ type:'object', properties:{ chave:{type:'string'}, valor:{type:'number',description:'valor real, se diferente do previsto'}, data:{type:'string'} }, required:['chave'] } },
+  { name:'criar_fixa', description:'Cria uma receita ou despesa recorrente (fixa).',
+    input_schema:{ type:'object', properties:{ nome:{type:'string'}, tipo:{type:'string',enum:['receita','despesa']}, valor:{type:'number'}, categoriaId:{type:'string'}, freq:{type:'string',enum:['mensal','semanal','diaria']}, dia:{type:'number'}, diaSemana:{type:'number',description:'0=domingo…6=sábado'}, inicio:{type:'string'}, fim:{type:'string'} }, required:['nome','tipo','valor','categoriaId','freq'] } }
+];
+
+function aiExec(name, inp){
+  try {
+    if (name === 'criar_lancamento'){
+      if (!inp.valor || inp.valor <= 0) return {erro:'valor inválido'};
+      const cat = state.data.categorias.find(c=>c.id===inp.categoriaId) || state.data.categorias.find(c=>c.tipo===inp.tipo);
+      if (!cat) return {erro:'categoria não encontrada'};
+      state.data.lancamentos.push({id:uid('l'), tipo:inp.tipo, valor:inp.valor, categoriaId:cat.id, descricao:inp.descricao||'', data:inp.data||hojeISO(), recChave:null, criadoEm:new Date().toISOString()});
+      touch(); renderAll();
+      return {ok:true, resumo:(inp.tipo==='receita'?'+':'−')+R(inp.valor)+(inp.descricao?' · '+inp.descricao:'')+' em '+cat.nome};
+    }
+    if (name === 'dar_baixa'){
+      const o = ocorrencias(mesAtual()).find(x=>x.chave===inp.chave && !x.lanc);
+      if (!o) return {erro:'pendência não encontrada (confira a chave, talvez já foi baixada)'};
+      const v = inp.valor && inp.valor > 0 ? inp.valor : o.rec.valor;
+      state.data.lancamentos.push({id:uid('l'), tipo:o.rec.tipo, valor:v, categoriaId:o.rec.categoriaId, descricao:o.rec.nome, data:inp.data||hojeISO(), recChave:o.chave, criadoEm:new Date().toISOString()});
+      touch(); renderAll();
+      return {ok:true, resumo:o.rec.nome+' baixada: '+(o.rec.tipo==='receita'?'+':'−')+R(v)};
+    }
+    if (name === 'criar_fixa'){
+      if (!inp.valor || inp.valor <= 0) return {erro:'valor inválido'};
+      const cat = state.data.categorias.find(c=>c.id===inp.categoriaId) || state.data.categorias.find(c=>c.tipo===inp.tipo);
+      if (!cat) return {erro:'categoria não encontrada'};
+      state.data.recorrentes.push({id:uid('r'), nome:inp.nome, tipo:inp.tipo, valor:inp.valor, categoriaId:cat.id, freq:inp.freq,
+        dia: inp.freq==='mensal' ? (inp.dia || Number((inp.inicio||hojeISO()).slice(8,10))) : null,
+        diaSemana: inp.freq==='semanal' ? (inp.diaSemana ?? 5) : null,
+        freqMeses:1, inicio: inp.inicio||hojeISO(), fim: inp.fim||null, ativa:true});
+      touch(); renderAll();
+      return {ok:true, resumo:'Fixa "'+inp.nome+'" criada ('+(inp.tipo==='receita'?'+':'−')+R(inp.valor)+')'};
+    }
+    return {erro:'ferramenta desconhecida'};
+  } catch(e){ return {erro:String(e && e.message || e)}; }
+}
+
+async function aiCall(messages){
+  const cfg = aiCfg();
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{ 'content-type':'application/json', 'x-api-key':cfg.key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+    body: JSON.stringify({
+      model: cfg.model || 'claude-haiku-4-5',
+      max_tokens: 1200,
+      system: 'Você é o assistente do Minhas Finanças, o app de finanças do Tiago (Brasil). Espaço ativo: '+ESPACOS[state.espaco].nome+(state.espaco==='freequency'?' — finanças da empresa/CNPJ Freequency.':' — finanças pessoais (imóveis de aluguel).')+' Responda SEMPRE em português do Brasil, curto e direto, valores em R$. Hoje é '+hojeISO()+'. Quando o usuário pedir para registrar/lançar/pagar/receber/dar baixa, USE as ferramentas — prefira dar_baixa quando o pedido corresponder a uma pendência de pendentesEsteMes. Nunca invente números: use somente os dados fornecidos; se não souber, diga que não tem o dado. DADOS ATUAIS DO APP (JSON): '+aiContexto(),
+      tools: AI_TOOLS,
+      messages
+    })
+  });
+  if (r.status === 401) throw new Error('Chave inválida ou revogada — confira em Ajustes → Assistente.');
+  if (r.status === 429) throw new Error('Muitas perguntas seguidas — espera um instante e tenta de novo.');
+  if (!r.ok) { let msg = 'A API respondeu '+r.status+'.'; try { const j = await r.json(); if (j.error && j.error.message) msg = j.error.message; } catch(e){} throw new Error(msg); }
+  return r.json();
+}
+
+function aiAbrir(){ $('#aiDrawer').classList.add('open'); aiRenderAll(); setTimeout(() => { const ta = $('#aiTa') || $('#aiKey'); if (ta) ta.focus(); }, 150); }
+function aiFechar(){ $('#aiDrawer').classList.remove('open'); }
+
+function aiRenderAll(){
+  const cfg = aiCfg();
+  const body = $('#aiBody'), foot = $('#aiFoot');
+  $('#aiSub').textContent = cfg.key ? ((cfg.model||'claude-haiku-4-5').includes('haiku') ? 'modelo rápido · conversa e age sobre seus dados' : 'modelo inteligente · conversa e age sobre seus dados') : 'conversa e age sobre seus dados';
+  if (!cfg.key){
+    body.innerHTML = '<div class="ai-setup"><strong>Ative o assistente em 2 minutos:</strong><br><br>'+
+      '1. Entre em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--accent)">console.anthropic.com/settings/keys</a> (conta da Anthropic — a empresa do Claude; crie se precisar e adicione um crédito pequeno, US$5 dura meses).<br>'+
+      '2. Clique em <em>Create key</em> e copie o código <code>sk-ant-…</code>.<br>'+
+      '3. Cole aqui embaixo.<br><br>'+
+      '<input class="f-input" id="aiKey" type="password" placeholder="sk-ant-…" autocomplete="off">'+
+      '<button class="btn" id="aiKeyOk" style="margin-top:12px">Ativar assistente</button>'+
+      '<p class="muted" style="font-size:11.5px;margin-top:12px">A chave fica salva <strong>só neste aparelho</strong> — nunca vai para o GitHub nem para os seus dados. Cada pergunta custa centavos no modelo rápido. Dá para definir limite de gasto no site da Anthropic.</p></div>';
+    foot.innerHTML = '';
+    $('#aiKeyOk').onclick = () => {
+      const k = $('#aiKey').value.trim();
+      if (!k) return shake($('#aiKey'));
+      aiSave({ key:k, model: aiCfg().model || 'claude-haiku-4-5' });
+      aiRenderAll(); toast('Assistente ativado ✨');
+      if (state.page === 'ajustes') renderAjustes();
+    };
+    return;
+  }
+  body.innerHTML = (aiChat.view.length
+    ? aiChat.view.map(m => m.who==='act' ? '<div class="ai-act">✓ '+esc(m.text)+'</div>' : '<div class="ai-msg '+(m.who==='user'?'user':'bot')+'">'+esc(m.text)+'</div>').join('')
+    : '<div class="ai-msg bot">Oi, Tiago! Posso responder qualquer coisa sobre suas finanças e também lançar por você. Experimenta 👇</div>')
+    + (aiChat.busy ? '<div class="ai-typing"><i></i><i></i><i></i></div>' : '');
+  body.scrollTop = body.scrollHeight;
+  foot.innerHTML =
+    (!aiChat.view.length ? '<div class="ai-sugg">'+['Como está agosto?','Quanto sobra até dezembro?','O que corto pra 2027 fechar no azul?','Lança 50 de padaria hoje'].map(s=>'<button data-s="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div>' : '')+
+    '<div class="ai-inrow"><textarea id="aiTa" rows="1" placeholder="Pergunte ou peça um lançamento…  (Enter envia)"></textarea>'+
+    '<button class="ai-send" id="aiSend"'+(aiChat.busy?' disabled':'')+' aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button></div>';
+  $$('#aiFoot .ai-sugg button').forEach(b => b.onclick = () => aiEnviar(b.dataset.s));
+  const ta = $('#aiTa');
+  ta.addEventListener('input', () => { ta.style.height='auto'; ta.style.height = Math.min(110, ta.scrollHeight)+'px'; });
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); aiEnviar(ta.value); } });
+  $('#aiSend').onclick = () => aiEnviar(ta.value);
+}
+
+async function aiEnviar(texto){
+  texto = String(texto||'').trim();
+  if (!texto || aiChat.busy || !aiCfg().key) return;
+  aiChat.view.push({who:'user', text:texto});
+  aiChat.msgs.push({role:'user', content:texto});
+  aiChat.busy = true; aiRenderAll();
+  try {
+    for (let volta = 0; volta < 5; volta++){
+      const resp = await aiCall(aiChat.msgs);
+      const blocos = resp.content || [];
+      const usos = blocos.filter(b => b.type === 'tool_use');
+      const textos = blocos.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+      if (textos) aiChat.view.push({who:'bot', text:textos});
+      aiChat.msgs.push({role:'assistant', content:blocos});
+      if (!usos.length) break;
+      const results = usos.map(u => {
+        const out = aiExec(u.name, u.input || {});
+        if (out.ok) aiChat.view.push({who:'act', text:out.resumo});
+        return {type:'tool_result', tool_use_id:u.id, content: JSON.stringify(out)};
+      });
+      aiChat.msgs.push({role:'user', content:results});
+      aiRenderAll();
+    }
+  } catch(e){
+    aiChat.view.push({who:'bot', text:'😕 '+(e.message || 'Deu erro na chamada.')});
+  }
+  aiChat.busy = false; aiRenderAll();
 }
 
 /* ---------------- paleta de comandos (⌘K) ---------------- */
@@ -2171,6 +2413,13 @@ document.addEventListener('click', async e => {
     }
   }
   else if (act === 'conectar-github') { state.migrarLocal = true; $('#shell').classList.add('hidden'); $('#setup').classList.add('active'); }
+  else if (act === 'ai-open') aiAbrir();
+  else if (act === 'ai-logout') {
+    if (await confirmSheet('Remover a chave do assistente?', 'Você pode colar de novo quando quiser — a chave continua válida na Anthropic (revogue lá se quiser desativá-la de vez).', 'Remover', true)) {
+      localStorage.removeItem(LS_AI); aiChat.msgs = []; aiChat.view = [];
+      renderAjustes(); toast('Chave removida deste aparelho');
+    }
+  }
 });
 
 document.addEventListener('change', e => {
@@ -2187,6 +2436,7 @@ document.addEventListener('change', e => {
     if (r && v && v > 0) { r.valor = v; touch(); renderCen(); }
     else if (r) { e.target.value = String(r.valor).replace('.',','); }
   }
+  if (e.target.id === 'aiModel') { aiSave({ ...aiCfg(), model: e.target.value }); toast('Modelo atualizado ✓'); }
   if (e.target.id === 'importFile' && e.target.files[0]) { importar(e.target.files[0]); e.target.value=''; }
 });
 
@@ -2217,15 +2467,44 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   const typing = ['INPUT','SELECT','TEXTAREA'].includes(document.activeElement && document.activeElement.tagName);
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); if ($('#palette').classList.contains('open')) fecharPaleta(); else abrirPaleta(); return; }
-  if (e.key === 'Escape') { closeSheet(); fecharPaleta(); return; }
+  if (e.key === 'Escape') { closeSheet(); fecharPaleta(); aiFechar(); return; }
   if (typing || !state.data || $('#overlay').classList.contains('open') || $('#palette').classList.contains('open')) return;
   if (e.key === 'n' || e.key === 'N') { e.preventDefault(); sheetLancamento(null); }
   else if (e.key === 'l' || e.key === 'L') { e.preventDefault(); state.page = 'inicio'; renderAll(); const q2 = $('#qAdd'); if (q2) q2.focus(); }
+  else if (e.key === 'a' || e.key === 'A') { e.preventDefault(); aiAbrir(); }
   else if (e.key === '/') { e.preventDefault(); state.page = 'lanc'; renderAll(); const b = $('#busca'); if (b) b.focus(); }
   else if (e.key === 'ArrowLeft') { state.month = addMeses(state.month, -1); renderAll(); }
   else if (e.key === 'ArrowRight') { state.month = addMeses(state.month, 1); renderAll(); }
   else if (/^[1-8]$/.test(e.key)) { state.page = Object.keys(PAGES)[Number(e.key)-1]; renderAll(); }
 });
+
+/* ---------------- espaços (Pessoal / Freequency) ---------------- */
+function aplicarEspacoUI(){
+  document.body.classList.toggle('fq', state.espaco === 'freequency');
+  $('#spLogo').textContent = ESPACOS[state.espaco].logo;
+  $$('#spSwitch button').forEach(b => b.classList.toggle('on', b.dataset.sp === state.espaco));
+}
+async function trocarEspaco(esp){
+  if (!ESPACOS[esp] || esp === state.espaco || !state.cfg) return;
+  clearTimeout(state.saveTimer);
+  if (state.dirty && state.cfg.modo === 'github') await doSave();
+  cacheData();
+  state.espaco = esp;
+  localStorage.setItem(LS_ESP, esp);
+  aiChat.msgs = []; aiChat.view = [];
+  state.sel.clear(); state.filtroCat = ''; state.busca = ''; state.cenAtivo = null; state.dirty = false;
+  aplicarEspacoUI();
+  const cache = readCache();
+  state.data = (cache && cache.data) ? migrar(cache.data) : (state.cfg.modo === 'local' ? seedDe(esp) : null);
+  state.sha = (cache && cache.sha) || null;
+  if (state.data) {
+    renderAll();
+    if (state.cfg.modo === 'local') { cacheData(); setSync('local','Neste aparelho'); }
+  } else setSync('saving','Carregando…');
+  if (state.cfg.modo === 'github') { state.lastLoad = 0; await loadRemote(); if (state.data) renderAll(); }
+  toast(esp === 'freequency' ? 'Espaço Freequency (CNPJ) 💼' : 'Espaço Pessoal 🏠');
+}
+$$('#spSwitch button').forEach(b => b.onclick = () => trocarEspaco(b.dataset.sp));
 
 /* ---------------- navegação ---------------- */
 $$('#nav .nav-it').forEach(b => b.onclick = () => { state.page = b.dataset.page; renderAll(); window.scrollTo({top:0}); });
@@ -2239,6 +2518,8 @@ $('#mLabel').onclick = () => { state.month = mesAtual(); renderAll(); };
 $('#newBtn').onclick = () => sheetLancamento(null);
 $('#fab').onclick = () => sheetLancamento(null);
 $('#kbtn').onclick = abrirPaleta;
+$('#aiBtn').onclick = aiAbrir;
+$('#aiClose').onclick = aiFechar;
 $('#eyeBtn').onclick = togglePriv;
 $('#syncPill').onclick = () => { if (state.cfg && state.cfg.modo === 'github') { if (state.dirty) doSave(); else { state.lastLoad = 0; loadRemote(); } } };
 
@@ -2251,7 +2532,7 @@ $('#suEye').onclick = () => { const i = $('#suToken'); i.type = i.type === 'pass
 $('#suLocal').onclick = () => {
   saveCfg({modo:'local'});
   const cache = readCache();
-  state.data = migrar((cache && cache.data) ? cache.data : structuredClone(SEED));
+  state.data = migrar((cache && cache.data) ? cache.data : seedDe(state.espaco));
   bootUI(); setSync('local','Neste aparelho'); cacheData();
 };
 $('#suConnect').onclick = async () => {
@@ -2260,6 +2541,7 @@ $('#suConnect').onclick = async () => {
   err.style.display = 'none';
   if (!usuario || !repo || !token) { err.textContent = 'Preencha usuário, repositório e token.'; err.style.display='block'; return; }
   const btn = $('#suConnect'); btn.disabled = true; btn.textContent = 'Conectando…';
+  state.espaco = 'pessoal'; localStorage.setItem(LS_ESP, 'pessoal'); aplicarEspacoUI();
   const cfg = {modo:'github', usuario, repo, token};
   try {
     const r = await ghLoad(cfg);
@@ -2292,13 +2574,15 @@ function bootUI(){
 (function init(){
   aplicarTema(localStorage.getItem(LS_THEME) || 'auto');
   if (localStorage.getItem(LS_PRIV)) document.body.classList.add('private');
+  state.espaco = ESPACOS[localStorage.getItem(LS_ESP)] ? localStorage.getItem(LS_ESP) : 'pessoal';
+  aplicarEspacoUI();
   state.cfg = loadCfg();
   state.month = mesAtual();
   if (!state.cfg) { $('#setup').classList.add('active'); return; }
   const cache = readCache();
   if (cache && cache.data) { state.data = migrar(cache.data); state.sha = cache.sha || null; }
   if (state.cfg.modo === 'local') {
-    if (!state.data) state.data = migrar(structuredClone(SEED));
+    if (!state.data) state.data = migrar(seedDe(state.espaco));
     bootUI(); setSync('local','Neste aparelho');
   } else {
     if (state.data) bootUI(); else setSync('saving','Carregando…');
