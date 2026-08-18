@@ -973,6 +973,15 @@ function migrar(d){
   if (d.conta === undefined) d.conta = null; /* {saldo, data} — âncora do saldo bancário */
   d.pulos = d.pulos || [];      /* chaves de ocorrências puladas ("esse mês não teve") */
   d.ajustes = d.ajustes || {};  /* chave -> valor diferente só naquela ocorrência */
+  /* rede de segurança: fixa sem frequência (ou sem dia) nunca gerava ocorrência e sumia do app */
+  for (const r of d.recorrentes) {
+    if (!r.freq) r.freq = 'mensal';
+    if (r.freq === 'mensal' && !r.dia) r.dia = Number((r.inicio || hojeISO()).slice(8,10)) || 1;
+    if (r.freq === 'semanal' && r.diaSemana == null) r.diaSemana = new Date((r.inicio || hojeISO())+'T12:00:00').getDay();
+    if (!r.inicio) r.inicio = hojeISO();
+    if (!r.freqMeses) r.freqMeses = 1;
+    if (r.ativa === undefined) r.ativa = true;
+  }
   return d;
 }
 
@@ -1783,6 +1792,17 @@ function renderFixas(){
   const fFreq = state.fixaFreq || 'todas';
   const todas = state.data.recorrentes;
   const conta = f => todas.filter(r => r.freq === f).length;
+  /* fixas ativas que não geram nada nos próximos 12 meses — normalmente data de fim vencida */
+  const mudas = todas.filter(r => {
+    if (!r.ativa) return false;
+    for (let i = 0; i < 12; i++) if (gerarOcorrencias([r], addMeses(ym, i)).length) return false;
+    return true;
+  });
+  const avisoMudas = mudas.length
+    ? '<div class="ext-aviso" style="margin-bottom:14px"><span>⚠️ <b>'+mudas.length+' fixa'+(mudas.length===1?'':'s')+' ativa'+(mudas.length===1?'':'s')+' não aparece'+(mudas.length===1?'':'m')+' em nenhum mês do próximo ano</b> — '+
+        mudas.slice(0,3).map(r=>esc(r.nome)).join(', ')+(mudas.length>3?' e mais '+(mudas.length-3):'')+
+        '. Costuma ser data de término já vencida ou dia não preenchido. Clique nela abaixo para revisar.</span></div>'
+    : '';
   const defs = todas.slice()
     .filter(r => fFreq === 'todas' || r.freq === fFreq)
     .sort((a,b) => (b.ativa?1:0)-(a.ativa?1:0) || a.nome.localeCompare(b.nome,'pt-BR'));
@@ -1799,7 +1819,7 @@ function renderFixas(){
       '<span class="amt num '+(r.tipo==='receita'?'pos':'neg')+'">'+(r.tipo==='receita'?'+':'−')+R(r.valor).replace('R$','R$ ')+'</span></button>';
   }).join('');
 
-  $('#panel-fixas').innerHTML = resumo +
+  $('#panel-fixas').innerHTML = avisoMudas + resumo +
     '<div class="grid c2" style="align-items:start">'+
       '<div><div class="sec-head"><h3>A receber</h3><span class="sum num">'+rec.filter(o=>o.lanc).length+' de '+rec.length+'</span></div>'+
       '<div class="list">'+(rec.map(rowOcc).join('') || '<div class="empty">Nenhuma receita fixa neste mês.</div>')+'</div></div>'+
