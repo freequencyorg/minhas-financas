@@ -288,6 +288,48 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 .cal-ev.paid{opacity:.5;text-decoration:line-through}
 .cal-more{font-size:10px;color:var(--muted);padding:0 6px}
 .cal-sum{display:flex;gap:16px;padding:11px 16px;font-size:12px;color:var(--muted);border-top:1px solid var(--grid);background:var(--page)}
+/* ================= extrato (fluxo unificado) ================= */
+.ext-top{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
+.ext-kpi{background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;padding:15px 17px;box-shadow:var(--shadow)}
+.ext-kpi .l{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+.ext-kpi .v{font-size:23px;font-weight:800;letter-spacing:-.02em;margin-top:6px}
+.ext-kpi .s{font-size:11.5px;color:var(--muted);margin-top:3px}
+.ext-kpi.alerta{background:linear-gradient(160deg,color-mix(in srgb, var(--critical) 9%, var(--surface)),var(--surface) 70%);border-color:color-mix(in srgb, var(--critical) 28%, transparent)}
+.ext-kpi.alerta .v{color:var(--down)}
+.ext-kpi.ok{background:linear-gradient(160deg,color-mix(in srgb, var(--good) 8%, var(--surface)),var(--surface) 70%);border-color:color-mix(in srgb, var(--good) 22%, transparent)}
+.ext-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.ext-mes{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:12px 16px;background:var(--page);border-bottom:1px solid var(--grid);border-top:1px solid var(--grid);position:sticky;top:64px;z-index:5}
+.ext-mes:first-child{border-top:none}
+.ext-mes .m{font-size:12.5px;font-weight:750;text-transform:capitalize;letter-spacing:-.01em}
+.ext-mes .kv{font-size:11.5px;color:var(--muted)}
+.ext-mes .kv b{font-weight:700}
+.ext-mes .fecha{margin-left:auto;font-size:12.5px;font-weight:750}
+.ext-row{display:flex;align-items:center;gap:11px;padding:9px 16px;border-bottom:1px solid var(--border-soft);width:100%;text-align:left;font-size:13px}
+.ext-row:hover{background:var(--hover)}
+.ext-row .dia{width:44px;flex:none;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ext-row .cdot{width:8px;height:8px;border-radius:50%;flex:none}
+.ext-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:560}
+.ext-row .tagp{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border-soft);border-radius:5px;padding:1px 5px;flex:none}
+.ext-row .vl{width:118px;flex:none;text-align:right;font-weight:680;font-variant-numeric:tabular-nums}
+.ext-row .sd{width:126px;flex:none;text-align:right;font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;font-weight:640}
+.ext-row.prev .nm{color:var(--ink-2)}
+.ext-row.prev .vl{opacity:.82}
+.ext-row.vermelho{background:color-mix(in srgb, var(--critical) 7%, transparent);box-shadow:inset 3px 0 0 var(--critical)}
+.ext-row.vermelho .sd{color:var(--down);font-weight:750}
+.ext-row.virada{box-shadow:inset 3px 0 0 var(--critical)}
+.ext-head{display:flex;align-items:center;gap:11px;padding:9px 16px;border-bottom:1px solid var(--grid);font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;background:var(--surface)}
+.ext-head .dia{width:44px;flex:none} .ext-head .nm{flex:1}
+.ext-head .vl{width:118px;text-align:right;flex:none} .ext-head .sd{width:126px;text-align:right;flex:none}
+.ext-abertura{display:flex;align-items:center;gap:11px;padding:11px 16px;font-size:12.5px;background:var(--accent-soft);border-bottom:1px solid var(--grid);font-weight:640}
+.ext-abertura .sd{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:750}
+.ext-aviso{display:flex;align-items:center;gap:11px;flex-wrap:wrap;background:var(--surface);border:1px dashed var(--baseline);border-radius:14px;padding:13px 16px;margin-bottom:14px;font-size:12.5px;color:var(--ink-2)}
+.ext-aviso b{color:var(--ink)}
+.ext-aviso .btn-sm{margin-left:auto}
+@media (max-width:919px){
+  .ext-top{grid-template-columns:1fr 1fr}
+  .ext-row .sd{width:96px} .ext-row .vl{width:92px} .ext-row .tagp{display:none}
+  .ext-mes{position:static}
+}
 /* ================= relatórios ================= */
 .rep-table{width:100%;border-collapse:collapse;font-size:13px}
 .rep-table th{font-size:11px;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:right;padding:8px 10px;border-bottom:1px solid var(--grid)}
@@ -389,6 +431,23 @@ nav.tabs{display:none}
 .ai-send{width:34px;height:34px;border-radius:10px;background:var(--accent-grad);color:var(--on-accent);display:grid;place-items:center;flex:none}
 .ai-send:disabled{opacity:.4}
 .ai-send svg{width:16px;height:16px}
+.ai-attach{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--muted);flex:none;align-self:flex-end}
+.ai-attach:hover{background:var(--hover);color:var(--accent)}
+.ai-attach svg{width:17px;height:17px}
+.ai-file{align-self:flex-end;max-width:92%;background:var(--accent-soft);border:1px solid color-mix(in srgb, var(--accent) 32%, transparent);border-radius:14px;padding:10px 13px;font-size:12.5px}
+.ai-file .fn{display:flex;align-items:center;gap:8px;font-weight:650;color:var(--ink)}
+.ai-file .fn svg{width:15px;height:15px;flex:none;color:var(--accent)}
+.ai-file .fs{color:var(--muted);font-size:11.5px;margin-top:3px}
+.ai-tbl{width:100%;border-collapse:collapse;font-size:11px;margin-top:9px;background:var(--surface);border-radius:9px;overflow:hidden;display:block;overflow-x:auto;white-space:nowrap}
+.ai-tbl th{text-align:left;font-weight:700;color:var(--muted);padding:5px 8px;border-bottom:1px solid var(--grid);text-transform:uppercase;letter-spacing:.06em;font-size:9.5px}
+.ai-tbl td{padding:5px 8px;border-bottom:1px solid var(--border-soft);color:var(--ink-2)}
+.ai-tbl tr:last-child td{border-bottom:none}
+.ai-file .acts{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.ai-file .acts button{font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.ai-file .acts button.pri{background:var(--accent-grad);color:var(--on-accent);border-color:transparent}
+.ai-file .acts button:hover{border-color:var(--accent)}
+.ai-map{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6}
+.ai-map b{color:var(--ink-2);font-weight:650}
 .ai-sugg{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 8px}
 .ai-sugg button{font-size:11.5px;padding:5px 10px;border-radius:99px;background:var(--page);border:1px solid var(--border-soft);color:var(--ink-2)}
 .ai-sugg button:hover{border-color:var(--accent);color:var(--accent)}
@@ -536,33 +595,37 @@ nav.tabs{display:none}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/></svg>
         Visão geral <kbd>1</kbd>
       </button>
+      <button class="nav-it" data-page="extrato">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5h13v17l-2.2-1.6-2.2 1.6-2.1-1.6-2.2 1.6-2.1-1.6-2.2 1.6z"/><path d="M9 8.5h6M9 12.5h6"/></svg>
+        Extrato <kbd>2</kbd>
+      </button>
       <button class="nav-it" data-page="lanc">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4.5 6.5h15M4.5 12h15M4.5 17.5h9"/></svg>
-        Lançamentos <kbd>2</kbd>
+        Lançamentos <kbd>3</kbd>
       </button>
       <button class="nav-it" data-page="fixas">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.5l3 3-3 3"/><path d="M20 5.5H7a4 4 0 0 0-4 4v1"/><path d="M7 21.5l-3-3 3-3"/><path d="M4 18.5h13a4 4 0 0 0 4-4v-1"/></svg>
-        Fixas <kbd>3</kbd>
+        Fixas <kbd>4</kbd>
       </button>
       <button class="nav-it" data-page="cal">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8.5 3.5v4M15.5 3.5v4"/></svg>
-        Calendário <kbd>4</kbd>
+        Calendário <kbd>5</kbd>
       </button>
       <button class="nav-it" data-page="rel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-6"/></svg>
-        Relatórios <kbd>5</kbd>
+        Relatórios <kbd>6</kbd>
       </button>
       <button class="nav-it" data-page="cen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h5l3.5 6L16 18h4"/><path d="M4 18h5l2-3.4"/><path d="M13.5 8.6 16 6h4"/><path d="M17.5 3.5 20 6l-2.5 2.5M17.5 15.5 20 18l-2.5 2.5"/></svg>
-        Cenários <kbd>6</kbd>
+        Cenários <kbd>7</kbd>
       </button>
       <button class="nav-it" data-page="metas">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.6"/><circle cx="12" cy="12" r=".5" fill="currentColor"/></svg>
-        Metas <kbd>7</kbd>
+        Metas <kbd>8</kbd>
       </button>
       <button class="nav-it" data-page="ajustes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4.5 7.5h15M4.5 12h15M4.5 16.5h15"/><circle cx="9.5" cy="7.5" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="16.5" r="2" fill="var(--surface)"/></svg>
-        Ajustes <kbd>8</kbd>
+        Ajustes <kbd>9</kbd>
       </button>
     </nav>
     <div class="side-foot">
@@ -596,6 +659,7 @@ nav.tabs{display:none}
 
     <main>
       <section class="panel active" id="panel-inicio"></section>
+      <section class="panel" id="panel-extrato"></section>
       <section class="panel" id="panel-lanc"></section>
       <section class="panel" id="panel-fixas"></section>
       <section class="panel" id="panel-cal"></section>
@@ -644,6 +708,7 @@ nav.tabs{display:none}
   </div>
   <div class="ai-body" id="aiBody"></div>
   <div class="ai-foot" id="aiFoot"></div>
+  <input type="file" id="aiArquivo" accept=".xlsx,.xlsm,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" class="hidden">
 </div>
 <div id="toasts"></div>
 
@@ -658,7 +723,7 @@ const ESPACOS = { pessoal: {nome:'Pessoal', logo:'R$', arquivo:'dados.json'}, fr
 const SLOT = { 0:'--s0',1:'--s1',2:'--s2',3:'--s3',4:'--s4',5:'--s5',6:'--s6',7:'--s7',8:'--s8' };
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DIAS_SEM = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
-const PAGES = { inicio:'Visão geral', lanc:'Lançamentos', fixas:'Fixas', cal:'Calendário', rel:'Relatórios', cen:'Cenários', metas:'Metas', ajustes:'Ajustes' };
+const PAGES = { inicio:'Visão geral', extrato:'Extrato', lanc:'Lançamentos', fixas:'Fixas', cal:'Calendário', rel:'Relatórios', cen:'Cenários', metas:'Metas', ajustes:'Ajustes' };
 
 const SEED = {
   versao: 1, moeda: 'BRL', atualizadoEm: null,
@@ -866,7 +931,61 @@ function migrar(d){
   d.categorias = d.categorias || []; d.lancamentos = d.lancamentos || [];
   d.recorrentes = d.recorrentes || []; d.orcamentos = d.orcamentos || {}; d.metas = d.metas || [];
   d.cenarios = d.cenarios || [];
+  if (d.conta === undefined) d.conta = null; /* {saldo, data} — âncora do saldo bancário */
   return d;
+}
+
+/* ---------------- saldo em conta ---------------- */
+/* saldo real acumulado até uma data, partindo da âncora informada em Ajustes */
+function saldoEmConta(ate){
+  const c = state.data.conta;
+  if (!c) return null;
+  let s = c.saldo;
+  for (const l of state.data.lancamentos)
+    if (l.data > c.data && l.data <= ate) s += (l.tipo === 'receita' ? l.valor : -l.valor);
+  return s;
+}
+function saldoHoje(){ return saldoEmConta(hojeISO()); }
+
+/* extrato unificado: todo movimento (real + previsto) em ordem, com saldo correndo */
+function extrato(hMeses){
+  const c = state.data.conta;
+  const inicio = state.month + '-01';
+  const fimYm = addMeses(state.month, hMeses - 1);
+  const fim = fimYm + '-' + pad2(diasNoMes(fimYm));
+  const itens = [];
+  for (const l of state.data.lancamentos){
+    if (l.data < inicio || l.data > fim) continue;
+    itens.push({ data:l.data, nome: l.descricao || catById(l.categoriaId).nome, catId:l.categoriaId,
+      valor: l.tipo === 'receita' ? l.valor : -l.valor, real:true, id:l.id });
+  }
+  for (let i = 0; i < hMeses; i++)
+    for (const o of ocorrencias(addMeses(state.month, i)))
+      if (!o.lanc && o.data >= inicio && o.data <= fim)
+        itens.push({ data:o.data, nome:o.rec.nome, catId:o.rec.categoriaId,
+          valor: o.rec.tipo === 'receita' ? o.rec.valor : -o.rec.valor, real:false, chave:o.chave });
+  itens.sort((a,b) => a.data === b.data ? (b.valor - a.valor) : (a.data < b.data ? -1 : 1));
+  /* saldo de partida: âncora projetada até a véspera do período */
+  let saldo = c ? saldoEmConta(inicio) - (state.data.lancamentos.filter(l => l.data === inicio).reduce((s,l)=>s+(l.tipo==='receita'?l.valor:-l.valor),0)) : 0;
+  const abertura = saldo;
+  let pior = null, primeiroVermelho = null;
+  for (const it of itens){
+    saldo += it.valor;
+    it.saldo = saldo;
+    if (pior === null || saldo < pior.saldo) pior = it;
+    if (saldo < 0 && !primeiroVermelho) primeiroVermelho = it;
+  }
+  /* agrupa por mês */
+  const meses = [];
+  for (const it of itens){
+    const ym = mesDe(it.data);
+    let g = meses[meses.length-1];
+    if (!g || g.ym !== ym){ g = {ym, itens:[], entrou:0, saiu:0, fecha:0}; meses.push(g); }
+    g.itens.push(it);
+    if (it.valor >= 0) g.entrou += it.valor; else g.saiu += -it.valor;
+    g.fecha = it.saldo;
+  }
+  return { itens, meses, abertura, pior, primeiroVermelho, ancorado: !!c, fim: itens.length ? itens[itens.length-1].saldo : abertura };
 }
 
 /* ---------------- consultas ---------------- */
@@ -1055,7 +1174,8 @@ function projecaoSVG(ym){
 /* projeção de longo prazo (1–10 anos) com base nas fixas */
 function projLonga(hMeses){
   const pts = [], porAno = {};
-  let acc = 0;
+  /* parte do saldo em conta, se informado — assim a projeção mostra dinheiro real */
+  let acc = state.data.conta ? (saldoEmConta(state.month + '-01') || 0) : 0;
   for (let i=0; i<hMeses; i++){
     const ym = addMeses(state.month, i);
     const fluxo = previstoDoMes(ym).saldo;
@@ -1164,10 +1284,10 @@ function renderAll(){
   $('#pageTitle').textContent = PAGES[state.page] || '';
   $('#monthNav').style.visibility = (state.page==='metas'||state.page==='ajustes'||state.page==='cen') ? 'hidden' : 'visible';
   $$('#nav .nav-it').forEach(b => b.classList.toggle('on', b.dataset.page === state.page));
-  $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.page === state.page || (b.dataset.page==='mais' && ['cal','cen','metas','ajustes'].includes(state.page))));
+  $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.page === state.page || (b.dataset.page==='mais' && ['cal','cen','metas','ajustes','extrato'].includes(state.page))));
   $$('main section.panel').forEach(p => p.classList.remove('active'));
   $('#panel-' + state.page).classList.add('active');
-  ({inicio: renderInicio, lanc: renderLanc, fixas: renderFixas, cal: renderCal, rel: renderRel, cen: renderCen, metas: renderMetas, ajustes: renderAjustes})[state.page]();
+  ({inicio: renderInicio, extrato: renderExtrato, lanc: renderLanc, fixas: renderFixas, cal: renderCal, rel: renderRel, cen: renderCen, metas: renderMetas, ajustes: renderAjustes})[state.page]();
 }
 
 let donutLegenda = [];
@@ -1256,6 +1376,9 @@ function renderInicio(){
       '<div class="h-value num amt '+(t.saldo>0?'pos':t.saldo<0?'neg':'')+'">'+Rs(t.saldo)+'</div>'+
       (tAnt.rec||tAnt.desp ? '<span class="delta-chip '+(delta>=0?'up':'down')+'">'+(delta>=0?'↑':'↓')+' <span class="amt">'+R(Math.abs(delta))+'</span>&nbsp;vs '+fmtMesLabel(addMeses(ym,-1))+'</span>' : '')+
       (ehAtualOuFuturo && (prev.recPend || prev.despPend) ? '<div class="h-sub">Com as fixas pendentes, termina em <strong class="amt '+(prev.saldo>=0?'pos':'neg')+'">'+Rs(prev.saldo)+'</strong></div>' : '')+
+      (state.data.conta
+        ? '<div class="h-sub">Em conta hoje: <strong class="amt '+(saldoHoje()>=0?'pos':'neg')+'">'+Rs(saldoHoje())+'</strong> · <button class="link-btn" data-act="goto" data-page="extrato">ver extrato</button></div>'
+        : '<div class="h-sub"><button class="link-btn" data-act="sheet-conta">Informar seu saldo em conta</button> para ver o dinheiro real, não só o fluxo do mês</div>')+
       '</div>'+
       '<div>'+projecaoSVG(ym)+'</div>'+
     '</div></div>'+
@@ -1323,6 +1446,80 @@ function lancsFiltrados(){
     return (a.criadoEm||'') < (b.criadoEm||'') ? -dir : dir;
   });
   return ls;
+}
+
+function renderExtrato(){
+  const h = state.extH || 6;
+  const e = extrato(h);
+  const hoje = hojeISO();
+  const chips = [3,6,12,24].map(n => '<button class="chip'+(h===n?' on':'')+'" data-act="set-exth" data-v="'+n+'">'+n+' meses</button>').join('');
+
+  const aviso = e.ancorado ? '' :
+    '<div class="ext-aviso"><span>O extrato está partindo do <b>zero</b>. Informe quanto você tem hoje na conta e ele passa a mostrar o saldo de verdade — e o dia exato em que fica no vermelho.</span><button class="btn-sm" data-act="sheet-conta">Informar saldo em conta</button></div>';
+
+  const kpis =
+    '<div class="ext-top">'+
+      '<div class="ext-kpi"><div class="l">Abre com</div><div class="v num amt">'+Rs(e.abertura)+'</div><div class="s">'+(e.ancorado ? 'saldo em conta em '+fmtDataCurta(state.data.conta.data) : 'sem saldo informado')+'</div></div>'+
+      '<div class="ext-kpi"><div class="l">Entra no período</div><div class="v num amt pos">'+R(e.meses.reduce((s,m)=>s+m.entrou,0))+'</div><div class="s">'+e.itens.filter(i=>i.valor>=0).length+' movimentos</div></div>'+
+      '<div class="ext-kpi"><div class="l">Sai no período</div><div class="v num amt neg">'+R(e.meses.reduce((s,m)=>s+m.saiu,0))+'</div><div class="s">'+e.itens.filter(i=>i.valor<0).length+' movimentos</div></div>'+
+      (e.primeiroVermelho
+        ? '<div class="ext-kpi alerta"><div class="l">Fica no vermelho</div><div class="v num amt">'+fmtDataCurta(e.primeiroVermelho.data)+'</div><div class="s">em '+esc(e.primeiroVermelho.nome)+' · pior momento '+Rs(e.pior.saldo)+' em '+fmtDataCurta(e.pior.data)+'</div></div>'
+        : '<div class="ext-kpi ok"><div class="l">Termina com</div><div class="v num amt pos">'+Rs(e.fim)+'</div><div class="s">sem ficar negativo no período</div></div>')+
+    '</div>';
+
+  let linhas = '';
+  for (const g of e.meses){
+    linhas += '<div class="ext-mes"><span class="m">'+fmtMesLabel(g.ym)+'</span>'+
+      '<span class="kv">entrou <b class="pos amt num">'+R(g.entrou)+'</b></span>'+
+      '<span class="kv">saiu <b class="neg amt num">'+R(g.saiu)+'</b></span>'+
+      '<span class="kv">sobra <b class="'+(g.entrou-g.saiu>=0?'pos':'neg')+' amt num">'+Rs(g.entrou-g.saiu)+'</b></span>'+
+      '<span class="fecha '+(g.fecha>=0?'pos':'neg')+' amt num">fecha em '+Rs(g.fecha)+'</span></div>';
+    for (const it of g.itens){
+      const c = catById(it.catId);
+      const vermelho = it.saldo < 0;
+      const virada = e.primeiroVermelho && it === e.primeiroVermelho;
+      linhas += '<button class="ext-row'+(it.real?'':' prev')+(vermelho?' vermelho':'')+(virada?' virada':'')+'"'+
+        (it.real ? ' data-act="abrir-lanc" data-id="'+it.id+'"' : ' data-act="pay-occ" data-chave="'+it.chave+'"')+'>'+
+        '<span class="dia">'+fmtDataCurta(it.data)+'</span>'+
+        '<span class="cdot" style="background:'+corVar(c)+'"></span>'+
+        '<span class="nm">'+esc(it.nome)+'</span>'+
+        (it.real ? '' : '<span class="tagp">previsto</span>')+
+        '<span class="vl '+(it.valor>=0?'pos':'neg')+' amt num">'+(it.valor>=0?'+':'−')+R(Math.abs(it.valor))+'</span>'+
+        '<span class="sd amt num">'+Rs(it.saldo)+'</span></button>';
+    }
+  }
+
+  $('#panel-extrato').innerHTML = aviso + kpis +
+    '<div class="toolbar"><div class="hz-chips">'+chips+'</div>'+
+      '<button class="btn-sm" data-act="sheet-conta" style="margin-left:auto">'+(e.ancorado ? 'Ajustar saldo em conta' : 'Informar saldo em conta')+'</button></div>'+
+    '<div class="ext-card">'+
+      '<div class="ext-head"><span class="dia">Data</span><span class="nm">Movimento</span><span class="vl">Valor</span><span class="sd">Saldo</span></div>'+
+      '<div class="ext-abertura"><span>Saldo de abertura</span><span class="sd '+(e.abertura>=0?'pos':'neg')+' amt num">'+Rs(e.abertura)+'</span></div>'+
+      (linhas || '<div class="empty">Nada previsto nesse período.</div>')+
+    '</div>';
+}
+
+function sheetConta(){
+  const c = state.data.conta || { saldo:0, data: hojeISO() };
+  const s = openSheet(
+    '<h3>Saldo em conta'+(state.data.conta ? '<button class="del" id="contaDel">Remover</button>' : '')+'</h3>'+
+    '<p class="muted" style="font-size:12.5px;line-height:1.6">Quanto você tem hoje somando suas contas. É daqui que o extrato calcula o saldo de verdade — e aponta o dia em que ele fica negativo.</p>'+
+    '<div class="amount-box"><span class="cur">R$</span><input class="valor-input" id="contaVal" inputmode="decimal" placeholder="0,00" value="'+(state.data.conta ? mascaraViva(String(c.saldo).replace('.',',')) : '')+'"></div>'+
+    '<div class="f-label">Conferido em</div>'+
+    '<input class="f-input" id="contaData" type="date" value="'+c.data+'">'+
+    '<p class="rep-hint">Só os lançamentos com data <strong>depois</strong> desse dia entram na conta. Quando você olhar o extrato do banco de novo, é só atualizar esses dois campos.</p>'+
+    '<button class="btn" id="contaOk">Salvar saldo</button>');
+  const inp = s.querySelector('#contaVal');
+  inp.addEventListener('input', () => { inp.value = mascaraViva(inp.value); });
+  setTimeout(() => inp.focus(), 120);
+  const del = s.querySelector('#contaDel');
+  if (del) del.onclick = () => { state.data.conta = null; touch(); closeSheet(); renderAll(); toast('Saldo em conta removido'); };
+  s.querySelector('#contaOk').onclick = () => {
+    const v = Number(String(inp.value).replace(/\./g,'').replace(',','.'));
+    if (!isFinite(v)) return shake(inp);
+    state.data.conta = { saldo: v, data: s.querySelector('#contaData').value || hojeISO() };
+    touch(); closeSheet(); renderAll(); toast('Saldo em conta salvo ✓');
+  };
 }
 
 function renderLanc(){
@@ -1678,8 +1875,14 @@ function renderAjustes(){
     '</div>';
   }).join('');
 
+  const conta = d.conta;
   $('#panel-ajustes').innerHTML = '<div class="grid c2" style="align-items:start">'+
     '<div>'+
+    '<div class="card" style="margin-bottom:14px"><h2>Saldo em conta</h2>'+
+      '<div class="set-row"><span class="mid"><span class="t1">'+(conta ? '<span class="amt num">'+Rs(conta.saldo)+'</span>' : 'Não informado')+'</span>'+
+      '<span class="t2">'+(conta ? 'conferido em '+fmtDataCurta(conta.data)+' · hoje: '+Rs(saldoHoje()) : 'sem isso o extrato começa do zero')+'</span></span>'+
+      '<button class="btn-sm" data-act="sheet-conta">'+(conta?'Atualizar':'Informar')+'</button></div>'+
+    '</div>'+
     '<div class="card" style="margin-bottom:14px"><h2>Sincronização</h2>'+
     (cfg.modo==='github' ?
       '<div class="set-row"><span class="mid"><span class="t1">'+esc(cfg.usuario)+' / '+esc(cfg.repo)+'</span><span class="t2">'+(state.dirty?'alterações pendentes':'dados no seu GitHub privado')+'</span></span></div>'+
@@ -2064,7 +2267,7 @@ function sheetCategoria(c, tipo){
 
 function sheetMais(){
   const s = openSheet('<h3>Mais</h3><div class="list">'+
-    [['cal','Calendário'],['cen','Cenários (Plano B)'],['metas','Metas'],['ajustes','Ajustes']].map(p =>
+    [['extrato','Extrato — entradas, saídas e saldo'],['cal','Calendário'],['cen','Cenários (Plano B)'],['metas','Metas'],['ajustes','Ajustes']].map(p =>
       '<button class="row" data-go="'+p[0]+'"><span class="mid"><span class="t1">'+p[1]+'</span></span><span class="muted">›</span></button>').join('')+
     '</div>'+
     '<button class="btn" id="mAI" style="margin-top:12px">✨ Assistente</button>'+
@@ -2131,6 +2334,7 @@ function aiContexto(){
   const proj = projLonga(12);
   return JSON.stringify({
     hoje: hojeISO(),
+    saldoEmContaHoje: d.conta ? saldoHoje() : null,
     categorias: d.categorias.map(c=>({id:c.id, nome:c.nome, tipo:c.tipo})),
     fixasAtivas: d.recorrentes.filter(r=>r.ativa).map(r=>({nome:r.nome, tipo:r.tipo, valor:r.valor, freq:r.freq, dia:r.dia, diaSemana:r.diaSemana, fim:r.fim})),
     pendentesEsteMes: ocorrencias(ym).filter(o=>!o.lanc).map(o=>({chave:o.chave, nome:o.rec.nome, tipo:o.rec.tipo, valor:o.rec.valor, data:o.data})),
@@ -2232,14 +2436,18 @@ function aiRenderAll(){
   }
   body.innerHTML = (aiChat.view.length
     ? aiChat.view.map(m => m.who==='act' ? '<div class="ai-act">✓ '+esc(m.text)+'</div>' : '<div class="ai-msg '+(m.who==='user'?'user':'bot')+'">'+esc(m.text)+'</div>').join('')
-    : '<div class="ai-msg bot">Oi, Tiago! Posso responder qualquer coisa sobre suas finanças e também lançar por você. Experimenta 👇</div>')
+    : '<div class="ai-msg bot">Oi, Tiago! Posso responder qualquer coisa sobre suas finanças e também lançar por você. Dá até pra anexar uma planilha do Excel no 📎 aqui embaixo. Experimenta 👇</div>')
+    + anexoHtml()
     + (aiChat.busy ? '<div class="ai-typing"><i></i><i></i><i></i></div>' : '');
   body.scrollTop = body.scrollHeight;
   foot.innerHTML =
     (!aiChat.view.length ? '<div class="ai-sugg">'+['Como está agosto?','Quanto sobra até dezembro?','O que corto pra 2027 fechar no azul?','Lança 50 de padaria hoje'].map(s=>'<button data-s="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div>' : '')+
-    '<div class="ai-inrow"><textarea id="aiTa" rows="1" placeholder="Pergunte ou peça um lançamento…  (Enter envia)"></textarea>'+
+    '<div class="ai-inrow">'+
+    '<button class="ai-attach" id="aiClip" title="Anexar planilha (.xlsx ou .csv)" aria-label="Anexar planilha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5 12.3 20.2a5 5 0 0 1-7.1-7.1l8.8-8.7a3.4 3.4 0 0 1 4.8 4.8l-8.7 8.7a1.7 1.7 0 0 1-2.4-2.4l8.1-8"/></svg></button>'+
+    '<textarea id="aiTa" rows="1" placeholder="Pergunte, peça um lançamento ou anexe uma planilha…"></textarea>'+
     '<button class="ai-send" id="aiSend"'+(aiChat.busy?' disabled':'')+' aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button></div>';
   $$('#aiFoot .ai-sugg button').forEach(b => b.onclick = () => aiEnviar(b.dataset.s));
+  $('#aiClip').onclick = () => $('#aiArquivo').click();
   const ta = $('#aiTa');
   ta.addEventListener('input', () => { ta.style.height='auto'; ta.style.height = Math.min(110, ta.scrollHeight)+'px'; });
   ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); aiEnviar(ta.value); } });
@@ -2275,6 +2483,222 @@ async function aiEnviar(texto){
   aiChat.busy = false; aiRenderAll();
 }
 
+/* ---------------- anexos no chat (Excel / CSV) ---------------- */
+let aiAnexo = null;
+
+/* mini-leitor de .xlsx: o arquivo é um ZIP; usamos DecompressionStream do próprio navegador */
+async function unzip(buf){
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  let eocd = -1;
+  for (let i = buf.byteLength - 22; i >= 0 && i > buf.byteLength - 65558; i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('arquivo .xlsx inválido');
+  const nEnt = dv.getUint16(eocd + 10, true);
+  let off = dv.getUint32(eocd + 16, true);
+  const saida = {};
+  for (let e = 0; e < nEnt; e++){
+    if (dv.getUint32(off, true) !== 0x02014b50) break;
+    const metodo = dv.getUint16(off + 10, true);
+    const tamComp = dv.getUint32(off + 20, true);
+    const nLen = dv.getUint16(off + 28, true), xLen = dv.getUint16(off + 30, true), cLen = dv.getUint16(off + 32, true);
+    const lho = dv.getUint32(off + 42, true);
+    const nome = new TextDecoder().decode(u8.subarray(off + 46, off + 46 + nLen));
+    const lnLen = dv.getUint16(lho + 26, true), lxLen = dv.getUint16(lho + 28, true);
+    const ini = lho + 30 + lnLen + lxLen;
+    const bruto = u8.subarray(ini, ini + tamComp);
+    if (/^(xl\/worksheets\/sheet1\.xml|xl\/sharedStrings\.xml|xl\/workbook\.xml)$/.test(nome)){
+      let texto;
+      if (metodo === 0) texto = new TextDecoder().decode(bruto);
+      else {
+        const ds = new DecompressionStream('deflate-raw');
+        const stream = new Blob([bruto]).stream().pipeThrough(ds);
+        texto = await new Response(stream).text();
+      }
+      saida[nome] = texto;
+    }
+    off += 46 + nLen + xLen + cLen;
+  }
+  return saida;
+}
+const desescapa = s => s
+  .replace(/&#x([0-9a-fA-F]+);/g, (_,h) => String.fromCodePoint(parseInt(h,16)))
+  .replace(/&#(\d+);/g, (_,n) => String.fromCodePoint(Number(n)))
+  .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+function colParaIndice(ref){ const m = /^([A-Z]+)/.exec(ref); if(!m) return 0; let n=0; for (const ch of m[1]) n = n*26 + (ch.charCodeAt(0)-64); return n-1; }
+const SERIAL0 = Date.UTC(1899,11,30);
+function serialParaData(n){ const d = new Date(SERIAL0 + n*86400000); return d.toISOString().slice(0,10); }
+
+async function lerXlsx(file){
+  const z = await unzip(await file.arrayBuffer());
+  const sheet = z['xl/worksheets/sheet1.xml'];
+  if (!sheet) throw new Error('não achei a primeira planilha no arquivo');
+  const compart = [];
+  if (z['xl/sharedStrings.xml']) for (const si of z['xl/sharedStrings.xml'].split('<si>').slice(1)){
+    compart.push(desescapa((si.match(/<t[^>]*>([\s\S]*?)<\/t>/g)||[]).map(t=>t.replace(/<[^>]+>/g,'')).join('')));
+  }
+  const linhas = [];
+  for (const rowXml of sheet.split(/<row[ >]/).slice(1)){
+    const linha = [];
+    for (const cel of rowXml.split(/<c[ >]/).slice(1)){
+      const ref = (/r="([A-Z]+\d+)"/.exec(cel)||[])[1] || '';
+      const tipo = (/t="([^"]+)"/.exec(cel)||[])[1] || 'n';
+      const estilo = (/s="(\d+)"/.exec(cel)||[])[1];
+      let v = (/<v>([\s\S]*?)<\/v>/.exec(cel)||[])[1];
+      let txt = '';
+      if (tipo === 's' && v != null) txt = compart[Number(v)] || '';
+      else if (tipo === 'inlineStr') txt = desescapa(((/<t[^>]*>([\s\S]*?)<\/t>/.exec(cel)||[])[1]||''));
+      else if (v != null) txt = v;
+      const i = ref ? colParaIndice(ref) : linha.length;
+      while (linha.length < i) linha.push('');
+      linha[i] = txt;
+    }
+    if (linha.some(c => String(c).trim() !== '')) linhas.push(linha.map(c => String(c ?? '')));
+  }
+  return linhas;
+}
+function lerCsv(texto){
+  texto = texto.replace(/^﻿/, '');
+  const primeira = texto.split(/\r?\n/)[0] || '';
+  const sep = (primeira.split(';').length > primeira.split(',').length) ? ';' : ',';
+  const linhas = []; let campo = '', linha = [], aspas = false;
+  for (let i = 0; i < texto.length; i++){
+    const ch = texto[i];
+    if (aspas){
+      if (ch === '"' && texto[i+1] === '"'){ campo += '"'; i++; }
+      else if (ch === '"') aspas = false;
+      else campo += ch;
+    } else if (ch === '"') aspas = true;
+    else if (ch === sep){ linha.push(campo); campo = ''; }
+    else if (ch === '\n'){ linha.push(campo); campo=''; if (linha.some(c=>c.trim()!=='')) linhas.push(linha); linha = []; }
+    else if (ch !== '\r') campo += ch;
+  }
+  linha.push(campo); if (linha.some(c=>c.trim()!=='')) linhas.push(linha);
+  return linhas;
+}
+
+/* adivinha quais colunas são data, valor, descrição e tipo */
+function mapearColunas(cab, amostra){
+  const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const acha = re => cab.findIndex(c => re.test(norm(c)));
+  const m = {
+    data: acha(/^(data|dia|vencimento|venc|competencia|date)/),
+    valor: acha(/(valor|preco|montante|quantia|total|amount|r\$|credito|debito)/),
+    desc: acha(/(desc|histor|nome|item|memo|lancamento|titulo|fornecedor|obs)/),
+    tipo: acha(/^(tipo|natureza|entrada|saida|e\/s|d\/c)$/),
+    cat: acha(/(categoria|classific|grupo|hub|centro)/)
+  };
+  /* fallback: detecta pelas próprias células */
+  if (m.data < 0) m.data = cab.findIndex((_,i) => amostra.some(l => parseData(l[i])));
+  if (m.valor < 0) m.valor = cab.findIndex((_,i) => i !== m.data && amostra.filter(l => parseValor(l[i]) !== null).length >= Math.max(1, amostra.length*0.6));
+  if (m.desc < 0) m.desc = cab.findIndex((_,i) => i !== m.data && i !== m.valor && amostra.some(l => String(l[i]||'').trim().length > 2 && parseValor(l[i]) === null));
+  return m;
+}
+function parseValor(v){
+  if (v == null) return null;
+  let s = String(v).trim();
+  if (!s) return null;
+  const neg = /^\(.*\)$/.test(s) || /^-/.test(s) || /\bD\b$/.test(s);
+  s = s.replace(/[()rR$\s]/g,'').replace(/[A-Za-z]/g,'');
+  if (!/\d/.test(s)) return null;
+  if (s.includes(',') && s.includes('.')) s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,'');
+  else if (s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
+  else if ((s.match(/\./g)||[]).length > 1) s = s.replace(/\./g,'');
+  const n = Number(s.replace(/[^\d.\-]/g,''));
+  if (!isFinite(n) || n === 0) return null;
+  return neg ? -Math.abs(n) : n;
+}
+function parseData(v){
+  if (v == null) return null;
+  const s = String(v).trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  let m = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/.exec(s);
+  if (m){ let a = m[3]; if (a.length===2) a = '20'+a; return a+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); }
+  if (/^\d{5}$/.test(s)){ const n = Number(s); if (n > 20000 && n < 80000) return serialParaData(n); }
+  return null;
+}
+
+async function aiAnexar(file){
+  if (!file) return;
+  if (file.size > 4*1024*1024) { aiChat.view.push({who:'bot', text:'😕 Esse arquivo tem mais de 4 MB. Salva só a aba que interessa e manda de novo.'}); aiRenderAll(); return; }
+  aiChat.busy = true; aiRenderAll();
+  try {
+    let linhas;
+    if (/\.(xlsx|xlsm)$/i.test(file.name)) linhas = await lerXlsx(file);
+    else if (/\.(csv|txt|tsv)$/i.test(file.name)) linhas = lerCsv(await file.text());
+    else if (/\.xls$/i.test(file.name)) throw new Error('formato .xls antigo não é lido aqui — abre no Excel e salva como .xlsx ou .csv');
+    else throw new Error('formato não suportado — use .xlsx ou .csv');
+    if (!linhas.length) throw new Error('a planilha veio vazia');
+    const cab = linhas[0], corpo = linhas.slice(1);
+    aiAnexo = { nome:file.name, cab, linhas:corpo, mapa: mapearColunas(cab, corpo.slice(0,25)) };
+  } catch(e){
+    aiAnexo = null;
+    aiChat.view.push({who:'bot', text:'😕 '+(e.message||'não consegui ler esse arquivo')});
+  }
+  aiChat.busy = false; aiRenderAll();
+}
+
+function anexoHtml(){
+  if (!aiAnexo) return '';
+  const a = aiAnexo, m = a.mapa;
+  const cols = [m.data, m.desc, m.valor, m.cat].filter(i => i >= 0);
+  const cabs = cols.map(i => '<th>'+esc(a.cab[i]||'coluna '+(i+1))+'</th>').join('');
+  const linhas = a.linhas.slice(0,4).map(l => '<tr>'+cols.map(i => '<td>'+esc(String(l[i]||'').slice(0,26))+'</td>').join('')+'</tr>').join('');
+  const nome = i => i >= 0 ? '<b>'+esc(a.cab[i]||'coluna '+(i+1))+'</b>' : '<b>não achei</b>';
+  return '<div class="ai-file">'+
+    '<div class="fn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5H7a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7.5z"/><path d="M14 2.5v5h5"/></svg>'+esc(a.nome)+'</div>'+
+    '<div class="fs">'+a.linhas.length+' linha'+(a.linhas.length===1?'':'s')+' · '+a.cab.length+' colunas</div>'+
+    (cols.length ? '<table class="ai-tbl"><tr>'+cabs+'</tr>'+linhas+'</table>' : '')+
+    '<div class="ai-map">Data: '+nome(m.data)+' · Valor: '+nome(m.valor)+' · Descrição: '+nome(m.desc)+'</div>'+
+    '<div class="acts">'+
+      (m.valor >= 0 ? '<button class="pri" data-act="anexo-importar">Importar '+a.linhas.length+' lançamento'+(a.linhas.length===1?'':'s')+'</button>' : '')+
+      '<button data-act="anexo-ia">Pedir pra IA organizar</button>'+
+      '<button data-act="anexo-cancelar">Descartar</button>'+
+    '</div></div>';
+}
+
+/* importa direto, sem IA — usa o mapeamento de colunas */
+function anexoImportar(){
+  const a = aiAnexo; if (!a || a.mapa.valor < 0) return;
+  const m = a.mapa, cats = state.data.categorias;
+  const acharCat = (txt, tipo) => {
+    const n = String(txt||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    if (n) { const c = cats.find(c => c.tipo===tipo && n.includes(c.nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''))); if (c) return c; }
+    return cats.find(c => c.tipo===tipo) || cats[0];
+  };
+  let criados = 0, pulados = 0;
+  const desfazer = [];
+  for (const l of a.linhas){
+    const valor = parseValor(l[m.valor]);
+    if (valor === null) { pulados++; continue; }
+    const data = (m.data >= 0 ? parseData(l[m.data]) : null) || hojeISO();
+    let tipo = valor < 0 ? 'despesa' : 'receita';
+    if (m.tipo >= 0){
+      const t = String(l[m.tipo]||'').toLowerCase();
+      if (/(desp|saida|saída|debito|débito|pag|^d$|^s$)/.test(t)) tipo = 'despesa';
+      else if (/(rec|entrada|credito|crédito|receb|^c$|^e$)/.test(t)) tipo = 'receita';
+    }
+    const cat = acharCat(m.cat >= 0 ? l[m.cat] : '', tipo);
+    const lan = {id:uid('l'), tipo, valor:Math.abs(valor), categoriaId:cat.id, descricao:String(m.desc>=0 ? l[m.desc] : '').trim().slice(0,80), data, recChave:null, criadoEm:new Date().toISOString()};
+    state.data.lancamentos.push(lan); desfazer.push(lan.id); criados++;
+  }
+  touch(); renderAll();
+  aiChat.view.push({who:'act', text:criados+' lançamento'+(criados===1?'':'s')+' importado'+(criados===1?'':'s')+' de '+a.nome+(pulados?' ('+pulados+' linha'+(pulados===1?'':'s')+' sem valor foram puladas)':'')});
+  aiAnexo = null; aiRenderAll();
+  toast(criados+' lançamentos importados ✓', () => { state.data.lancamentos = state.data.lancamentos.filter(l => !desfazer.includes(l.id)); touch(); renderAll(); });
+}
+
+/* manda a tabela pro assistente organizar (respeitando um limite de linhas) */
+function anexoParaIA(){
+  const a = aiAnexo; if (!a) return;
+  const LIM = 120;
+  const corte = a.linhas.slice(0, LIM);
+  const tsv = [a.cab.join('\t')].concat(corte.map(l => l.join('\t'))).join('\n');
+  aiAnexo = null;
+  aiEnviar('Segue uma planilha que anexei ("'+a.nome+'"). Interprete as colunas, converta em lançamentos e crie no app usando as ferramentas, escolhendo a categoria mais adequada de cada um. Se algo estiver ambíguo, pergunte antes.'+
+    (a.linhas.length > LIM ? ' (Mostrando as primeiras '+LIM+' de '+a.linhas.length+' linhas.)' : '')+
+    '\n\n'+tsv, {arquivo:true});
+}
+
 /* ---------------- paleta de comandos (⌘K) ---------------- */
 let palIdx = 0, palItems = [];
 function comandos(){
@@ -2287,6 +2711,8 @@ function comandos(){
   cmds.push({ic:'↓', lbl:'Exportar backup', run: exportar});
   cmds.push({ic:'◐', lbl:'Alternar tema claro/escuro', run:() => { const cur = localStorage.getItem(LS_THEME)||'auto'; aplicarTema(cur==='dark'?'light':'dark'); if(state.page==='ajustes') renderAjustes(); }});
   cmds.push({ic:'📅', lbl:'Hoje (mês atual)', run:() => { state.month = mesAtual(); renderAll(); }});
+  cmds.push({ic:'🏦', lbl:'Informar saldo em conta', run: sheetConta});
+  cmds.push({ic:'📎', lbl:'Anexar planilha (Excel/CSV) no assistente', run:() => { aiAbrir(); setTimeout(() => $('#aiArquivo').click(), 260); }});
   for (const o of ocorrencias(state.month)) if (!o.lanc)
     cmds.push({ic: o.rec.tipo==='receita'?'＋':'−', lbl:(o.rec.tipo==='receita'?'Receber: ':'Pagar: ')+o.rec.nome+' ('+R(o.rec.valor)+')', hint:'dia '+Number(o.data.slice(8)), run:() => sheetPagarOcc(o)});
   return cmds;
@@ -2368,6 +2794,12 @@ document.addEventListener('click', async e => {
   else if (act === 'drill-tipo') { state.page = 'lanc'; state.filtroTipo = el.dataset.v; state.filtroCat=''; renderAll(); window.scrollTo({top:0}); }
   else if (act === 'day') sheetDia(el.dataset.iso);
   else if (act === 'set-horizon') { state.horizonte = Number(el.dataset.v); (state.page==='cen' ? renderCen : renderInicio)(); }
+  else if (act === 'set-exth') { state.extH = Number(el.dataset.v); renderExtrato(); }
+  else if (act === 'sheet-conta') { sheetConta(); }
+  else if (act === 'anexo-importar') { anexoImportar(); }
+  else if (act === 'anexo-ia') { anexoParaIA(); }
+  else if (act === 'anexo-cancelar') { aiAnexo = null; aiRenderAll(); }
+  else if (act === 'abrir-lanc') { const l = state.data.lancamentos.find(x => x.id === el.dataset.id); if (l) sheetLancamento(l); }
   else if (act === 'cen-novo') { novoCenario(); state.page='cen'; renderAll(); toast('Cenário criado — mexa à vontade, seus dados reais ficam intactos'); }
   else if (act === 'cen-sel') { state.cenAtivo = el.dataset.id; renderCen(); }
   else if (act === 'cen-toggle') { const cen = cenAtual(); const r = cen && cen.recorrentes.find(x=>x.id===el.dataset.id); if (r) { r.ativa = !r.ativa; touch(); renderCen(); } }
@@ -2498,7 +2930,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === '/') { e.preventDefault(); state.page = 'lanc'; renderAll(); const b = $('#busca'); if (b) b.focus(); }
   else if (e.key === 'ArrowLeft') { state.month = addMeses(state.month, -1); renderAll(); }
   else if (e.key === 'ArrowRight') { state.month = addMeses(state.month, 1); renderAll(); }
-  else if (/^[1-8]$/.test(e.key)) { state.page = Object.keys(PAGES)[Number(e.key)-1]; renderAll(); }
+  else if (/^[1-9]$/.test(e.key)) { const p = Object.keys(PAGES)[Number(e.key)-1]; if (p) { state.page = p; renderAll(); } }
 });
 
 /* ---------------- espaços (Pessoal / Freequency) ---------------- */
@@ -2543,6 +2975,7 @@ $('#fab').onclick = () => sheetLancamento(null);
 $('#kbtn').onclick = abrirPaleta;
 $('#aiBtn').onclick = aiAbrir;
 $('#aiClose').onclick = aiFechar;
+$('#aiArquivo').onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value=''; if (f) aiAnexar(f); };
 $('#eyeBtn').onclick = togglePriv;
 $('#syncPill').onclick = () => { if (state.cfg && state.cfg.modo === 'github') { if (state.dirty) doSave(); else { state.lastLoad = 0; loadRemote(); } } };
 
