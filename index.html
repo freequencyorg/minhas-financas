@@ -594,7 +594,7 @@ nav.tabs{display:none}
     <h2>Conectar ao GitHub (recomendado)</h2>
     <p class="sec" style="font-size:13.5px;margin-bottom:4px">Seus dados ficam num repositório <strong>privado</strong> seu, sincronizados entre celular e computador.</p>
     <div class="f-label">Usuário do GitHub</div>
-    <input class="f-input" id="suUser" placeholder="ex.: tiagomari" autocapitalize="none" autocorrect="off">
+    <input class="f-input" id="suUser" placeholder="seu usuário do GitHub" autocapitalize="none" autocorrect="off">
     <div class="f-label">Repositório de dados (privado)</div>
     <input class="f-input" id="suRepo" value="minhas-financas-dados" autocapitalize="none" autocorrect="off">
     <div class="f-label">Token de acesso</div>
@@ -778,31 +778,15 @@ const SEED = {
   ],
   lancamentos: [],
   recorrentes: [
-    {id:'r-gastos-semanais', nome:'Gastos semanais',        tipo:'despesa', valor:1300,    categoriaId:'c-gastos-part',   freq:'semanal', diaSemana:5, dia:null, freqMeses:1, inicio:'2025-02-28', fim:null,        ativa:true},
-    {id:'r-abiquifi',        nome:'Abiquifi',               tipo:'receita', valor:15000,   categoriaId:'c-outras-rec',    freq:'mensal', dia:11, diaSemana:null, freqMeses:3, inicio:'2025-03-11', fim:'2025-09-11', ativa:false},
-    {id:'r-adriana',         nome:'Adriana',                tipo:'despesa', valor:1000,    categoriaId:'c-custos-casas',  freq:'mensal', dia:28, diaSemana:null, freqMeses:1, inicio:'2021-05-28', fim:null,        ativa:true},
-    {id:'r-agua-core',       nome:'Água Casa Core',         tipo:'despesa', valor:250,     categoriaId:'c-custos-casas',  freq:'mensal', dia:10, diaSemana:null, freqMeses:1, inicio:'2024-01-10', fim:null,        ativa:true},
-    {id:'r-alug-bruninho',   nome:'Aluguel Bruninho',       tipo:'receita', valor:1400,    categoriaId:'c-entradas-alug', freq:'mensal', dia:20, diaSemana:null, freqMeses:1, inicio:'2025-02-20', fim:null,        ativa:true},
-    {id:'r-alug-casa-core',  nome:'Aluguel Casa Core',      tipo:'despesa', valor:3000,    categoriaId:'c-alugueis-pag',  freq:'mensal', dia:20, diaSemana:null, freqMeses:1, inicio:'2024-04-20', fim:null,        ativa:true},
-    {id:'r-alug-casa-pira',  nome:'Aluguel Casa Pira',      tipo:'despesa', valor:4100,    categoriaId:'c-alugueis-pag',  freq:'mensal', dia:25, diaSemana:null, freqMeses:1, inicio:'2024-05-25', fim:null,        ativa:true},
-    {id:'r-alug-marcia',     nome:'Aluguel Márcia',         tipo:'receita', valor:3000,    categoriaId:'c-entradas-alug', freq:'mensal', dia:25, diaSemana:null, freqMeses:1, inicio:'2025-08-25', fim:null,        ativa:true},
-    {id:'r-alug-pablo',      nome:'Aluguel Pablo',          tipo:'receita', valor:3000,    categoriaId:'c-entradas-alug', freq:'mensal', dia:25, diaSemana:null, freqMeses:1, inicio:'2025-08-25', fim:null,        ativa:true},
-    {id:'r-alug-preller',    nome:'Aluguel Preller',        tipo:'receita', valor:1400,    categoriaId:'c-entradas-alug', freq:'mensal', dia:20, diaSemana:null, freqMeses:1, inicio:'2025-02-20', fim:null,        ativa:true},
-    {id:'r-alug-roosevelt',  nome:'Aluguel Roosevelt',      tipo:'despesa', valor:7200,    categoriaId:'c-alugueis-pag',  freq:'mensal', dia:31, diaSemana:null, freqMeses:1, inicio:'2026-01-31', fim:null,        ativa:true},
-    {id:'r-alug-vicente',    nome:'Aluguel Vicente',        tipo:'receita', valor:3000,    categoriaId:'c-entradas-alug', freq:'mensal', dia:25, diaSemana:null, freqMeses:1, inicio:'2025-08-25', fim:null,        ativa:true},
-    {id:'r-alug-wev',        nome:'Aluguel Wev',            tipo:'receita', valor:3000,    categoriaId:'c-entradas-alug', freq:'mensal', dia:25, diaSemana:null, freqMeses:1, inicio:'2025-10-25', fim:null,        ativa:true},
-    {id:'r-casa-planetario', nome:'Casa Planetário',        tipo:'despesa', valor:3500,    categoriaId:'c-alugueis-pag',  freq:'mensal', dia:30, diaSemana:null, freqMeses:1, inicio:'2026-06-30', fim:'2026-07-31', ativa:false},
-    {id:'r-condominio',      nome:'Condomínio',             tipo:'despesa', valor:1947,    categoriaId:'c-custos-casas',  freq:'mensal', dia:24, diaSemana:null, freqMeses:1, inicio:'2025-02-24', fim:null,        ativa:true},
-    {id:'r-contador',        nome:'Contador',               tipo:'despesa', valor:309,     categoriaId:'c-servicos',      freq:'mensal', dia:12, diaSemana:null, freqMeses:1, inicio:'2026-02-12', fim:null,        ativa:true},
-    {id:'r-escola-jo',       nome:'Escola Jô (acordo)',     tipo:'despesa', valor:2200,    categoriaId:'c-educacao',      freq:'mensal', dia:1,  diaSemana:null, freqMeses:1, inicio:'2025-09-01', fim:'2025-12-01', ativa:false},
-    {id:'r-gas',             nome:'Gás',                    tipo:'despesa', valor:50,      categoriaId:'c-custos-casas',  freq:'mensal', dia:15, diaSemana:null, freqMeses:1, inicio:'2021-05-15', fim:null,        ativa:true},
-    {id:'r-internet',        nome:'Internet',               tipo:'despesa', valor:119,     categoriaId:'c-custos-casas',  freq:'mensal', dia:10, diaSemana:null, freqMeses:1, inicio:'2024-01-10', fim:null,        ativa:true},
-    {id:'r-internet-core',   nome:'Internet Casa Core',     tipo:'despesa', valor:90,      categoriaId:'c-custos-casas',  freq:'mensal', dia:10, diaSemana:null, freqMeses:1, inicio:'2024-01-10', fim:null,        ativa:true},
-    {id:'r-luz-core',        nome:'Luz Casa Core',          tipo:'despesa', valor:280,     categoriaId:'c-custos-casas',  freq:'mensal', dia:10, diaSemana:null, freqMeses:1, inicio:'2024-01-10', fim:null,        ativa:true},
-    {id:'r-luz-sp',          nome:'Luz Casa SP',            tipo:'despesa', valor:450,     categoriaId:'c-custos-casas',  freq:'mensal', dia:29, diaSemana:null, freqMeses:1, inicio:'2024-01-29', fim:null,        ativa:true},
-    {id:'r-mens-sementinha', nome:'Mensalidade Sementinha', tipo:'despesa', valor:1860,    categoriaId:'c-educacao',      freq:'mensal', dia:20, diaSemana:null, freqMeses:1, inicio:'2026-05-20', fim:'2026-12-20', ativa:true},
-    {id:'r-reneg-sementinha',nome:'Renegociação Sementinha',tipo:'despesa', valor:2343.25, categoriaId:'c-educacao',      freq:'mensal', dia:10, diaSemana:null, freqMeses:1, inicio:'2026-05-10', fim:'2026-10-10', ativa:true},
-    {id:'r-terrible-fee',    nome:'Terrible Fee',           tipo:'receita', valor:15000,   categoriaId:'c-outras-rec',    freq:'mensal', dia:30, diaSemana:null, freqMeses:1, inicio:'2026-01-30', fim:'2026-12-30', ativa:true}
+    {id:'r-gastos-semanais', nome:'Compras da semana',   tipo:'despesa', valor:400,  categoriaId:'c-gastos-part',   freq:'semanal', diaSemana:5, dia:null, freqMeses:1, inicio:'2026-01-02', fim:null, ativa:true},
+    {id:'r-alug-pablo',      nome:'Aluguel recebido',    tipo:'receita', valor:2500, categoriaId:'c-entradas-alug', freq:'mensal', dia:10, diaSemana:null, freqMeses:1, inicio:'2026-01-10', fim:null, ativa:true},
+    {id:'r-salario',         nome:'Entrada principal',   tipo:'receita', valor:6000, categoriaId:'c-outras-rec',    freq:'mensal', dia:5,  diaSemana:null, freqMeses:1, inicio:'2026-01-05', fim:null, ativa:true},
+    {id:'r-alug-casa',       nome:'Aluguel da moradia',  tipo:'despesa', valor:2800, categoriaId:'c-alugueis-pag',  freq:'mensal', dia:10, diaSemana:null, freqMeses:1, inicio:'2026-01-10', fim:null, ativa:true},
+    {id:'r-condominio',      nome:'Condomínio',          tipo:'despesa', valor:700,  categoriaId:'c-custos-casas',  freq:'mensal', dia:12, diaSemana:null, freqMeses:1, inicio:'2026-01-12', fim:null, ativa:true},
+    {id:'r-luz',             nome:'Luz',                 tipo:'despesa', valor:220,  categoriaId:'c-custos-casas',  freq:'mensal', dia:15, diaSemana:null, freqMeses:1, inicio:'2026-01-15', fim:null, ativa:true},
+    {id:'r-internet',        nome:'Internet',            tipo:'despesa', valor:120,  categoriaId:'c-custos-casas',  freq:'mensal', dia:8,  diaSemana:null, freqMeses:1, inicio:'2026-01-08', fim:null, ativa:true},
+    {id:'r-escola',          nome:'Mensalidade escolar', tipo:'despesa', valor:900,  categoriaId:'c-educacao',      freq:'mensal', dia:20, diaSemana:null, freqMeses:1, inicio:'2026-01-20', fim:null, ativa:true},
+    {id:'r-contador',        nome:'Contador',            tipo:'despesa', valor:300,  categoriaId:'c-servicos',      freq:'mensal', dia:12, diaSemana:null, freqMeses:1, inicio:'2026-01-12', fim:null, ativa:true}
   ],
   orcamentos: {}, metas: [], cenarios: []
 };
@@ -2078,7 +2062,7 @@ function renderAjustes(){
     '<div class="card"><div class="h-row"><h2>Categorias de receita</h2><button class="link-btn" data-act="new-cat" data-tipo="receita">+ nova</button></div>'+catRows('receita')+'</div>'+
     '</div>'+
     '</div>'+
-    '<p class="muted" style="text-align:center;font-size:12px;padding:16px 0 8px">Minhas Finanças · feito para o Tiago com Claude</p>';
+    '<p class="muted" style="text-align:center;font-size:12px;padding:16px 0 8px">Minhas Finanças · feito com Claude</p>';
 }
 
 /* ---------------- sheets ---------------- */
@@ -2632,7 +2616,7 @@ async function aiCall(messages){
     body: JSON.stringify({
       model: cfg.model || 'claude-haiku-4-5',
       max_tokens: 1200,
-      system: 'Você é o assistente do Minhas Finanças, o app de finanças do Tiago (Brasil). Espaço ativo: '+ESPACOS[state.espaco].nome+(state.espaco==='freequency'?' — finanças da empresa/CNPJ Freequency.':' — finanças pessoais (imóveis de aluguel).')+' Responda SEMPRE em português do Brasil, curto e direto, valores em R$. Hoje é '+hojeISO()+'. Quando o usuário pedir para registrar/lançar/pagar/receber/dar baixa, USE as ferramentas — prefira dar_baixa quando o pedido corresponder a uma pendência de pendentesEsteMes. Nunca invente números: use somente os dados fornecidos; se não souber, diga que não tem o dado. DADOS ATUAIS DO APP (JSON): '+aiContexto(),
+      system: 'Você é o assistente do Minhas Finanças, o app de finanças pessoais do usuário (Brasil). Espaço ativo: '+ESPACOS[state.espaco].nome+(state.espaco==='freequency'?' — finanças da empresa/CNPJ Freequency.':' — finanças pessoais (imóveis de aluguel).')+' Responda SEMPRE em português do Brasil, curto e direto, valores em R$. Hoje é '+hojeISO()+'. Quando o usuário pedir para registrar/lançar/pagar/receber/dar baixa, USE as ferramentas — prefira dar_baixa quando o pedido corresponder a uma pendência de pendentesEsteMes. Nunca invente números: use somente os dados fornecidos; se não souber, diga que não tem o dado. DADOS ATUAIS DO APP (JSON): '+aiContexto(),
       tools: AI_TOOLS,
       messages
     })
@@ -2670,7 +2654,7 @@ function aiRenderAll(){
   }
   body.innerHTML = (aiChat.view.length
     ? aiChat.view.map(m => m.who==='act' ? '<div class="ai-act">✓ '+esc(m.text)+'</div>' : '<div class="ai-msg '+(m.who==='user'?'user':'bot')+'">'+esc(m.text)+'</div>').join('')
-    : '<div class="ai-msg bot">Oi, Tiago! Posso responder qualquer coisa sobre suas finanças e também lançar por você. Dá até pra anexar uma planilha do Excel no 📎 aqui embaixo. Experimenta 👇</div>')
+    : '<div class="ai-msg bot">Oi! Posso responder qualquer coisa sobre suas finanças e também lançar por você. Dá até pra anexar uma planilha do Excel no 📎 aqui embaixo. Experimenta 👇</div>')
     + anexoHtml()
     + (aiChat.busy ? '<div class="ai-typing"><i></i><i></i><i></i></div>' : '');
   body.scrollTop = body.scrollHeight;
