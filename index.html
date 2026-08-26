@@ -341,6 +341,10 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
 .ext-head .vl{width:128px;text-align:right;flex:none} .ext-head .sd{width:138px;text-align:right;flex:none}
 .ext-abertura{display:flex;align-items:center;gap:12px;padding:12px 18px;font-size:13.5px;background:var(--accent-soft);border-bottom:1px solid var(--grid);font-weight:640}
 .ext-abertura .sd{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:750}
+.ext-abertura em{display:block;font-style:normal;font-size:11.5px;font-weight:500;color:var(--muted);margin-top:2px}
+.ext-row.feito .nm{color:var(--muted)}
+.ext-row.feito .vl{opacity:.75}
+.tagp.ok{color:var(--up);border-color:color-mix(in srgb, var(--good) 45%, transparent)}
 .ext-hoje{display:flex;align-items:center;gap:12px;padding:0 18px;height:0;position:relative}
 .ext-hoje span{position:absolute;top:-9px;left:18px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);background:var(--surface);padding:0 8px;border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);border-radius:99px;z-index:2}
 .ext-hoje::before{content:"";position:absolute;left:0;right:0;top:-1px;border-top:1px dashed color-mix(in srgb, var(--accent) 55%, transparent)}
@@ -988,15 +992,21 @@ function saldoHoje(){ return saldoEmConta(hojeISO()); }
 
 /* extrato unificado: todo movimento (real + previsto) em ordem, com saldo correndo */
 function extrato(hMeses){
-  const c = state.data.conta;
+  const c = state.data.conta, hoje = hojeISO();
   const inicio = state.month + '-01';
   const fimYm = addMeses(state.month, hMeses - 1);
   const fim = fimYm + '-' + pad2(diasNoMes(fimYm));
+  const verRealizados = !!state.extRealizados;
+  /* tudo que já foi realizado até hoje sai da lista e entra no saldo de abertura */
+  const jaAconteceu = l => !verRealizados && l.data <= hoje;
   const itens = [];
+  let embutido = 0, nEmbutidos = 0;
   for (const l of state.data.lancamentos){
     if (l.data < inicio || l.data > fim) continue;
+    const v = l.tipo === 'receita' ? l.valor : -l.valor;
+    if (jaAconteceu(l)) { embutido += v; nEmbutidos++; continue; }
     itens.push({ data:l.data, nome: l.descricao || catById(l.categoriaId).nome, catId:l.categoriaId,
-      valor: l.tipo === 'receita' ? l.valor : -l.valor, real:true, id:l.id });
+      valor: v, real:true, id:l.id });
   }
   for (let i = 0; i < hMeses; i++)
     for (const o of ocorrencias(addMeses(state.month, i)))
@@ -1004,8 +1014,9 @@ function extrato(hMeses){
         itens.push({ data:o.data, nome:o.rec.nome, catId:o.rec.categoriaId, ajustado: !!o.ajustado,
           valor: o.rec.tipo === 'receita' ? o.rec.valor : -o.rec.valor, real:false, chave:o.chave });
   itens.sort((a,b) => a.data === b.data ? (b.valor - a.valor) : (a.data < b.data ? -1 : 1));
-  /* saldo de partida: âncora projetada até a véspera do período */
-  let saldo = c ? saldoEmConta(inicio) - (state.data.lancamentos.filter(l => l.data === inicio).reduce((s,l)=>s+(l.tipo==='receita'?l.valor:-l.valor),0)) : 0;
+  /* saldo de partida: âncora até a véspera do período + o que já foi realizado dentro dele */
+  const antes = inicio.slice(0,8) + '00'; /* dia 00 = véspera do primeiro dia */
+  let saldo = (c ? saldoEmConta(antes) : 0) + embutido;
   const abertura = saldo;
   let pior = null, primeiroVermelho = null;
   for (const it of itens){
@@ -1024,7 +1035,8 @@ function extrato(hMeses){
     if (it.valor >= 0) g.entrou += it.valor; else g.saiu += -it.valor;
     g.fecha = it.saldo;
   }
-  return { itens, meses, abertura, pior, primeiroVermelho, ancorado: !!c, fim: itens.length ? itens[itens.length-1].saldo : abertura };
+  return { itens, meses, abertura, pior, primeiroVermelho, ancorado: !!c, embutido, nEmbutidos, verRealizados,
+    fim: itens.length ? itens[itens.length-1].saldo : abertura };
 }
 
 /* ---------------- consultas ---------------- */
@@ -1592,13 +1604,14 @@ function renderExtrato(){
       const c = catById(it.catId);
       const vermelho = it.saldo < 0;
       const virada = e.primeiroVermelho && it === e.primeiroVermelho;
+      const feito = it.real && it.data <= hoje;
       linhas += '<div class="ext-linha">'+
-        '<button class="ext-row'+(it.real?'':' prev')+(vermelho?' vermelho':'')+(virada?' virada':'')+'"'+
+        '<button class="ext-row'+(it.real?'':' prev')+(feito?' feito':'')+(vermelho?' vermelho':'')+(virada?' virada':'')+'"'+
         (it.real ? ' data-act="abrir-lanc" data-id="'+it.id+'"' : ' data-act="pay-occ" data-chave="'+it.chave+'"')+'>'+
         '<span class="dia">'+fmtDataCurta(it.data)+'</span>'+
         '<span class="cdot" style="background:'+corVar(c)+'"></span>'+
         '<span class="nm">'+esc(it.nome)+'</span>'+
-        (it.real ? '' : '<span class="tagp">previsto</span>')+
+        (it.real ? (feito ? '<span class="tagp ok">✓ feito</span>' : '') : '<span class="tagp">previsto</span>')+
         (it.ajustado ? '<span class="tagp aj">ajustado</span>' : '')+
         '<span class="vl '+(it.valor>=0?'pos':'neg')+' amt num">'+(it.valor>=0?'+':'−')+R(Math.abs(it.valor))+'</span>'+
         '<span class="sd amt num">'+Rs(it.saldo)+'</span></button>'+
@@ -1616,10 +1629,15 @@ function renderExtrato(){
         [['tudo','Tudo'],['saidas','Só saídas'],['entradas','Só entradas']].map(([k,l]) =>
           '<button class="chip'+((state.extF||'tudo')===k?' on':'')+'" data-act="set-extf" data-v="'+k+'">'+l+'</button>').join('')+
       '</div>'+
+      '<div class="hz-chips" style="margin-left:14px">'+
+        '<button class="chip'+(e.verRealizados?' on':'')+'" data-act="toggle-realizados">'+(e.verRealizados?'✓ ':'')+'Mostrar realizados</button>'+
+      '</div>'+
       '<button class="btn-sm" data-act="sheet-conta" style="margin-left:auto">'+(e.ancorado ? 'Ajustar saldo em conta' : 'Informar saldo em conta')+'</button></div>'+
     '<div class="ext-card">'+
       '<div class="ext-head"><span class="dia">Data</span><span class="nm">Movimento</span><span class="vl">Valor</span><span class="sd">Saldo</span></div>'+
-      '<div class="ext-abertura"><span>Saldo de abertura</span><span class="sd '+(e.abertura>=0?'pos':'neg')+' amt num">'+Rs(e.abertura)+'</span></div>'+
+      '<div class="ext-abertura"><span>Saldo de abertura'+
+        (e.nEmbutidos ? '<em>inclui '+e.nEmbutidos+' já '+(e.nEmbutidos===1?'realizado':'realizados')+' · <span class="amt">'+Rs(e.embutido)+'</span></em>' : '')+
+        '</span><span class="sd '+(e.abertura>=0?'pos':'neg')+' amt num">'+Rs(e.abertura)+'</span></div>'+
       (linhas || '<div class="empty">Nada previsto nesse período.</div>')+
     '</div>';
 }
@@ -3057,6 +3075,7 @@ document.addEventListener('click', async e => {
   else if (act === 'set-horizon') { state.horizonte = Number(el.dataset.v); (state.page==='cen' ? renderCen : renderInicio)(); }
   else if (act === 'set-exth') { state.extH = Number(el.dataset.v); renderExtrato(); }
   else if (act === 'set-extf') { state.extF = el.dataset.v; renderExtrato(); }
+  else if (act === 'toggle-realizados') { state.extRealizados = !state.extRealizados; renderExtrato(); }
   else if (act === 'set-fixafreq') { state.fixaFreq = el.dataset.v; renderFixas(); }
   else if (act === 'sheet-conta') { sheetConta(); }
   else if (act === 'anexo-importar') { anexoImportar(); }
