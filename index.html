@@ -313,6 +313,11 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
 @media (hover:none){ .ext-mais{opacity:.5} }
 .ext-row{display:flex;align-items:center;gap:12px;padding:11px 6px 11px 18px;border-bottom:none;flex:1;min-width:0;text-align:left;font-size:14px;background:none}
 .tagp.aj{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 45%, transparent)}
+.row-mais{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:var(--muted);flex:none;margin-left:2px;opacity:.45;transition:.12s}
+.row:hover .row-mais{opacity:1}
+.row-mais:hover{color:var(--accent);background:var(--accent-soft)}
+.row-mais svg{width:15px;height:15px}
+@media (hover:none){ .row-mais{opacity:.65} }
 .acao-lista{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .acao{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;padding:13px 15px;border-radius:13px;background:var(--page);border:1px solid var(--border-soft)}
 .acao:hover{border-color:var(--accent);background:var(--accent-soft)}
@@ -1753,8 +1758,12 @@ function rowOcc(o){
   return '<div class="row'+(pago?' done':'')+(atrasada?' overdue':'')+'" style="cursor:default">'+
     '<button class="chk" data-act="toggle-occ" data-chave="'+o.chave+'" aria-label="Marcar">'+
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>'+
-    '<button class="mid" data-act="edit-rec" data-id="'+o.rec.id+'" style="text-align:left"><span class="t1">'+esc(o.rec.nome)+'</span><span class="t2">'+rotStatus+' · '+esc(c.nome)+'</span></button>'+
-    '<span class="amt num '+(o.rec.tipo==='receita'?'pos':'neg')+'">'+(o.rec.tipo==='receita'?'+':'−')+R(pago ? o.lanc.valor : o.rec.valor).replace('R$','R$ ')+'</span></div>';
+    '<button class="mid" data-act="edit-rec" data-id="'+o.rec.id+'" style="text-align:left"><span class="t1">'+esc(o.rec.nome)+(o.ajustado?' <span class="tagp aj">ajustado</span>':'')+'</span><span class="t2">'+rotStatus+' · '+esc(c.nome)+'</span></button>'+
+    '<span class="amt num '+(o.rec.tipo==='receita'?'pos':'neg')+'">'+(o.rec.tipo==='receita'?'+':'−')+R(pago ? o.lanc.valor : o.rec.valor).replace('R$','R$ ')+'</span>'+
+    '<button class="row-mais" aria-label="Opções" title="Opções" '+
+      (pago ? 'data-act="menu-lanc" data-id="'+o.lanc.id+'"' : 'data-act="menu-occ" data-chave="'+o.chave+'"')+'>'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>'+
+    '</button></div>';
 }
 
 function renderFixas(){
@@ -2298,8 +2307,8 @@ function sheetOccAcoes(o){
     '<p class="sec" style="font-size:13.5px">'+fmtDataCurta(o.data)+' · '+(receita?'+':'−')+R(rec.valor)+(o.ajustado?' · <span style="color:var(--accent)">valor ajustado só neste</span>':'')+'</p>'+
     '<div class="acao-lista">'+
       '<button class="acao" data-x="baixa"><b>'+(receita?'Marcar como recebido':'Marcar como pago')+'</b><span>vira um lançamento de verdade</span></button>'+
-      '<button class="acao" data-x="valor"><b>Mudar o valor só deste</b><span>não altera os outros meses</span></button>'+
-      '<button class="acao" data-x="pular"><b>Pular este</b><span>some do extrato; a fixa continua nos outros meses</span></button>'+
+      '<button class="acao" data-x="valor"><b>Mudar o valor só '+(rec.freq==='semanal'?'desta semana':'desta vez')+'</b><span>não altera as outras vezes</span></button>'+
+      '<button class="acao" data-x="pular"><b>Pular '+(rec.freq==='semanal'?'esta semana':rec.freq==='diaria'?'este dia':'este mês')+'</b><span>some do extrato e das pendências; a fixa continua nas outras vezes</span></button>'+
       '<button class="acao" data-x="fixa"><b>Editar a fixa</b><span>muda valor, dia e frequência de todos</span></button>'+
       '<button class="acao ruim" data-x="excluir"><b>Excluir a fixa inteira</b><span>apaga em todos os meses</span></button>'+
     '</div>');
@@ -2354,6 +2363,7 @@ function sheetLancAcoes(l){
     '<div class="acao-lista">'+
       '<button class="acao" data-x="editar"><b>Editar</b><span>valor, data, categoria e descrição</span></button>'+
       (l.recChave ? '<button class="acao" data-x="desfazer"><b>Desfazer a baixa</b><span>volta a aparecer como pendente</span></button>' : '')+
+      (l.recChave ? '<button class="acao ruim" data-x="sumir"><b>Apagar '+(freqDaChave(l.recChave)==='semanal'?'desta semana':'deste mês')+'</b><span>tira o lançamento e a pendência; a fixa segue nas outras vezes</span></button>' : '')+
       '<button class="acao ruim" data-x="excluir"><b>Excluir lançamento</b><span>dá para desfazer logo em seguida</span></button>'+
     '</div>');
   s.querySelectorAll('.acao').forEach(b => b.onclick = () => {
@@ -2362,10 +2372,22 @@ function sheetLancAcoes(l){
     if (x === 'editar') return sheetLancamento(l);
     const copia = {...l};
     state.data.lancamentos = state.data.lancamentos.filter(y => y.id !== l.id);
+    if (x === 'sumir' && l.recChave) state.data.pulos.push(l.recChave);
     touch(); renderAll();
-    toast(x === 'desfazer' ? 'Baixa desfeita — voltou para pendente' : 'Lançamento excluído',
-      () => { state.data.lancamentos.push(copia); touch(); renderAll(); });
+    const msg = x === 'desfazer' ? 'Baixa desfeita — voltou para pendente'
+      : x === 'sumir' ? 'Removido desta vez — a fixa continua nas outras'
+      : 'Lançamento excluído';
+    toast(msg, () => {
+      state.data.lancamentos.push(copia);
+      if (x === 'sumir' && l.recChave) state.data.pulos = state.data.pulos.filter(k => k !== l.recChave);
+      touch(); renderAll();
+    });
   });
+}
+/* frequência da fixa por trás de uma chave "recId@data" */
+function freqDaChave(chave){
+  const r = state.data.recorrentes.find(x => x.id === String(chave).split('@')[0]);
+  return r ? r.freq : 'mensal';
 }
 
 function sheetRecorrente(r, alvo, tipoIni){
