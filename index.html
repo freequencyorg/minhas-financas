@@ -67,6 +67,8 @@ svg{display:block}
 .hidden{display:none!important}
 .muted{color:var(--muted)} .sec{color:var(--ink-2)}
 .pos{color:var(--up)} .neg{color:var(--down)}
+/* saída de dinheiro: neutra — vermelho é reservado para alerta (atraso, saldo negativo) */
+.out{color:var(--ink)}
 .num{font-variant-numeric:tabular-nums}
 body.private .amt,body.private .blur-priv{filter:blur(7px);transition:filter .2s}
 /* ================= shell ================= */
@@ -82,6 +84,8 @@ aside#side{
 body.fq{--accent:var(--s7);--accent-soft:color-mix(in srgb, var(--s7) 12%, transparent);--accent-soft-2:color-mix(in srgb, var(--s7) 18%, transparent);--on-accent:#fff;--accent-grad:linear-gradient(160deg,color-mix(in srgb, var(--s7) 82%, #fff),color-mix(in srgb, var(--s7) 84%, #000))}
 .side-brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(160deg,var(--accent-soft-2),transparent);border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:800;flex:none}
 nav#nav{display:flex;flex-direction:column;gap:2px}
+.nav-sec{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);opacity:.75;padding:16px 12px 6px;user-select:none}
+.icon-sq.on{color:var(--accent);background:var(--accent-soft)}
 nav#nav .nav-it{
   display:flex;align-items:center;gap:11px;padding:9.5px 12px;border-radius:10px;
   font-size:14.5px;font-weight:560;color:var(--ink-2);text-align:left;width:100%;
@@ -147,6 +151,12 @@ main section.panel.active{display:block}
 .hero .h-value{font-size:48px;font-weight:800;letter-spacing:-.025em;line-height:1.08;margin-top:8px}
 .hero .h-value::after{content:"";display:block;width:62px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--accent),transparent);margin-top:12px}
 .hero.card{background:linear-gradient(165deg,color-mix(in srgb, var(--accent) 6%, var(--surface)),var(--surface) 65%)}
+.hero-stats{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;border-top:1px solid var(--border-soft);padding-top:16px}
+.hero-stats .hs{display:flex;flex-direction:column;gap:3px;align-items:flex-start;background:color-mix(in srgb, var(--page) 55%, transparent);border:1px solid var(--border-soft);border-radius:11px;padding:9px 14px;text-align:left}
+.hero-stats .hs:hover{border-color:var(--baseline)}
+.hero-stats .l{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hero-stats .v{font-size:16px;font-weight:750;letter-spacing:-.01em}
+.pend-alerta{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:650;color:var(--critical);background:color-mix(in srgb, var(--critical) 8%, transparent);border:1px solid color-mix(in srgb, var(--critical) 25%, transparent);border-radius:10px;padding:8px 13px;margin-bottom:8px}
 .hero .h-sub{font-size:13.5px;color:var(--muted);margin-top:8px;line-height:1.6}
 .hero .h-sub strong{font-weight:650}
 .delta-chip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:650;border-radius:99px;padding:2.5px 9px;margin-top:10px}
@@ -284,11 +294,18 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
 .cal-day.today .cd-n{background:var(--accent);color:var(--on-accent)}
 .cal-ev{font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:none;text-align:left;color:var(--ink-2);background:var(--page);border:1px solid var(--border-soft)}
 .cal-ev.rec{color:var(--up);background:color-mix(in srgb, var(--good) 9%, var(--surface))}
-.cal-ev.desp{color:var(--down);background:color-mix(in srgb, var(--critical) 8%, var(--surface))}
+.cal-ev.desp{color:var(--ink-2);background:var(--page)}
 .cal-ev.paid{opacity:.5;text-decoration:line-through}
 .cal-more{font-size:11px;color:var(--muted);padding:0 6px}
 .cal-sum{display:flex;gap:16px;padding:11px 16px;font-size:13px;color:var(--muted);border-top:1px solid var(--grid);background:var(--page)}
 /* ================= extrato (fluxo unificado) ================= */
+.ext-strip{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:14px;padding:17px 22px}
+.ext-strip .es{display:flex;flex-direction:column;gap:3px}
+.ext-strip .es .l{font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.ext-strip .es .v{font-size:19px;font-weight:780;letter-spacing:-.015em}
+.ext-strip .es-seta{color:var(--baseline);font-size:15px}
+.es-alerta{flex-basis:100%;font-size:13px;color:var(--critical);background:color-mix(in srgb, var(--critical) 8%, transparent);border:1px solid color-mix(in srgb, var(--critical) 25%, transparent);border-radius:10px;padding:8px 13px;line-height:1.5}
+.es-alerta .amt{font-weight:750}
 .ext-top{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
 .ext-kpi{background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;padding:15px 17px;box-shadow:var(--shadow)}
 .ext-kpi .l{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
@@ -326,7 +343,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
 .acao.ruim b{color:var(--critical)}
 .acao.ruim:hover{border-color:var(--critical);background:color-mix(in srgb, var(--critical) 8%, transparent)}
 .ext-row .dia{width:50px;flex:none;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
-.ext-row .cdot{width:8px;height:8px;border-radius:50%;flex:none}
+
 .ext-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:560}
 .ext-row .tagp{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border-soft);border-radius:5px;padding:1px 5px;flex:none}
 .ext-row .vl{width:128px;flex:none;text-align:right;font-weight:680;font-variant-numeric:tabular-nums}
@@ -414,7 +431,7 @@ nav.tabs{display:none}
 .amount-box .cur{font-size:16px;font-weight:650;color:var(--muted)}
 .valor-input{border:none;background:none;font-size:40px;font-weight:800;letter-spacing:-.03em;text-align:center;outline:none;padding:0;width:100%;max-width:340px;caret-color:var(--accent)}
 .valor-input::placeholder{color:var(--baseline)}
-.valor-input.vneg{color:var(--down)} .valor-input.vpos{color:var(--up)}
+.valor-input.vneg{color:var(--ink)} .valor-input.vpos{color:var(--up)}
 .seg{display:grid;grid-template-columns:1fr 1fr;background:var(--page);border-radius:11px;padding:3px;gap:3px;border:1px solid var(--border-soft)}
 .seg button{padding:7.5px;border-radius:8px;font-weight:640;font-size:14px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
 .seg button.on.desp{background:color-mix(in srgb, var(--critical) 10%, var(--surface));color:var(--down)}
@@ -647,6 +664,7 @@ nav.tabs{display:none}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5h13v17l-2.2-1.6-2.2 1.6-2.1-1.6-2.2 1.6-2.1-1.6-2.2 1.6z"/><path d="M9 8.5h6M9 12.5h6"/></svg>
         Extrato <kbd>2</kbd>
       </button>
+      <div class="nav-sec">Dia a dia</div>
       <button class="nav-it" data-page="lanc">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4.5 6.5h15M4.5 12h15M4.5 17.5h9"/></svg>
         Lançamentos <kbd>3</kbd>
@@ -659,6 +677,7 @@ nav.tabs{display:none}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8.5 3.5v4M15.5 3.5v4"/></svg>
         Calendário <kbd>5</kbd>
       </button>
+      <div class="nav-sec">Planejar</div>
       <button class="nav-it" data-page="rel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-6"/></svg>
         Relatórios <kbd>6</kbd>
@@ -671,14 +690,13 @@ nav.tabs{display:none}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.6"/><circle cx="12" cy="12" r=".5" fill="currentColor"/></svg>
         Metas <kbd>8</kbd>
       </button>
-      <button class="nav-it" data-page="ajustes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4.5 7.5h15M4.5 12h15M4.5 16.5h15"/><circle cx="9.5" cy="7.5" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="16.5" r="2" fill="var(--surface)"/></svg>
-        Ajustes <kbd>9</kbd>
-      </button>
     </nav>
     <div class="side-foot">
       <div class="side-mini">
         <button id="syncPill" title="Estado da sincronização"><span class="dot"></span><span id="syncTxt">…</span></button>
+        <button id="setBtn" class="icon-sq" title="Ajustes (9)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4.5 7.5h15M4.5 12h15M4.5 16.5h15"/><circle cx="9.5" cy="7.5" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="16.5" r="2" fill="var(--surface)"/></svg>
+        </button>
         <button id="eyeBtn" class="icon-sq" title="Modo discreto (esconder valores)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
         </button>
@@ -1360,6 +1378,7 @@ function renderAll(){
   $('#pageTitle').textContent = PAGES[state.page] || '';
   $('#monthNav').style.visibility = (state.page==='metas'||state.page==='ajustes'||state.page==='cen') ? 'hidden' : 'visible';
   $$('#nav .nav-it').forEach(b => b.classList.toggle('on', b.dataset.page === state.page));
+  const sb = $('#setBtn'); if (sb) sb.classList.toggle('on', state.page === 'ajustes');
   $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.page === state.page || (b.dataset.page==='mais' && ['cal','cen','metas','ajustes','rel'].includes(state.page))));
   $$('main section.panel').forEach(p => p.classList.remove('active'));
   $('#panel-' + state.page).classList.add('active');
@@ -1406,22 +1425,23 @@ function renderInicio(){
   const futuras = ehMesAtual ? pend.filter(o => o.data >= hoje) : pend;
   const somaPend = a => a.reduce((s,o) => s + (o.rec.tipo==='receita'? o.rec.valor : -o.rec.valor), 0);
   const rowPend = o => {
-    const c = catById(o.rec.categoriaId);
     const late = ehMesAtual && o.data < hoje;
     const quando = o.rec.freq==='semanal' ? DIAS_SEM[o.rec.diaSemana].slice(0,3)+' '+Number(o.data.slice(8)) : 'dia '+Number(o.data.slice(8));
     return '<button class="pend-row" data-act="pay-occ" data-chave="'+o.chave+'" title="'+(o.rec.tipo==='receita'?'Marcar como recebido':'Marcar como pago')+'">'+
-      '<span class="cdot" style="background:'+corVar(c)+'"></span><span class="nm">'+esc(o.rec.nome)+'</span>'+
-      '<span class="when'+(late?' late':'')+'">'+quando+'</span>'+
-      '<span class="val num amt '+(o.rec.tipo==='receita'?'pos':'neg')+'">'+(o.rec.tipo==='receita'?'+':'−')+R(o.rec.valor).replace('R$','R$ ')+'</span>'+
+      '<span class="nm">'+esc(o.rec.nome)+'</span>'+
+      '<span class="when'+(late?' late':'')+'">'+(late?'atrasada · ':'')+quando+'</span>'+
+      '<span class="val num amt '+(o.rec.tipo==='receita'?'pos':'out')+'">'+(o.rec.tipo==='receita'?'+':'−')+R(o.rec.valor).replace('R$','R$ ')+'</span>'+
       '<span class="go"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></button>';
   };
   const LIM = 5;
+  const proximas = atrasadas.concat(futuras);
   const pendCard = pend.length ?
-    '<div class="card"><div class="h-row"><h2>Pendências de '+fmtMesLabel(ym)+'</h2><button class="link-btn" data-act="goto" data-page="fixas">ver fixas</button></div>'+
-    (atrasadas.length ? '<div class="pend-sub" style="color:var(--critical)">Atrasadas · '+atrasadas.length+'<span class="sum num amt">'+Rs(somaPend(atrasadas))+'</span></div>'+atrasadas.slice(0,LIM).map(rowPend).join('')+(atrasadas.length>LIM?'<button class="pend-more" data-act="goto" data-page="fixas">+ '+(atrasadas.length-LIM)+' atrasadas</button>':'') : '')+
-    (futuras.length ? '<div class="pend-sub">Próximas<span class="sum num amt">'+Rs(somaPend(futuras))+'</span></div>'+futuras.slice(0,LIM).map(rowPend).join('')+(futuras.length>LIM?'<button class="pend-more" data-act="goto" data-page="fixas">+ '+(futuras.length-LIM)+' no mês</button>':'') : '')+
+    '<div class="card"><div class="h-row"><h2>Próximas contas</h2><button class="link-btn" data-act="goto" data-page="extrato">ver extrato →</button></div>'+
+    (atrasadas.length ? '<div class="pend-alerta">'+atrasadas.length+' atrasada'+(atrasadas.length===1?'':'s')+' · <span class="amt num">'+Rs(somaPend(atrasadas))+'</span></div>' : '')+
+    proximas.slice(0,LIM).map(rowPend).join('')+
+    (proximas.length>LIM?'<button class="pend-more" data-act="goto" data-page="fixas">+ '+(proximas.length-LIM)+' no mês</button>':'')+
     '</div>'
-    : '<div class="card"><h2>Pendências</h2><div class="empty">✅ Tudo em dia — nada pendente em '+fmtMesLabel(ym)+'.</div></div>';
+    : '<div class="card"><h2>Próximas contas</h2><div class="empty">✅ Tudo em dia — nada pendente em '+fmtMesLabel(ym)+'.</div></div>';
 
   /* projeção de longo prazo */
   const proj = projLonga(state.horizonte);
@@ -1462,6 +1482,11 @@ function renderInicio(){
           '<div class="h-sub"><button class="link-btn" data-act="sheet-conta">Informe seu saldo em conta</button> para ver dinheiro de verdade, não só o fluxo do mês</div>')+
       '</div>'+
       '<div>'+projecaoSVG(ym)+'</div>'+
+    '</div>'+
+    '<div class="hero-stats">'+
+      '<button class="hs" data-act="drill-tipo" data-v="receita"><span class="l">Entradas do mês</span><span class="v num amt pos">'+R(ehAtualOuFuturo?prev.rec:t.rec)+'</span></button>'+
+      '<button class="hs" data-act="drill-tipo" data-v="despesa"><span class="l">Saídas do mês</span><span class="v num amt">'+R(ehAtualOuFuturo?prev.desp:t.desp)+'</span></button>'+
+      '<button class="hs" data-act="goto" data-page="fixas"><span class="l">Pendentes</span><span class="v num">'+pend.length+'</span></button>'+
     '</div></div>'+
 
     '<div class="card quick"><div class="q-wrap">'+
@@ -1469,27 +1494,12 @@ function renderInicio(){
       '<input id="qAdd" placeholder="Lance rápido: “250 mercado ontem” · “recebi 3000 pablo” · “1947 condomínio”" autocomplete="off">'+
     '</div><div class="q-prev hidden" id="qPrev"></div></div>'+
 
-    '<div class="grid c4">'+
-      '<button class="tile click" data-act="drill-tipo" data-v="receita"><div class="label"><span class="dot" style="background:var(--s6)"></span>Receitas</div><div class="value num amt">'+R(t.rec)+'</div>'+(ehAtualOuFuturo&&prev.recPend?'<div class="sub">previsto <span class="amt">'+R(prev.rec)+'</span></div>':'')+'</button>'+
-      '<button class="tile click" data-act="drill-tipo" data-v="despesa"><div class="label"><span class="dot" style="background:var(--s8)"></span>Despesas</div><div class="value num amt">'+R(t.desp)+'</div>'+(ehAtualOuFuturo&&prev.despPend?'<div class="sub">previsto <span class="amt">'+R(prev.desp)+'</span></div>':'')+'</button>'+
-      '<button class="tile click" data-act="goto" data-page="fixas"><div class="label"><span class="dot" style="background:var(--s1)"></span>A receber</div><div class="value num amt">'+R(prev.recPend)+'</div><div class="sub">'+pend.filter(o=>o.rec.tipo==='receita').length+' pendentes</div></button>'+
-      '<button class="tile click" data-act="goto" data-page="fixas"><div class="label"><span class="dot" style="background:var(--s2)"></span>A pagar</div><div class="value num amt">'+R(prev.despPend)+'</div><div class="sub">'+pend.filter(o=>o.rec.tipo==='despesa').length+' pendentes</div></button>'+
-    '</div>'+
-
     projCard+
 
     '<div class="grid c2" style="align-items:start">'+
       pendCard+
-      (t.desp > 0 ?
-        '<div class="card"><div class="h-row"><h2>Gastos por categoria</h2><button class="link-btn" data-act="goto" data-page="rel">relatórios</button></div><div class="donut-wrap"><div class="donut-box" id="donutBox">'+donutSVG(arcos, t.desp)+
-        '<div class="donut-center"><div><div class="t" id="dcT">Total</div><div class="v num amt" id="dcV">'+R(t.desp)+'</div></div></div></div>'+
-        '<div class="donut-legend">'+legenda+'</div></div></div>' : '<div class="card"><h2>Gastos por categoria</h2><div class="empty">Sem despesas em '+fmtMesLabel(ym)+'.</div></div>')+
-    '</div>'+
-
-    '<div class="grid c2" style="align-items:start">'+
-      '<div class="card">'+(temHist ? '<h2>Últimos 6 meses</h2><div class="cols-legend"><span><span class="sw" style="background:var(--s6)"></span>Receitas</span><span><span class="sw" style="background:var(--s8)"></span>Despesas</span></div><div id="cols6">'+colunasSVG(serie,{clickable:true})+'</div>' : '<h2>Últimos 6 meses</h2><div class="empty">O histórico aparece conforme você usa.</div>')+'</div>'+
       '<div style="display:flex;flex-direction:column;gap:14px">'+
-        '<div class="card"><div class="h-row"><h2>Orçamento do mês</h2><button class="link-btn" data-act="goto" data-page="ajustes">ajustar</button></div>'+(orc.length ? orcHtml : '<div class="empty">Defina limites por categoria em Ajustes<br>para acompanhar aqui.</div>')+'</div>'+
+        (orc.length ? '<div class="card"><div class="h-row"><h2>Orçamento do mês</h2><button class="link-btn" data-act="goto" data-page="ajustes">ajustar</button></div>'+orcHtml+'</div>' : '')+
         (state.data.metas.length ? '<div class="card"><div class="h-row"><h2>Metas</h2><button class="link-btn" data-act="goto" data-page="metas">ver todas</button></div>'+metasHtml+'</div>' : '')+
       '</div>'+
     '</div>';
@@ -1588,13 +1598,16 @@ function renderExtrato(){
   const dual = (v, comSinal) => '<span class="v-longo">'+(comSinal?Rs(v):R(v))+'</span><span class="v-curto">'+(comSinal?compacto(v):compacto(Math.abs(v)))+'</span>';
   const entrou = e.meses.reduce((s,m)=>s+m.entrou,0), saiu = e.meses.reduce((s,m)=>s+m.saiu,0);
   const kpis =
-    '<div class="ext-top">'+
-      '<div class="ext-kpi"><div class="l">Abre com</div><div class="v num amt">'+dual(e.abertura,true)+'</div><div class="s">'+(e.ancorado ? 'saldo em conta em '+fmtDataCurta(state.data.conta.data) : 'sem saldo informado')+'</div></div>'+
-      '<div class="ext-kpi"><div class="l">Entra</div><div class="v num amt pos">'+dual(entrou,false)+'</div><div class="s">'+e.itens.filter(i=>i.valor>=0).length+' movimentos</div></div>'+
-      '<div class="ext-kpi"><div class="l">Sai</div><div class="v num amt neg">'+dual(saiu,false)+'</div><div class="s">'+e.itens.filter(i=>i.valor<0).length+' movimentos</div></div>'+
+    '<div class="card ext-strip">'+
+      '<div class="es"><span class="l">Abre com</span><span class="v num amt">'+dual(e.abertura,true)+'</span></div>'+
+      '<span class="es-seta">→</span>'+
+      '<div class="es"><span class="l">Entra</span><span class="v num amt pos">'+dual(entrou,false)+'</span></div>'+
+      '<div class="es"><span class="l">Sai</span><span class="v num amt">'+dual(saiu,false)+'</span></div>'+
+      '<span class="es-seta">→</span>'+
+      '<div class="es"><span class="l">Termina com</span><span class="v num amt '+(e.fim>=0?'pos':'neg')+'">'+dual(e.fim,true)+'</span></div>'+
       (e.primeiroVermelho
-        ? '<div class="ext-kpi alerta"><div class="l">Fica no vermelho</div><div class="v num amt">'+fmtDataCurta(e.primeiroVermelho.data)+'</div><div class="s">em '+esc(e.primeiroVermelho.nome)+' · pior momento <span class="amt">'+Rs(e.pior.saldo)+'</span> em '+fmtDataCurta(e.pior.data)+'</div></div>'
-        : '<div class="ext-kpi ok"><div class="l">Termina com</div><div class="v num amt pos">'+dual(e.fim,true)+'</div><div class="s">sem ficar negativo no período</div></div>')+
+        ? '<div class="es-alerta"><b>Fica no vermelho em '+fmtDataCurta(e.primeiroVermelho.data)+'</b> ('+esc(e.primeiroVermelho.nome)+') · pior momento <span class="amt num">'+Rs(e.pior.saldo)+'</span> em '+fmtDataCurta(e.pior.data)+'</div>'
+        : '')+
     '</div>';
 
   const filtro = state.extF || 'tudo';
@@ -1605,13 +1618,12 @@ function renderExtrato(){
     if (!g.itens.some(passa)) continue;
     linhas += '<div class="ext-mes"><span class="m">'+fmtMesLabel(g.ym)+'</span>'+
       '<span class="kv">entrou <b class="pos amt num">'+R(g.entrou)+'</b></span>'+
-      '<span class="kv">saiu <b class="neg amt num">'+R(g.saiu)+'</b></span>'+
+      '<span class="kv">saiu <b class="amt num">'+R(g.saiu)+'</b></span>'+
       '<span class="kv">sobra <b class="'+(g.entrou-g.saiu>=0?'pos':'neg')+' amt num">'+Rs(g.entrou-g.saiu)+'</b></span>'+
       '<span class="fecha '+(g.fecha>=0?'pos':'neg')+' amt num">fecha em '+Rs(g.fecha)+'</span></div>';
     for (const it of g.itens){
       if (!passa(it)) continue;
       if (!hojeMarcado.feito && it.data >= hoje){ hojeMarcado.feito = true; linhas += '<div class="ext-hoje"><span>hoje · '+fmtDataCurta(hoje)+'</span></div>'; }
-      const c = catById(it.catId);
       const vermelho = it.saldo < 0;
       const virada = e.primeiroVermelho && it === e.primeiroVermelho;
       const feito = it.real && it.data <= hoje;
@@ -1619,11 +1631,10 @@ function renderExtrato(){
         '<button class="ext-row'+(it.real?'':' prev')+(feito?' feito':'')+(vermelho?' vermelho':'')+(virada?' virada':'')+'"'+
         (it.real ? ' data-act="abrir-lanc" data-id="'+it.id+'"' : ' data-act="pay-occ" data-chave="'+it.chave+'"')+'>'+
         '<span class="dia">'+fmtDataCurta(it.data)+'</span>'+
-        '<span class="cdot" style="background:'+corVar(c)+'"></span>'+
         '<span class="nm">'+esc(it.nome)+'</span>'+
-        (it.real ? (feito ? '<span class="tagp ok">✓ feito</span>' : '') : '<span class="tagp">previsto</span>')+
+        (feito ? '<span class="tagp ok">✓ feito</span>' : '')+
         (it.ajustado ? '<span class="tagp aj">ajustado</span>' : '')+
-        '<span class="vl '+(it.valor>=0?'pos':'neg')+' amt num">'+(it.valor>=0?'+':'−')+R(Math.abs(it.valor))+'</span>'+
+        '<span class="vl '+(it.valor>=0?'pos':'out')+' amt num">'+(it.valor>=0?'+':'−')+R(Math.abs(it.valor))+'</span>'+
         '<span class="sd amt num">'+Rs(it.saldo)+'</span></button>'+
         '<button class="ext-mais" aria-label="Opções" title="Opções" '+
           (it.real ? 'data-act="menu-lanc" data-id="'+it.id+'"' : 'data-act="menu-occ" data-chave="'+it.chave+'"')+'>'+
@@ -1691,7 +1702,7 @@ function renderLanc(){
       '<td class="c-data"><div class="cell cell-edit" data-edit="data">'+fmtDataCurta(l.data)+'</div></td>'+
       '<td><div class="cell cell-edit" data-edit="descricao">'+esc(l.descricao || c.nome)+(l.recChave?'<span class="fixa-mark">fixa</span>':'')+'</div></td>'+
       '<td class="c-cat"><div class="cell"><button class="cat-pill" data-act="cell-cat"><span class="sw" style="background:'+corVar(c)+'"></span><span>'+esc(c.nome)+'</span></button></div></td>'+
-      '<td class="c-valor"><div class="cell cell-edit num amt '+(l.tipo==='receita'?'pos':'neg')+'" data-edit="valor">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</div></td>'+
+      '<td class="c-valor"><div class="cell cell-edit num amt '+(l.tipo==='receita'?'pos':'out')+'" data-edit="valor">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</div></td>'+
       '<td class="c-acts"><div class="cell"><button class="iconbtn" data-act="edit-lanc" title="Abrir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4.5-1L20 7.5 16.5 4 5 15.5 4 20z"/></svg></button></div></td>'+
     '</tr>';
   }).join('');
@@ -1705,9 +1716,9 @@ function renderLanc(){
     const tot = arr2.reduce((s,l) => s + (l.tipo==='receita'? l.valor : -l.valor), 0);
     mHtml += '<div class="day-head"><span>'+fmtDiaHead(dia)+'</span><span class="num amt '+(tot>0?'pos':tot<0?'neg':'')+'">'+Rs(tot)+'</span></div>' +
       arr2.map(l => { const c = catById(l.categoriaId);
-        return '<button class="row" data-act="edit-lanc" data-id="'+l.id+'"><span class="cdot" style="background:'+corVar(c)+'"></span>'+
+        return '<button class="row" data-act="edit-lanc" data-id="'+l.id+'">'+
         '<span class="mid"><span class="t1">'+esc(l.descricao || c.nome)+'</span><span class="t2">'+esc(c.nome)+(l.recChave?' · fixa':'')+'</span></span>'+
-        '<span class="amt num '+(l.tipo==='receita'?'pos':'neg')+'">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</span></button>'; }).join('');
+        '<span class="amt num '+(l.tipo==='receita'?'pos':'out')+'">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</span></button>'; }).join('');
   }
 
   $('#panel-lanc').innerHTML =
@@ -1786,8 +1797,8 @@ function rowOcc(o){
   return '<div class="row'+(pago?' done':'')+(atrasada?' overdue':'')+'" style="cursor:default">'+
     '<button class="chk" data-act="toggle-occ" data-chave="'+o.chave+'" aria-label="Marcar">'+
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>'+
-    '<button class="mid" data-act="edit-rec" data-id="'+o.rec.id+'" style="text-align:left"><span class="t1">'+esc(o.rec.nome)+(o.ajustado?' <span class="tagp aj">ajustado</span>':'')+'</span><span class="t2">'+rotStatus+' · '+esc(c.nome)+'</span></button>'+
-    '<span class="amt num '+(o.rec.tipo==='receita'?'pos':'neg')+'">'+(o.rec.tipo==='receita'?'+':'−')+R(pago ? o.lanc.valor : o.rec.valor).replace('R$','R$ ')+'</span>'+
+    '<button class="mid" data-act="edit-rec" data-id="'+o.rec.id+'" style="text-align:left"><span class="t1">'+esc(o.rec.nome)+(o.ajustado?' <span class="tagp aj">ajustado</span>':'')+'</span><span class="t2">'+rotStatus+'</span></button>'+
+    '<span class="amt num '+(o.rec.tipo==='receita'?'pos':'out')+'">'+(o.rec.tipo==='receita'?'+':'−')+R(pago ? o.lanc.valor : o.rec.valor).replace('R$','R$ ')+'</span>'+
     '<button class="row-mais" aria-label="Opções" title="Opções" '+
       (pago ? 'data-act="menu-lanc" data-id="'+o.lanc.id+'"' : 'data-act="menu-occ" data-chave="'+o.chave+'"')+'>'+
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>'+
@@ -1807,7 +1818,7 @@ function renderFixas(){
     '<div class="card" style="margin-bottom:14px"><h2>Resumo de '+fmtMesLabel(ym)+'</h2>'+
     '<div class="grid c2" style="margin:0">'+
     '<div class="meter-item" style="--mc:var(--s6);margin:0"><div class="meter-top"><span class="nm">Recebido</span><span class="st muted num"><span class="amt">'+R(recP)+'</span> de <span class="amt">'+R(recT)+'</span></span></div><div class="meter"><i style="width:'+(recT?Math.min(100,recP/recT*100):0)+'%"></i></div></div>'+
-    '<div class="meter-item" style="--mc:var(--s8);margin:0"><div class="meter-top"><span class="nm">Pago</span><span class="st muted num"><span class="amt">'+R(despP)+'</span> de <span class="amt">'+R(despT)+'</span></span></div><div class="meter"><i style="width:'+(despT?Math.min(100,despP/despT*100):0)+'%"></i></div></div>'+
+    '<div class="meter-item" style="--mc:var(--s0);margin:0"><div class="meter-top"><span class="nm">Pago</span><span class="st muted num"><span class="amt">'+R(despP)+'</span> de <span class="amt">'+R(despT)+'</span></span></div><div class="meter"><i style="width:'+(despT?Math.min(100,despP/despT*100):0)+'%"></i></div></div>'+
     '</div></div>';
 
   const fFreq = state.fixaFreq || 'todas';
@@ -1835,9 +1846,9 @@ function renderFixas(){
   const gerHtml = defs.map(r => {
     const c = catById(r.categoriaId);
     const freqTxt = r.freq==='semanal' ? 'toda '+DIAS_SEM[r.diaSemana] : r.freq==='diaria' ? 'todos os dias' : (r.freqMeses>1 ? 'a cada '+r.freqMeses+' meses' : 'todo dia '+r.dia);
-    return '<button class="row" data-act="edit-rec" data-id="'+r.id+'" style="'+(r.ativa?'':'opacity:.55')+'"><span class="cdot" style="background:'+corVar(c)+'"></span>'+
+    return '<button class="row" data-act="edit-rec" data-id="'+r.id+'" style="'+(r.ativa?'':'opacity:.55')+'">'+
       '<span class="mid"><span class="t1">'+esc(r.nome)+(r.ativa?'':' · encerrada')+'</span><span class="t2">'+freqTxt+'</span></span>'+
-      '<span class="amt num '+(r.tipo==='receita'?'pos':'neg')+'">'+(r.tipo==='receita'?'+':'−')+R(r.valor).replace('R$','R$ ')+'</span></button>';
+      '<span class="amt num '+(r.tipo==='receita'?'pos':'out')+'">'+(r.tipo==='receita'?'+':'−')+R(r.valor).replace('R$','R$ ')+'</span></button>';
   }).join('');
 
   $('#panel-fixas').innerHTML = avisoMudas + resumo +
@@ -1893,9 +1904,9 @@ function sheetDia(iso){
   const titulo = new Date(a,m-1,dd).toLocaleDateString('pt-BR',{weekday:'long', day:'numeric', month:'long'});
   const occHtml = occs.map(rowOcc).join('');
   const lHtml = lancs.filter(l=>!l.recChave).map(l => { const c = catById(l.categoriaId);
-    return '<button class="row" data-act="edit-lanc" data-id="'+l.id+'"><span class="cdot" style="background:'+corVar(c)+'"></span>'+
+    return '<button class="row" data-act="edit-lanc" data-id="'+l.id+'">'+
     '<span class="mid"><span class="t1">'+esc(l.descricao || c.nome)+'</span><span class="t2">'+esc(c.nome)+'</span></span>'+
-    '<span class="amt num '+(l.tipo==='receita'?'pos':'neg')+'">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</span></button>'; }).join('');
+    '<span class="amt num '+(l.tipo==='receita'?'pos':'out')+'">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</span></button>'; }).join('');
   const s = openSheet('<h3 style="text-transform:capitalize">'+titulo+'</h3>'+
     (occHtml ? '<div class="f-label" style="margin-top:2px">Fixas do dia</div><div class="list">'+occHtml+'</div>' : '')+
     (lHtml ? '<div class="f-label">Lançamentos</div><div class="list">'+lHtml+'</div>' : '')+
@@ -3258,6 +3269,7 @@ $('#aiBtn').onclick = aiAbrir;
 $('#aiClose').onclick = aiFechar;
 $('#aiArquivo').onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value=''; if (f) aiAnexar(f); };
 $('#eyeBtn').onclick = togglePriv;
+$('#setBtn').onclick = () => { state.page = 'ajustes'; renderAll(); window.scrollTo({top:0}); };
 $('#syncPill').onclick = () => { if (state.cfg && state.cfg.modo === 'github') { if (state.dirty) doSave(); else { state.lastLoad = 0; loadRemote(); } } };
 
 window.addEventListener('focus', () => { if (state.cfg && state.cfg.modo==='github' && !state.dirty && Date.now() - state.lastLoad > 45000) loadRemote(true); });
