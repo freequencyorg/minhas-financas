@@ -839,16 +839,26 @@ const fmtBRL = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'}
 const R = v => fmtBRL.format(v || 0);
 const Rs = v => (v > 0 ? '+' : v < 0 ? '−' : '') + fmtBRL.format(Math.abs(v || 0));
 
+/* ÚNICO interpretador de valores do app — pt-BR, tolerante a R$, parênteses e milhar.
+   Cuidado: "1.000" é MIL, não um. Retorna NaN quando não dá para ler. */
 function parseValor(str){
-  if (typeof str === 'number') return str;
-  let s = String(str||'').replace(/[R$\s]/g,'');
+  if (typeof str === 'number') return isFinite(str) ? str : NaN;
+  let s = String(str == null ? '' : str).trim();
   if (!s) return NaN;
+  const neg = /^\(.*\)$/.test(s) || /^\s*-/.test(s) || /\bD$/.test(s);
+  s = s.replace(/[()R$\s ]/g,'').replace(/[A-Za-z]/g,'');
+  if (!/\d/.test(s)) return NaN;
   const temV = s.includes(','), temP = s.includes('.');
-  if (temV && temP) s = s.replace(/\./g,'').replace(',', '.');
-  else if (temV) s = s.replace(',', '.');
-  const n = parseFloat(s);
-  return isNaN(n) ? NaN : Math.round(n*100)/100;
+  if (temV && temP) s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,'');
+  else if (temV) s = s.replace(/\./g,'').replace(',','.');
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,'');   /* 1.000 / 1.234.567 = milhar */
+  else if ((s.match(/\./g)||[]).length > 1) s = s.replace(/\./g,'');
+  const n = parseFloat(s.replace(/[^\d.\-]/g,''));
+  if (!isFinite(n)) return NaN;
+  return Math.round(Math.abs(n)*100)/100 * (neg ? -1 : 1);
 }
+/* versão para células de planilha: devolve null (e não NaN/0) quando não há número */
+function parseValorCel(v){ const n = parseValor(v); return (isFinite(n) && n !== 0) ? n : null; }
 const pad2 = n => String(n).padStart(2,'0');
 function hojeISO(){ const d = new Date(); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 function mesAtual(){ return hojeISO().slice(0,7); }
@@ -2868,23 +2878,9 @@ function mapearColunas(cab, amostra){
   };
   /* fallback: detecta pelas próprias células */
   if (m.data < 0) m.data = cab.findIndex((_,i) => amostra.some(l => parseData(l[i])));
-  if (m.valor < 0) m.valor = cab.findIndex((_,i) => i !== m.data && amostra.filter(l => parseValor(l[i]) !== null).length >= Math.max(1, amostra.length*0.6));
-  if (m.desc < 0) m.desc = cab.findIndex((_,i) => i !== m.data && i !== m.valor && amostra.some(l => String(l[i]||'').trim().length > 2 && parseValor(l[i]) === null));
+  if (m.valor < 0) m.valor = cab.findIndex((_,i) => i !== m.data && amostra.filter(l => parseValorCel(l[i]) !== null).length >= Math.max(1, amostra.length*0.6));
+  if (m.desc < 0) m.desc = cab.findIndex((_,i) => i !== m.data && i !== m.valor && amostra.some(l => String(l[i]||'').trim().length > 2 && parseValorCel(l[i]) === null));
   return m;
-}
-function parseValor(v){
-  if (v == null) return null;
-  let s = String(v).trim();
-  if (!s) return null;
-  const neg = /^\(.*\)$/.test(s) || /^-/.test(s) || /\bD\b$/.test(s);
-  s = s.replace(/[()rR$\s]/g,'').replace(/[A-Za-z]/g,'');
-  if (!/\d/.test(s)) return null;
-  if (s.includes(',') && s.includes('.')) s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,'');
-  else if (s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
-  else if ((s.match(/\./g)||[]).length > 1) s = s.replace(/\./g,'');
-  const n = Number(s.replace(/[^\d.\-]/g,''));
-  if (!isFinite(n) || n === 0) return null;
-  return neg ? -Math.abs(n) : n;
 }
 function parseData(v){
   if (v == null) return null;
@@ -2948,7 +2944,7 @@ function anexoImportar(){
   let criados = 0, pulados = 0;
   const desfazer = [];
   for (const l of a.linhas){
-    const valor = parseValor(l[m.valor]);
+    const valor = parseValorCel(l[m.valor]);
     if (valor === null) { pulados++; continue; }
     const data = (m.data >= 0 ? parseData(l[m.data]) : null) || hojeISO();
     let tipo = valor < 0 ? 'despesa' : 'receita';
