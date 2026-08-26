@@ -436,7 +436,7 @@ nav.tabs{display:none}
 .rep-hint{font-size:13px;color:var(--muted);padding:9px 2px 0;line-height:1.5}
 .btn{width:100%;padding:13px;border-radius:13px;font-weight:700;font-size:15.5px;margin-top:18px;background:var(--accent-grad);color:var(--on-accent)}
 .btn:active{transform:scale(.99)}
-.btn.ghost{background:var(--page);color:var(--ink-2);border:1px solid var(--border);font-weight:620}
+.btn.ghost{background:var(--page);color:var(--ink-2);border:1px solid var(--border);font-weight:620;font-size:14px;padding:11px;margin-top:9px}
 .btn.danger{background:var(--critical)}
 .btn:disabled{opacity:.55}
 .btn-sm{padding:7.5px 13px;border-radius:10px;font-size:13.5px;font-weight:620;background:var(--page);border:1px solid var(--border);color:var(--ink-2)}
@@ -2285,18 +2285,39 @@ function shake(el){ el.style.borderColor='var(--critical)'; el.focus(); setTimeo
 
 function sheetPagarOcc(o){
   const rec = o.rec, receita = rec.tipo === 'receita';
+  const qual = rec.freq==='semanal' ? 'esta semana' : rec.freq==='diaria' ? 'este dia' : 'este mês';
+  const outras = rec.freq==='semanal' ? 'as outras semanas' : rec.freq==='diaria' ? 'os outros dias' : 'os outros meses';
   const s = openSheet('<h3>'+(receita?'Confirmar recebimento':'Confirmar pagamento')+'</h3>'+
     '<p class="sec" style="font-size:14px;margin-bottom:4px">'+esc(rec.nome)+' — '+(rec.freq==='semanal'?'semana de ':'')+fmtDataCurta(o.data)+'</p>'+
     '<div class="f-label">Valor '+(receita?'recebido':'pago')+'</div>'+
-    '<input class="f-input valor-input" id="pValor" inputmode="decimal" value="'+String(rec.valor).replace('.',',')+'">'+
-    '<div class="f-label">Data</div><input class="f-input" id="pData" type="date" value="'+(o.data <= hojeISO() ? hojeISO() : o.data)+'">'+
-    '<button class="btn" id="pOk">'+(receita?'Recebi ✓':'Paguei ✓')+'</button>');
-  setTimeout(() => { const i = s.querySelector('#pValor'); i.focus(); i.select && i.select(); }, 120);
+    '<input class="f-input valor-input" id="pValor" inputmode="decimal" value="'+mascaraViva(String(rec.valor).replace('.',','))+'">'+
+    '<div class="rep-hint" id="pDelta">Vale só para '+qual+'. '+outras.charAt(0).toUpperCase()+outras.slice(1)+' seguem com <span class="amt">'+R(rec.valor)+'</span>.</div>'+
+    '<div class="f-label">Data</div><input class="f-input" id="pData" type="date" value="'+o.data+'">'+
+    '<button class="btn" id="pOk">'+(receita?'Recebi ✓':'Paguei ✓')+'</button>'+
+    '<button class="btn ghost" id="pSoAjuste">Só corrigir o previsto (sem dar baixa)</button>');
+  const inp = s.querySelector('#pValor');
+  inp.addEventListener('input', () => {
+    inp.value = mascaraViva(inp.value);
+    const v = parseValor(inp.value), d = s.querySelector('#pDelta');
+    if (v && Math.abs(v - rec.valor) > 0.001)
+      d.innerHTML = (v > rec.valor ? '↑ ' : '↓ ') + '<strong>'+R(Math.abs(v-rec.valor))+'</strong> em relação ao previsto ('+R(rec.valor)+'). Vale só para '+qual+' — '+outras+' seguem iguais.';
+    else
+      d.innerHTML = 'Vale só para '+qual+'. '+outras.charAt(0).toUpperCase()+outras.slice(1)+' seguem com <span class="amt">'+R(rec.valor)+'</span>.';
+  });
+  setTimeout(() => { inp.focus(); inp.select && inp.select(); }, 120);
   s.querySelector('#pOk').onclick = () => {
-    const v = parseValor(s.querySelector('#pValor').value);
-    if (!v || v <= 0) return shake(s.querySelector('#pValor'));
+    const v = parseValor(inp.value);
+    if (!v || v <= 0) return shake(inp);
     state.data.lancamentos.push({id: uid('l'), tipo: rec.tipo, valor: v, categoriaId: rec.categoriaId, descricao: rec.nome, data: s.querySelector('#pData').value || o.data, recChave: o.chave, criadoEm: new Date().toISOString()});
     touch(); closeSheet(); renderAll(); toast(receita ? 'Recebimento registrado ✓' : 'Pagamento registrado ✓');
+  };
+  /* guarda o novo valor apenas nesta ocorrência, mantendo-a pendente */
+  s.querySelector('#pSoAjuste').onclick = () => {
+    const v = parseValor(inp.value);
+    if (!v || v <= 0) return shake(inp);
+    state.data.ajustes[o.chave] = v;
+    touch(); closeSheet(); renderAll();
+    toast('Previsto de '+fmtDataCurta(o.data)+' ajustado para '+R(v), () => { delete state.data.ajustes[o.chave]; touch(); renderAll(); });
   };
 }
 
