@@ -19,7 +19,7 @@
   color-scheme:light;
   --page:#F7F5F0; --surface:#FFFFFF; --ink:#16181B; --ink-2:#4E555D; --muted:#7C858F;
   --grid:#E7E4DC; --baseline:#C9C5BA; --border:rgba(22,24,27,.10); --border-soft:rgba(22,24,27,.06);
-  --s1:#A47B24; --s2:#C05A38; --s3:#2E8F63; --s4:#3E6FA8; --s5:#B25587; --s6:#0F8A5F; --s7:#6D5AC8; --s8:#C44F3C; --s0:#7C858F;
+  --s1:#3D6FB4; --s2:#1E8A77; --s3:#6D5AC8; --s4:#B4527E; --s5:#A8641F; --s6:#1F7F96; --s7:#8A6A45; --s8:#C05A48; --s0:#7C858F; --fq:#6D5AC8;
   --good:#0F8A5F; --warn:#B98A16; --critical:#C44F3C;
   --up:#0B6B4E; --down:#C44F3C;
   --accent:#A47B24; --accent-soft:rgba(164,123,36,.10); --accent-soft-2:rgba(164,123,36,.17);
@@ -33,7 +33,7 @@
     color-scheme:dark;
     --page:#0E1114; --surface:#14181D; --ink:#EAEEF2; --ink-2:#B9C2CC; --muted:#8A96A3;
     --grid:#20262E; --baseline:#3A444F; --border:rgba(255,255,255,.09); --border-soft:rgba(255,255,255,.055);
-    --s1:#E2B34C; --s2:#E0795A; --s3:#58BE8F; --s4:#7FA8E0; --s5:#D883B8; --s6:#3ECF8E; --s7:#9C8BE8; --s8:#F07E6C; --s0:#8A96A3;
+    --s1:#6CA6E8; --s2:#4FC4B0; --s3:#A78BE8; --s4:#E08BB0; --s5:#E3A05B; --s6:#5BC8DE; --s7:#C4A57C; --s8:#E88B7A; --s0:#8A96A3; --fq:#9C8BE8;
     --good:#3ECF8E; --warn:#FAB219; --critical:#F07E6C;
     --up:#3ECF8E; --down:#F07E6C;
     --accent:#E2B34C; --accent-soft:rgba(226,179,76,.13); --accent-soft-2:rgba(226,179,76,.20);
@@ -47,7 +47,7 @@
   color-scheme:dark;
   --page:#0E1114; --surface:#14181D; --ink:#EAEEF2; --ink-2:#B9C2CC; --muted:#8A96A3;
   --grid:#20262E; --baseline:#3A444F; --border:rgba(255,255,255,.09); --border-soft:rgba(255,255,255,.055);
-  --s1:#E2B34C; --s2:#E0795A; --s3:#58BE8F; --s4:#7FA8E0; --s5:#D883B8; --s6:#3ECF8E; --s7:#9C8BE8; --s8:#F07E6C; --s0:#8A96A3;
+  --s1:#6CA6E8; --s2:#4FC4B0; --s3:#A78BE8; --s4:#E08BB0; --s5:#E3A05B; --s6:#5BC8DE; --s7:#C4A57C; --s8:#E88B7A; --s0:#8A96A3; --fq:#9C8BE8;
   --good:#3ECF8E; --warn:#FAB219; --critical:#F07E6C;
   --up:#3ECF8E; --down:#F07E6C;
   --accent:#E2B34C; --accent-soft:rgba(226,179,76,.13); --accent-soft-2:rgba(226,179,76,.20);
@@ -69,6 +69,9 @@ svg{display:block}
 .pos{color:var(--up)} .neg{color:var(--down)}
 /* saída de dinheiro: neutra — vermelho é reservado para alerta (atraso, saldo negativo) */
 .out{color:var(--ink)}
+.hub-tag{font-weight:760;letter-spacing:.03em;font-size:.92em}
+.hub-sep{color:var(--muted)}
+.ext-row.feito .hub-tag,.row.done .hub-tag{color:var(--muted)!important}
 .num{font-variant-numeric:tabular-nums}
 body.private .amt,body.private .blur-priv{filter:blur(7px);transition:filter .2s}
 /* ================= shell ================= */
@@ -81,7 +84,7 @@ aside#side{
 .sp-switch{display:grid;grid-template-columns:1fr 1fr;background:var(--page);border:1px solid var(--border-soft);border-radius:10px;padding:3px;gap:3px;margin:0 4px 14px}
 .sp-switch button{padding:6.5px 4px;border-radius:7px;font-size:13px;font-weight:620;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp-switch button.on{background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
-body.fq{--accent:var(--s7);--accent-soft:color-mix(in srgb, var(--s7) 12%, transparent);--accent-soft-2:color-mix(in srgb, var(--s7) 18%, transparent);--on-accent:#fff;--accent-grad:linear-gradient(160deg,color-mix(in srgb, var(--s7) 82%, #fff),color-mix(in srgb, var(--s7) 84%, #000))}
+body.fq{--accent:var(--fq);--accent-soft:color-mix(in srgb, var(--fq) 12%, transparent);--accent-soft-2:color-mix(in srgb, var(--fq) 18%, transparent);--on-accent:#fff;--accent-grad:linear-gradient(160deg,color-mix(in srgb, var(--fq) 82%, #fff),color-mix(in srgb, var(--fq) 84%, #000))}
 .side-brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(160deg,var(--accent-soft-2),transparent);border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:800;flex:none}
 nav#nav{display:flex;flex-direction:column;gap:2px}
 .nav-sec{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);opacity:.75;padding:16px 12px 6px;user-select:none}
@@ -896,6 +899,15 @@ function fmtDiaHead(iso){
 function mesesEntre(ymA, ymB){ const [a1,m1]=ymA.split('-').map(Number), [a2,m2]=ymB.split('-').map(Number); return (a2-a1)*12 + (m2-m1); }
 const catById = id => (state.data.categorias.find(c => c.id === id)) || {id:'?', nome:'Sem categoria', cor:0, tipo:'despesa'};
 const corVar = c => 'var(' + (SLOT[c.cor ?? 0] || '--s0') + ')';
+/* nome com o CENTRO DE CUSTO tingido na cor do hub: "PIRACICABA - Aluguel" */
+function nomeHtml(nome, categoriaId){
+  const s = String(nome || '');
+  const i = s.indexOf(' - ');
+  if (i <= 0) return esc(s);
+  const cat = categoriaId ? state.data.categorias.find(c => c.id === categoriaId) : null;
+  const cor = cat ? corVar(cat) : null;
+  return '<span class="hub-tag"'+(cor ? ' style="color:'+cor+'"' : '')+'>'+esc(s.slice(0,i))+'</span><span class="hub-sep"> · </span>'+esc(s.slice(i+3));
+}
 
 /* ---------------- armazenamento ---------------- */
 function loadCfg(){ try { return JSON.parse(localStorage.getItem(LS_CFG)) } catch(e){ return null } }
@@ -1205,8 +1217,8 @@ function colunasSVG(serie, opts){
       return '<path d="M '+x+' '+(yv+r)+' q 0 -'+r+' '+r+' -'+r+' h '+(bw-2*r)+' q '+r+' 0 '+r+' '+r+' v '+(h-r)+' h -'+bw+' Z" fill="'+cor+'"><title>'+fmtMesLabel(s.ym)+' — '+(key==='rec'?'receitas: ':'despesas: ')+R(v)+'</title></path>';
     };
     if (o.clickable) svg += '<rect data-ym="'+s.ym+'" class="col-hit" x="'+(padL+grupo*i)+'" y="'+padT+'" width="'+grupo+'" height="'+(ih)+'" fill="transparent" style="cursor:pointer"/>';
-    svg += bar(s.rec, cxg-bw-1, 'var(--s6)', 'rec');
-    svg += bar(s.desp, cxg+1, 'var(--s8)', 'desp');
+    svg += bar(s.rec, cxg-bw-1, 'var(--good)', 'rec');
+    svg += bar(s.desp, cxg+1, 'var(--critical)', 'desp');
     if (s.ym === atual && (s.rec || s.desp)) {
       const topo = Math.min(y(s.rec||0), y(s.desp||0));
       svg += '<text x="'+cxg+'" y="'+(topo-5)+'" font-size="9.5" font-weight="600" text-anchor="middle" fill="var(--ink-2)" class="amt">'+compacto(Math.max(s.rec,s.desp))+'</text>';
@@ -1428,7 +1440,7 @@ function renderInicio(){
     const late = ehMesAtual && o.data < hoje;
     const quando = o.rec.freq==='semanal' ? DIAS_SEM[o.rec.diaSemana].slice(0,3)+' '+Number(o.data.slice(8)) : 'dia '+Number(o.data.slice(8));
     return '<button class="pend-row" data-act="pay-occ" data-chave="'+o.chave+'" title="'+(o.rec.tipo==='receita'?'Marcar como recebido':'Marcar como pago')+'">'+
-      '<span class="nm">'+esc(o.rec.nome)+'</span>'+
+      '<span class="nm">'+nomeHtml(o.rec.nome, o.rec.categoriaId)+'</span>'+
       '<span class="when'+(late?' late':'')+'">'+(late?'atrasada · ':'')+quando+'</span>'+
       '<span class="val num amt '+(o.rec.tipo==='receita'?'pos':'out')+'">'+(o.rec.tipo==='receita'?'+':'−')+R(o.rec.valor).replace('R$','R$ ')+'</span>'+
       '<span class="go"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></button>';
@@ -1631,7 +1643,7 @@ function renderExtrato(){
         '<button class="ext-row'+(it.real?'':' prev')+(feito?' feito':'')+(vermelho?' vermelho':'')+(virada?' virada':'')+'"'+
         (it.real ? ' data-act="abrir-lanc" data-id="'+it.id+'"' : ' data-act="pay-occ" data-chave="'+it.chave+'"')+'>'+
         '<span class="dia">'+fmtDataCurta(it.data)+'</span>'+
-        '<span class="nm">'+esc(it.nome)+'</span>'+
+        '<span class="nm">'+nomeHtml(it.nome, it.catId)+'</span>'+
         (feito ? '<span class="tagp ok">✓ feito</span>' : '')+
         (it.ajustado ? '<span class="tagp aj">ajustado</span>' : '')+
         '<span class="vl '+(it.valor>=0?'pos':'out')+' amt num">'+(it.valor>=0?'+':'−')+R(Math.abs(it.valor))+'</span>'+
@@ -1717,7 +1729,7 @@ function renderLanc(){
     mHtml += '<div class="day-head"><span>'+fmtDiaHead(dia)+'</span><span class="num amt '+(tot>0?'pos':tot<0?'neg':'')+'">'+Rs(tot)+'</span></div>' +
       arr2.map(l => { const c = catById(l.categoriaId);
         return '<button class="row" data-act="edit-lanc" data-id="'+l.id+'">'+
-        '<span class="mid"><span class="t1">'+esc(l.descricao || c.nome)+'</span><span class="t2">'+esc(c.nome)+(l.recChave?' · fixa':'')+'</span></span>'+
+        '<span class="mid"><span class="t1">'+nomeHtml(l.descricao || c.nome, l.categoriaId)+'</span><span class="t2">'+esc(c.nome)+(l.recChave?' · fixa':'')+'</span></span>'+
         '<span class="amt num '+(l.tipo==='receita'?'pos':'out')+'">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</span></button>'; }).join('');
   }
 
@@ -1797,7 +1809,7 @@ function rowOcc(o){
   return '<div class="row'+(pago?' done':'')+(atrasada?' overdue':'')+'" style="cursor:default">'+
     '<button class="chk" data-act="toggle-occ" data-chave="'+o.chave+'" aria-label="Marcar">'+
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>'+
-    '<button class="mid" data-act="edit-rec" data-id="'+o.rec.id+'" style="text-align:left"><span class="t1">'+esc(o.rec.nome)+(o.ajustado?' <span class="tagp aj">ajustado</span>':'')+'</span><span class="t2">'+rotStatus+'</span></button>'+
+    '<button class="mid" data-act="edit-rec" data-id="'+o.rec.id+'" style="text-align:left"><span class="t1">'+nomeHtml(o.rec.nome, o.rec.categoriaId)+(o.ajustado?' <span class="tagp aj">ajustado</span>':'')+'</span><span class="t2">'+rotStatus+'</span></button>'+
     '<span class="amt num '+(o.rec.tipo==='receita'?'pos':'out')+'">'+(o.rec.tipo==='receita'?'+':'−')+R(pago ? o.lanc.valor : o.rec.valor).replace('R$','R$ ')+'</span>'+
     '<button class="row-mais" aria-label="Opções" title="Opções" '+
       (pago ? 'data-act="menu-lanc" data-id="'+o.lanc.id+'"' : 'data-act="menu-occ" data-chave="'+o.chave+'"')+'>'+
@@ -1847,7 +1859,7 @@ function renderFixas(){
     const c = catById(r.categoriaId);
     const freqTxt = r.freq==='semanal' ? 'toda '+DIAS_SEM[r.diaSemana] : r.freq==='diaria' ? 'todos os dias' : (r.freqMeses>1 ? 'a cada '+r.freqMeses+' meses' : 'todo dia '+r.dia);
     return '<button class="row" data-act="edit-rec" data-id="'+r.id+'" style="'+(r.ativa?'':'opacity:.55')+'">'+
-      '<span class="mid"><span class="t1">'+esc(r.nome)+(r.ativa?'':' · encerrada')+'</span><span class="t2">'+freqTxt+'</span></span>'+
+      '<span class="mid"><span class="t1">'+nomeHtml(r.nome, r.categoriaId)+(r.ativa?'':' · encerrada')+'</span><span class="t2">'+freqTxt+'</span></span>'+
       '<span class="amt num '+(r.tipo==='receita'?'pos':'out')+'">'+(r.tipo==='receita'?'+':'−')+R(r.valor).replace('R$','R$ ')+'</span></button>';
   }).join('');
 
@@ -1885,7 +1897,7 @@ function renderCal(){
     const extras = evs.length-3 + (la.length?1:0);
     if (la.length) evHtml += '<span class="cal-ev">'+la.length+' lançamento'+(la.length>1?'s':'')+(laDesp?' · <span class="amt neg">−'+compacto(laDesp)+'</span>':'')+(laRec?' <span class="amt pos">+'+compacto(laRec)+'</span>':'')+'</span>';
     if (evs.length > 3) evHtml += '<span class="cal-more">+'+(evs.length-3)+' mais</span>';
-    const dots = evs.slice(0,4).map(e => '<span class="dotv" style="background:var(--s'+(e.t==='receita'?'6':'8')+')'+(e.paid?';opacity:.35':'')+'"></span>').join('') + (la.length? '<span class="dotv" style="background:var(--s1)"></span>':'');
+    const dots = evs.slice(0,4).map(e => '<span class="dotv" style="background:var(--'+(e.t==='receita'?'good':'critical')+')'+(e.paid?';opacity:.35':'')+'"></span>').join('') + (la.length? '<span class="dotv" style="background:var(--s1)"></span>':'');
     cells += '<button class="cal-day'+(iso===hoje?' today':'')+'" data-act="day" data-iso="'+iso+'"><span class="cd-n">'+d+'</span>'+evHtml+'<span class="cd-dots">'+dots+'</span></button>';
   }
   const t = totaisDoMes(ym), prev = previstoDoMes(ym);
@@ -1893,7 +1905,7 @@ function renderCal(){
     '<div class="cal-card"><div class="cal-grid">'+
     ['dom','seg','ter','qua','qui','sex','sáb'].map(w => '<div class="cal-wd">'+w+'</div>').join('')+
     cells + '</div>'+
-    '<div class="cal-sum"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--s6);margin-right:5px"></span>a receber / recebido</span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--s8);margin-right:5px"></span>a pagar / pago</span><span style="margin-left:auto">Previsto no fim do mês: <strong class="num amt '+(prev.saldo>=0?'pos':'neg')+'">'+Rs(prev.saldo)+'</strong></span></div></div>';
+    '<div class="cal-sum"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:5px"></span>a receber / recebido</span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--critical);margin-right:5px"></span>a pagar / pago</span><span style="margin-left:auto">Previsto no fim do mês: <strong class="num amt '+(prev.saldo>=0?'pos':'neg')+'">'+Rs(prev.saldo)+'</strong></span></div></div>';
 }
 
 function sheetDia(iso){
@@ -1905,7 +1917,7 @@ function sheetDia(iso){
   const occHtml = occs.map(rowOcc).join('');
   const lHtml = lancs.filter(l=>!l.recChave).map(l => { const c = catById(l.categoriaId);
     return '<button class="row" data-act="edit-lanc" data-id="'+l.id+'">'+
-    '<span class="mid"><span class="t1">'+esc(l.descricao || c.nome)+'</span><span class="t2">'+esc(c.nome)+'</span></span>'+
+    '<span class="mid"><span class="t1">'+nomeHtml(l.descricao || c.nome, l.categoriaId)+'</span><span class="t2">'+esc(c.nome)+'</span></span>'+
     '<span class="amt num '+(l.tipo==='receita'?'pos':'out')+'">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</span></button>'; }).join('');
   const s = openSheet('<h3 style="text-transform:capitalize">'+titulo+'</h3>'+
     (occHtml ? '<div class="f-label" style="margin-top:2px">Fixas do dia</div><div class="list">'+occHtml+'</div>' : '')+
