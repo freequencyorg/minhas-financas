@@ -2227,7 +2227,7 @@ function sheetLancamento(l, dataIni){
     '</div>'+
     '<div class="f-label">Categoria</div><div id="chipsWrap">'+chipsCategorias(val.tipo, val.categoriaId)+'</div>'+
     '<div class="f-row"><div><div class="f-label">Data</div><input class="f-input" id="fData" type="date" value="'+val.data+'"></div>'+
-    '<div><div class="f-label">Descrição <span style="text-transform:none;letter-spacing:0">(opcional)</span></div><input class="f-input" id="fDesc" placeholder="ex.: mercado…" value="'+esc(val.descricao||'')+'"></div></div>'+
+    '<div><div class="f-label">Descrição <span style="text-transform:none;letter-spacing:0">(opcional)</span></div><input class="f-input" id="fDesc" placeholder="ex.: GASTOS FAMÍLIA - Mercado" value="'+esc(val.descricao||'')+'"></div></div>'+
     (novo ?
       '<div class="rep-head"><div class="t"><b>Repete</b><span>cria uma fixa que se repete sozinha</span></div><button class="sw-toggle" id="fRep" role="switch" aria-checked="false"></button></div>'+
       '<div id="repBox" class="hidden"><div class="rep-box">'+
@@ -2436,7 +2436,8 @@ function sheetRecorrente(r, alvo, tipoIni){
   const val = novo ? {nome:'', tipo: tipoIni||'despesa', valor:'', categoriaId:null, freq:'mensal', dia:5, diaSemana:5, freqMeses:1, inicio: hojeISO(), fim:null, ativa:true} : {...r};
   const s = openSheet(
     '<h3>'+(novo?'Nova fixa':'Editar fixa')+(novo?'':'<button class="del" data-act-x="excluir">Excluir</button>')+'</h3>'+
-    '<div class="f-label">Nome</div><input class="f-input" id="rNome" placeholder="ex.: Aluguel, Internet…" value="'+esc(val.nome)+'">'+
+    '<div class="f-label">Nome</div><input class="f-input" id="rNome" placeholder="ex.: ROOSEVELT - Luz" value="'+esc(val.nome)+'">'+
+    '<div class="rep-hint" style="padding-top:6px">Padrão: <strong>CENTRO DE CUSTO</strong> em maiúsculas, hífen, e a descrição — <em>PIRACICABA - Aluguel</em>.</div>'+
     '<div class="f-label">Tipo</div><div class="seg" id="rTipo"><button class="desp'+(val.tipo==='despesa'?' on':'')+'" data-v="despesa">Despesa</button><button class="rec'+(val.tipo==='receita'?' on':'')+'" data-v="receita">Receita</button></div>'+
     '<div class="f-label">Valor</div><input class="f-input" id="rValor" inputmode="decimal" placeholder="R$ 0,00" value="'+(val.valor===''?'':String(val.valor).replace('.',','))+'">'+
     '<div class="f-label">Categoria</div><div id="chipsWrap">'+chipsCategorias(val.tipo, val.categoriaId)+'</div>'+
