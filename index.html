@@ -197,6 +197,19 @@ main section.panel.active{display:block}
 .quick .q-ico svg{width:17px;height:17px}
 .quick input{flex:1;border:none;background:none;outline:none;font-size:15.5px;padding:14px 6px 14px 0}
 .quick input::placeholder{color:var(--muted)}
+/* câmbio USD→BRL (Freequency) */
+.fx-grid{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fx-box{display:flex;align-items:center;gap:7px;background:var(--page);border:1px solid var(--border-soft);border-radius:12px;padding:10px 13px;flex:1;min-width:150px}
+.fx-cur{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.04em;flex:none}
+.fx-box input{border:none;background:none;outline:none;width:100%;min-width:0;font-size:19px;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:var(--ink)}
+.fx-eq{font-weight:800;color:var(--muted)}
+.fx-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}
+.fx-foot .num{font-variant-numeric:tabular-nums}
+.fx-fee{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:12px}
+.fx-fee input,.fx-man input{width:56px;text-align:right;background:var(--page);border:1px solid var(--border-soft);border-radius:7px;padding:4px 6px;font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.fx-man{display:flex;align-items:center;gap:5px}
+.fx-man input{width:66px}
+@media (max-width:919px){ .fx-eq{display:none} .fx-box{min-width:130px} }
 .q-prev{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 16px 12px;font-size:13.5px}
 .q-chip{display:inline-flex;align-items:center;gap:5px;background:var(--page);border:1px solid var(--border-soft);border-radius:8px;padding:4px 9px;color:var(--ink-2);font-weight:560}
 .q-chip.q-ok{color:var(--up);border-color:color-mix(in srgb, var(--good) 30%, transparent)}
@@ -1416,6 +1429,58 @@ function renderAll(){
 
 let donutLegenda = [];
 
+/* ---------------- câmbio USD→BRL (espaço Freequency) ---------------- */
+const LS_FX = 'mf_fx', LS_FXFEE = 'mf_fxfee';
+const fx = { rate: null, ts: 0, fonte: '', buscando: false };
+try { const c = JSON.parse(localStorage.getItem(LS_FX) || 'null'); if (c && c.rate > 0) Object.assign(fx, c); } catch(e){}
+const fxFee = () => { const v = parseFloat((localStorage.getItem(LS_FXFEE) || '').replace(',', '.')); return isNaN(v) || v < 0 ? 0 : v; };
+const fxEfetiva = () => fx.rate > 0 ? fx.rate * (1 - fxFee() / 100) : null;
+const fxFmt = (n, d) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: d || 2 });
+let fxUlt = 'usd';
+
+async function fxAtualizar(force){
+  if (fx.buscando) return;
+  if (!force && fx.rate && Date.now() - fx.ts < 30 * 60 * 1000) { fxPinta(); return; }
+  fx.buscando = true; fxPinta();
+  const fontes = [
+    ['comercial', 'https://economia.awesomeapi.com.br/json/last/USD-BRL', j => parseFloat(j.USDBRL && j.USDBRL.bid)],
+    ['BCE', 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL', j => j.rates && j.rates.BRL]
+  ];
+  for (const [fonte, url, pega] of fontes){
+    try {
+      const r = await fetch(url, { signal: (AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined) });
+      if (!r.ok) continue;
+      const v = pega(await r.json());
+      if (v > 0){
+        fx.rate = v; fx.ts = Date.now(); fx.fonte = fonte;
+        try { localStorage.setItem(LS_FX, JSON.stringify({ rate: fx.rate, ts: fx.ts, fonte: fx.fonte })) } catch(e){}
+        break;
+      }
+    } catch(e){}
+  }
+  fx.buscando = false; fxPinta(); fxRecalc();
+}
+function fxRecalc(){
+  const u = $('#fxUsd'), b = $('#fxBrl'), ef = fxEfetiva();
+  if (!u || !b || !ef) return;
+  if (fxUlt === 'usd'){ const v = parseValor(u.value); b.value = isNaN(v) || v <= 0 ? '' : fxFmt(v * ef); }
+  else { const v = parseValor(b.value); u.value = isNaN(v) || v <= 0 ? '' : fxFmt(v / ef); }
+}
+function fxPinta(){
+  const info = $('#fxInfo'); if (!info) return;
+  if (fx.buscando && !fx.rate){ info.innerHTML = 'buscando cotação…'; return; }
+  if (!fx.rate){
+    info.innerHTML = 'sem cotação — informe: <label class="fx-man">1 US$ = R$ <input id="fxManual" inputmode="decimal" placeholder="5,40"></label>';
+    const m = $('#fxManual');
+    if (m) m.addEventListener('input', () => { const v = parseValor(m.value); if (!isNaN(v) && v > 0){ fx.rate = v; fx.ts = Date.now(); fx.fonte = 'manual'; try { localStorage.setItem(LS_FX, JSON.stringify({ rate: fx.rate, ts: fx.ts, fonte: fx.fonte })) } catch(e){} fxRecalc(); const i2 = $('#fxInfo'); if (i2) i2.title = ''; } });
+    return;
+  }
+  const fee = fxFee(), ef = fxEfetiva();
+  const hora = new Date(fx.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  info.innerHTML = '1 US$ = <b class="num">R$ ' + fxFmt(fx.rate, 4) + '</b> · ' + fx.fonte + ' · ' + hora +
+    (fee > 0 && ef ? ' · com taxa de ' + fxFmt(fee) + '%: <b class="num">R$ ' + fxFmt(ef, 4) + '</b>' : '');
+}
+
 function renderInicio(){
   const ym = state.month, t = totaisDoMes(ym), prev = previstoDoMes(ym);
   const ehAtualOuFuturo = mesesEntre(mesAtual(), ym) >= 0;
@@ -1523,6 +1588,17 @@ function renderInicio(){
       '<input id="qAdd" placeholder="Lance rápido: “250 mercado ontem” · “recebi 3000 pablo” · “1947 condomínio”" autocomplete="off">'+
     '</div><div class="q-prev hidden" id="qPrev"></div></div>'+
 
+    (state.espaco === 'freequency' ?
+      '<div class="card" style="margin-bottom:14px"><div class="h-row"><h2>Câmbio USD → BRL</h2><button class="link-btn" id="fxRefresh">atualizar</button></div>'+
+      '<div class="fx-grid">'+
+        '<div class="fx-box"><span class="fx-cur">US$</span><input id="fxUsd" inputmode="decimal" placeholder="0,00" autocomplete="off"></div>'+
+        '<span class="fx-eq">=</span>'+
+        '<div class="fx-box"><span class="fx-cur">R$</span><input id="fxBrl" inputmode="decimal" placeholder="0,00" autocomplete="off"></div>'+
+        '<button class="btn-sm" id="fxLancar" style="flex:none">Lançar entrada</button>'+
+      '</div>'+
+      '<div class="fx-foot"><span id="fxInfo"></span><label class="fx-fee">taxa Wise <input id="fxFeeInp" inputmode="decimal" value="'+esc(localStorage.getItem(LS_FXFEE)||'')+'" placeholder="0">%</label></div>'+
+      '</div>' : '')+
+
     projCard+
 
     '<div class="grid c2" style="align-items:start">'+
@@ -1549,6 +1625,24 @@ function renderInicio(){
         else if (q.value.trim()) shake(q);
       } else if (e.key === 'Escape') { q.value=''; $('#qPrev').classList.add('hidden'); e.stopPropagation(); }
     });
+  }
+
+  /* câmbio (Freequency) */
+  if (state.espaco === 'freequency' && $('#fxUsd')){
+    const u = $('#fxUsd'), b = $('#fxBrl'), f = $('#fxFeeInp');
+    u.addEventListener('input', () => { fxUlt = 'usd'; fxRecalc(); });
+    b.addEventListener('input', () => { fxUlt = 'brl'; fxRecalc(); });
+    f.addEventListener('input', () => { try { localStorage.setItem(LS_FXFEE, f.value.trim()) } catch(e){} fxPinta(); fxRecalc(); });
+    $('#fxRefresh').onclick = () => fxAtualizar(true);
+    $('#fxLancar').onclick = () => {
+      const v = parseValor(b.value);
+      if (isNaN(v) || v <= 0) { shake(b.closest('.fx-box')); return; }
+      const uv = parseValor(u.value), ef = fxEfetiva();
+      const vendas = state.data.categorias.find(c => c.id === 'c-fq-vendas' && c.tipo === 'receita');
+      sheetLancamento(null, null, { tipo: 'receita', valor: v, categoriaId: vendas ? vendas.id : null,
+        descricao: 'Recebimento US$ ' + (isNaN(uv) ? '' : fxFmt(uv)) + (ef ? ' @ R$ ' + fxFmt(ef, 4) : '') });
+    };
+    fxPinta(); fxAtualizar();
   }
 }
 
@@ -2334,12 +2428,12 @@ function qPrevHtml(p){
     '<span class="q-enter"><kbd>↵</kbd> lança</span>';
 }
 
-function sheetLancamento(l, dataIni){
+function sheetLancamento(l, dataIni, pre){
   const novo = !l;
-  const val = novo ? {tipo:'despesa', valor:'', categoriaId:null, descricao:'', data: dataIni || (state.month===mesAtual()? hojeISO() : state.month+'-01')} : {...l};
+  const val = novo ? Object.assign({tipo:'despesa', valor:'', categoriaId:null, descricao:'', data: dataIni || (state.month===mesAtual()? hojeISO() : state.month+'-01')}, pre || {}) : {...l};
   const s = openSheet(
     '<h3>'+(novo?'Novo lançamento':'Editar lançamento')+(novo?'':'<button class="del" data-act-x="excluir">Excluir</button>')+'</h3>'+
-    '<div class="amount-box"><span class="cur">R$</span><input class="valor-input '+(val.tipo==='despesa'?'vneg':'vpos')+'" id="fValor" inputmode="decimal" placeholder="0,00" value="'+(novo?'':mascaraViva(String(val.valor).replace('.',',')))+'"></div>'+
+    '<div class="amount-box"><span class="cur">R$</span><input class="valor-input '+(val.tipo==='despesa'?'vneg':'vpos')+'" id="fValor" inputmode="decimal" placeholder="0,00" value="'+(val.valor===''?'':mascaraViva(String(val.valor).replace('.',',')))+'"></div>'+
     '<div class="seg" id="fTipo" style="margin-top:8px">'+
       '<button class="desp'+(val.tipo==='despesa'?' on':'')+'" data-v="despesa"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14m-6-6 6 6 6-6"/></svg>Despesa</button>'+
       '<button class="rec'+(val.tipo==='receita'?' on':'')+'" data-v="receita"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V6m-6 6 6-6 6 6"/></svg>Receita</button>'+
