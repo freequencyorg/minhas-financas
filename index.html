@@ -283,6 +283,26 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
 .sec-head{display:flex;align-items:center;justify-content:space-between;margin:16px 2px 8px}
 .sec-head h3{font-size:13.5px;font-weight:650;color:var(--ink-2)}
 .sec-head .sum{font-size:12.5px;color:var(--muted)}
+/* ================= hubs ================= */
+.hub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.hub-card{--hc:var(--s0);position:relative;display:flex;flex-direction:column;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;padding:17px 19px;box-shadow:var(--shadow);overflow:hidden;transition:border-color .12s, transform .12s}
+.hub-card:hover{border-color:color-mix(in srgb, var(--hc) 45%, transparent);transform:translateY(-1px)}
+.hub-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--hc);opacity:.85}
+.hc-top{display:flex;align-items:center;gap:8px}
+.hc-late{margin-left:auto;font-size:11px;font-weight:700;color:var(--critical);background:color-mix(in srgb, var(--critical) 10%, transparent);border-radius:99px;padding:2px 9px}
+.hc-res{font-size:23px;font-weight:800;letter-spacing:-.02em}
+.hc-sub{display:flex;gap:14px;font-size:12.5px;color:var(--muted)}
+.hc-sub b{font-weight:700}
+.hc-foot{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:2px}
+.hc-bar{height:4px;border-radius:2px;background:color-mix(in srgb, var(--hc) 14%, transparent);overflow:hidden}
+.hc-bar i{display:block;height:100%;background:var(--hc);border-radius:2px}
+.hub-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.hub-tag-lg{font-size:15px;padding:6px 14px;border-radius:9px}
+.hub-head ~ .grid .hub-tag{display:none}
+.hh-res{margin-left:auto;font-size:22px;font-weight:800;text-align:right}
+.hh-res em{display:block;font-style:normal;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+@media (max-width:919px){ .hub-grid{grid-template-columns:1fr 1fr} .hh-res{margin-left:0;text-align:left;flex-basis:100%} }
+@media (max-width:480px){ .hub-grid{grid-template-columns:1fr} }
 /* ================= calendário ================= */
 .cal-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
@@ -666,31 +686,17 @@ nav.tabs{display:none}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5h13v17l-2.2-1.6-2.2 1.6-2.1-1.6-2.2 1.6-2.1-1.6-2.2 1.6z"/><path d="M9 8.5h6M9 12.5h6"/></svg>
         Extrato <kbd>2</kbd>
       </button>
-      <div class="nav-sec">Dia a dia</div>
-      <button class="nav-it" data-page="lanc">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4.5 6.5h15M4.5 12h15M4.5 17.5h9"/></svg>
-        Lançamentos <kbd>3</kbd>
-      </button>
       <button class="nav-it" data-page="fixas">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.5l3 3-3 3"/><path d="M20 5.5H7a4 4 0 0 0-4 4v1"/><path d="M7 21.5l-3-3 3-3"/><path d="M4 18.5h13a4 4 0 0 0 4-4v-1"/></svg>
-        Fixas <kbd>4</kbd>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="2"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="2"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="2"/><rect x="13" y="13" width="7.5" height="7.5" rx="2"/></svg>
+        Hubs <kbd>3</kbd>
       </button>
-      <button class="nav-it" data-page="cal">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8.5 3.5v4M15.5 3.5v4"/></svg>
-        Calendário <kbd>5</kbd>
-      </button>
-      <div class="nav-sec">Planejar</div>
       <button class="nav-it" data-page="rel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-6"/></svg>
-        Relatórios <kbd>6</kbd>
+        Relatórios <kbd>4</kbd>
       </button>
       <button class="nav-it" data-page="cen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h5l3.5 6L16 18h4"/><path d="M4 18h5l2-3.4"/><path d="M13.5 8.6 16 6h4"/><path d="M17.5 3.5 20 6l-2.5 2.5M17.5 15.5 20 18l-2.5 2.5"/></svg>
-        Cenários <kbd>7</kbd>
-      </button>
-      <button class="nav-it" data-page="metas">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.6"/><circle cx="12" cy="12" r=".5" fill="currentColor"/></svg>
-        Metas <kbd>8</kbd>
+        Cenários <kbd>5</kbd>
       </button>
     </nav>
     <div class="side-foot">
@@ -750,13 +756,13 @@ nav.tabs{display:none}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5h13v17l-2.2-1.6-2.2 1.6-2.1-1.6-2.2 1.6-2.1-1.6-2.2 1.6z"/><path d="M9 8.5h6M9 12.5h6"/></svg>
         Extrato
       </button>
-      <button data-page="lanc">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4.5 6.5h15M4.5 12h15M4.5 17.5h9"/></svg>
-        Lançamentos
-      </button>
       <button data-page="fixas">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.5l3 3-3 3"/><path d="M20 5.5H7a4 4 0 0 0-4 4v1"/><path d="M7 21.5l-3-3 3-3"/><path d="M4 18.5h13a4 4 0 0 0 4-4v-1"/></svg>
-        Fixas
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="2"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="2"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="2"/><rect x="13" y="13" width="7.5" height="7.5" rx="2"/></svg>
+        Hubs
+      </button>
+      <button data-page="rel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-6"/></svg>
+        Relatórios
       </button>
       <button data-page="mais">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>
@@ -791,7 +797,7 @@ const ESPACOS = { pessoal: {nome:'Pessoal', logo:'R$', arquivo:'dados.json'}, fr
 const SLOT = { 0:'--s0',1:'--s1',2:'--s2',3:'--s3',4:'--s4',5:'--s5',6:'--s6',7:'--s7',8:'--s8' };
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DIAS_SEM = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
-const PAGES = { inicio:'Visão geral', extrato:'Extrato', lanc:'Lançamentos', fixas:'Fixas', cal:'Calendário', rel:'Relatórios', cen:'Cenários', metas:'Metas', ajustes:'Ajustes' };
+const PAGES = { inicio:'Visão geral', extrato:'Extrato', fixas:'Hubs', rel:'Relatórios', cen:'Cenários', lanc:'Histórico', cal:'Calendário', metas:'Metas', ajustes:'Ajustes' };
 
 const SEED = {
   versao: 1, moeda: 'BRL', atualizadoEm: null,
@@ -1392,7 +1398,7 @@ function renderAll(){
   $('#monthNav').style.visibility = (state.page==='metas'||state.page==='ajustes'||state.page==='cen') ? 'hidden' : 'visible';
   $$('#nav .nav-it').forEach(b => b.classList.toggle('on', b.dataset.page === state.page));
   const sb = $('#setBtn'); if (sb) sb.classList.toggle('on', state.page === 'ajustes');
-  $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.page === state.page || (b.dataset.page==='mais' && ['cal','cen','metas','ajustes','rel'].includes(state.page))));
+  $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.page === state.page || (b.dataset.page==='mais' && ['cal','cen','metas','ajustes','lanc'].includes(state.page))));
   $$('main section.panel').forEach(p => p.classList.remove('active'));
   $('#panel-' + state.page).classList.add('active');
   ({inicio: renderInicio, extrato: renderExtrato, lanc: renderLanc, fixas: renderFixas, cal: renderCal, rel: renderRel, cen: renderCen, metas: renderMetas, ajustes: renderAjustes})[state.page]();
@@ -1819,26 +1825,16 @@ function rowOcc(o){
 }
 
 function renderFixas(){
+  if (state.hubSel && !state.data.categorias.some(c => c.nome === state.hubSel)) state.hubSel = null;
+  if (state.hubSel) return renderHubDetalhe(state.hubSel);
+
   const ym = state.month;
   const occs = ocorrencias(ym);
-  const rec = occs.filter(o => o.rec.tipo === 'receita');
-  const desp = occs.filter(o => o.rec.tipo === 'despesa');
-  const somaP = a => a.filter(o => o.lanc).reduce((s,o) => s+o.lanc.valor, 0);
-  const somaT = a => a.reduce((s,o) => s + (o.lanc ? o.lanc.valor : o.rec.valor), 0);
-  const recP = somaP(rec), recT = somaT(rec), despP = somaP(desp), despT = somaT(desp);
+  const lancs = lancsDoMes(ym);
+  const hoje = hojeISO();
 
-  const resumo =
-    '<div class="card" style="margin-bottom:14px"><h2>Resumo de '+fmtMesLabel(ym)+'</h2>'+
-    '<div class="grid c2" style="margin:0">'+
-    '<div class="meter-item" style="--mc:var(--s6);margin:0"><div class="meter-top"><span class="nm">Recebido</span><span class="st muted num"><span class="amt">'+R(recP)+'</span> de <span class="amt">'+R(recT)+'</span></span></div><div class="meter"><i style="width:'+(recT?Math.min(100,recP/recT*100):0)+'%"></i></div></div>'+
-    '<div class="meter-item" style="--mc:var(--s0);margin:0"><div class="meter-top"><span class="nm">Pago</span><span class="st muted num"><span class="amt">'+R(despP)+'</span> de <span class="amt">'+R(despT)+'</span></span></div><div class="meter"><i style="width:'+(despT?Math.min(100,despP/despT*100):0)+'%"></i></div></div>'+
-    '</div></div>';
-
-  const fFreq = state.fixaFreq || 'todas';
-  const todas = state.data.recorrentes;
-  const conta = f => todas.filter(r => r.freq === f).length;
   /* fixas ativas que não geram nada nos próximos 12 meses — normalmente data de fim vencida */
-  const mudas = todas.filter(r => {
+  const mudas = state.data.recorrentes.filter(r => {
     if (!r.ativa) return false;
     for (let i = 0; i < 12; i++) if (gerarOcorrencias([r], addMeses(ym, i)).length) return false;
     return true;
@@ -1846,33 +1842,95 @@ function renderFixas(){
   const avisoMudas = mudas.length
     ? '<div class="ext-aviso" style="margin-bottom:14px"><span>⚠️ <b>'+mudas.length+' fixa'+(mudas.length===1?'':'s')+' ativa'+(mudas.length===1?'':'s')+' não aparece'+(mudas.length===1?'':'m')+' em nenhum mês do próximo ano</b> — '+
         mudas.slice(0,3).map(r=>esc(r.nome)).join(', ')+(mudas.length>3?' e mais '+(mudas.length-3):'')+
-        '. Costuma ser data de término já vencida ou dia não preenchido. Clique nela abaixo para revisar.</span></div>'
+        '. Abra o hub e revise a fixa (término vencido ou dia vazio).</span></div>'
     : '';
-  const defs = todas.slice()
-    .filter(r => fFreq === 'todas' || r.freq === fFreq)
-    .sort((a,b) => (b.ativa?1:0)-(a.ativa?1:0) || a.nome.localeCompare(b.nome,'pt-BR'));
-  const freqChips = '<div class="hz-chips" style="margin-left:auto">'+
-    [['todas','Todas',todas.length],['mensal','Mensais',conta('mensal')],['semanal','Semanais',conta('semanal')],['diaria','Diárias',conta('diaria')]]
-      .filter(([k,,n]) => k==='todas' || n>0)
-      .map(([k,l,n]) => '<button class="chip'+(fFreq===k?' on':'')+'" data-act="set-fixafreq" data-v="'+k+'">'+l+' <span class="muted">'+n+'</span></button>').join('')+
+
+  /* agrupa tudo por hub (nome da categoria) */
+  const hubs = new Map();
+  const hubDe = catId => { const c = catById(catId); return c ? c.nome : 'Outros'; };
+  const pega = nome => { if (!hubs.has(nome)) hubs.set(nome, {nome, entra:0, sai:0, occs:0, pagas:0, fixas:0, atrasadas:0}); return hubs.get(nome); };
+  for (const o of occs){
+    const g = pega(hubDe(o.rec.categoriaId));
+    const v = o.lanc ? o.lanc.valor : o.rec.valor;
+    if (o.rec.tipo === 'receita') g.entra += v; else g.sai += v;
+    g.occs++; if (o.lanc) g.pagas++;
+    if (!o.lanc && o.data < hoje && ym === mesAtual()) g.atrasadas++;
+  }
+  for (const l of lancs){
+    if (l.recChave) continue; /* baixas já contadas via occs */
+    const g = pega(hubDe(l.categoriaId));
+    if (l.tipo === 'receita') g.entra += l.valor; else g.sai += l.valor;
+  }
+  for (const r of state.data.recorrentes) pega(hubDe(r.categoriaId)).fixas++;
+  const catDoHub = nome => state.data.categorias.find(c => c.nome === nome);
+
+  const lista = Array.from(hubs.values()).sort((a,b) => (b.entra+b.sai) - (a.entra+a.sai));
+  const cards = lista.map(g => {
+    const c = catDoHub(g.nome);
+    const cor = c ? corVar(c) : 'var(--s0)';
+    const res = g.entra - g.sai;
+    return '<button class="hub-card" data-act="hub-open" data-hub="'+esc(g.nome)+'" style="--hc:'+cor+'">'+
+      '<div class="hc-top"><span class="hub-tag">'+esc(g.nome)+'</span>'+
+        (g.atrasadas ? '<span class="hc-late">'+g.atrasadas+' atrasada'+(g.atrasadas===1?'':'s')+'</span>' : '')+'</div>'+
+      '<div class="hc-res num amt '+(res>0?'pos':res<0?'':'')+'">'+Rs(res)+'</div>'+
+      '<div class="hc-sub">'+
+        (g.entra ? '<span>entra <b class="pos amt num">'+compacto(g.entra)+'</b></span>' : '')+
+        (g.sai ? '<span>sai <b class="amt num">'+compacto(g.sai)+'</b></span>' : '')+
+      '</div>'+
+      '<div class="hc-foot"><span>'+(g.occs ? g.pagas+' de '+g.occs+' no mês' : 'sem contas no mês')+'</span><span class="muted">'+g.fixas+' fixa'+(g.fixas===1?'':'s')+'</span></div>'+
+      (g.occs ? '<div class="hc-bar"><i style="width:'+Math.round(g.pagas/g.occs*100)+'%"></i></div>' : '')+
+    '</button>';
+  }).join('');
+
+  $('#panel-fixas').innerHTML = avisoMudas +
+    '<div class="hub-grid">'+cards+'</div>'+
+    '<div class="sec-head" style="margin-top:18px"><h3>Atalhos</h3></div>'+
+    '<div class="hz-chips">'+
+      '<button class="chip" data-act="new-rec">+ nova fixa</button>'+
+      '<button class="chip" data-act="goto" data-page="cal">Calendário</button>'+
+      '<button class="chip" data-act="goto" data-page="lanc">Histórico completo</button>'+
     '</div>';
-  const gerHtml = defs.map(r => {
-    const c = catById(r.categoriaId);
+}
+
+/* detalhe de um hub: contas do mês + fixas do hub */
+function renderHubDetalhe(nome){
+  const ym = state.month, hoje = hojeISO();
+  const cats = state.data.categorias.filter(c => c.nome === nome).map(c => c.id);
+  const c0 = state.data.categorias.find(c => c.nome === nome);
+  const cor = c0 ? corVar(c0) : 'var(--s0)';
+  const occs = ocorrencias(ym).filter(o => cats.includes(o.rec.categoriaId));
+  const avulsos = lancsDoMes(ym).filter(l => !l.recChave && cats.includes(l.categoriaId));
+  const fixasHub = state.data.recorrentes.filter(r => cats.includes(r.categoriaId))
+    .sort((a,b) => (b.ativa?1:0)-(a.ativa?1:0) || a.nome.localeCompare(b.nome,'pt-BR'));
+  let entra = 0, sai = 0;
+  for (const o of occs){ const v = o.lanc ? o.lanc.valor : o.rec.valor; if (o.rec.tipo==='receita') entra += v; else sai += v; }
+  for (const l of avulsos){ if (l.tipo==='receita') entra += l.valor; else sai += l.valor; }
+  const res = entra - sai;
+
+  const gerHtml = fixasHub.map(r => {
     const freqTxt = r.freq==='semanal' ? 'toda '+DIAS_SEM[r.diaSemana] : r.freq==='diaria' ? 'todos os dias' : (r.freqMeses>1 ? 'a cada '+r.freqMeses+' meses' : 'todo dia '+r.dia);
     return '<button class="row" data-act="edit-rec" data-id="'+r.id+'" style="'+(r.ativa?'':'opacity:.55')+'">'+
-      '<span class="mid"><span class="t1">'+nomeHtml(r.nome, r.categoriaId)+(r.ativa?'':' · encerrada')+'</span><span class="t2">'+freqTxt+'</span></span>'+
+      '<span class="mid"><span class="t1">'+esc(r.nome.indexOf(' - ')>0 ? r.nome.slice(r.nome.indexOf(' - ')+3) : r.nome)+(r.ativa?'':' · encerrada')+'</span><span class="t2">'+freqTxt+'</span></span>'+
       '<span class="amt num '+(r.tipo==='receita'?'pos':'out')+'">'+(r.tipo==='receita'?'+':'−')+R(r.valor).replace('R$','R$ ')+'</span></button>';
   }).join('');
 
-  $('#panel-fixas').innerHTML = avisoMudas + resumo +
-    '<div class="grid c2" style="align-items:start">'+
-      '<div><div class="sec-head"><h3>A receber</h3><span class="sum num">'+rec.filter(o=>o.lanc).length+' de '+rec.length+'</span></div>'+
-      '<div class="list">'+(rec.map(rowOcc).join('') || '<div class="empty">Nenhuma receita fixa neste mês.</div>')+'</div></div>'+
-      '<div><div class="sec-head"><h3>A pagar</h3><span class="sum num">'+desp.filter(o=>o.lanc).length+' de '+desp.length+'</span></div>'+
-      '<div class="list">'+(desp.map(rowOcc).join('') || '<div class="empty">Nenhuma despesa fixa neste mês.</div>')+'</div></div>'+
+  $('#panel-fixas').innerHTML =
+    '<div class="hub-head">'+
+      '<button class="btn-sm" data-act="hub-back">← Hubs</button>'+
+      '<span class="hub-tag hub-tag-lg" style="--hc:'+cor+'">'+esc(nome)+'</span>'+
+      '<span class="hh-res num amt '+(res>0?'pos':res<0?'neg':'')+'">'+Rs(res)+'<em>resultado de '+fmtMesLabel(ym)+'</em></span>'+
     '</div>'+
-    '<div class="sec-head"><h3>Gerenciar fixas</h3>'+freqChips+'<button class="link-btn" data-act="new-rec" style="margin-left:14px">+ nova fixa</button></div>'+
-    '<div class="list">'+(gerHtml || '<div class="empty">Nenhuma fixa com essa frequência.</div>')+'</div>';
+    '<div class="grid c2" style="align-items:start">'+
+      '<div><div class="sec-head"><h3>Contas de '+fmtMesLabel(ym)+'</h3><span class="sum num">'+occs.filter(o=>o.lanc).length+' de '+occs.length+'</span></div>'+
+      '<div class="list">'+(occs.map(rowOcc).join('') || '<div class="empty">Nenhuma conta fixa deste hub em '+fmtMesLabel(ym)+'.</div>')+
+      (avulsos.length ? '<div class="sec-head"><h3>Avulsos do mês</h3></div>'+avulsos.map(l =>
+        '<button class="row" data-act="edit-lanc" data-id="'+l.id+'">'+
+        '<span class="mid"><span class="t1">'+esc((l.descricao||'').indexOf(' - ')>0 ? l.descricao.slice(l.descricao.indexOf(' - ')+3) : (l.descricao||'sem descrição'))+'</span><span class="t2">'+fmtDataCurta(l.data)+'</span></span>'+
+        '<span class="amt num '+(l.tipo==='receita'?'pos':'out')+'">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</span></button>').join('') : '')+
+      '</div></div>'+
+      '<div><div class="sec-head"><h3>Fixas deste hub</h3><button class="link-btn" data-act="new-rec-hub" data-hub="'+esc(nome)+'">+ nova fixa</button></div>'+
+      '<div class="list">'+(gerHtml || '<div class="empty">Nenhuma fixa ainda — crie a primeira.</div>')+'</div></div>'+
+    '</div>';
 }
 
 /* ---------------- calendário ---------------- */
@@ -2277,10 +2335,10 @@ function sheetLancamento(l, dataIni){
   const wireChips = () => s.querySelectorAll('#catChips .cat-chip').forEach(ch => ch.onclick = () => { catSel = ch.dataset.cat; s.querySelectorAll('.cat-chip').forEach(x => x.classList.toggle('on', x===ch)); });
   wireChips();
   s.querySelectorAll('#fTipo button').forEach(b => b.onclick = () => {
-    tipo = b.dataset.v; catSel = null;
+    tipo = b.dataset.v; catSel = (typeof catDoHub === 'function' ? catDoHub(tipo) : null);
     s.querySelectorAll('#fTipo button').forEach(x => x.classList.toggle('on', x===b));
     vInp.classList.toggle('vneg', tipo==='despesa'); vInp.classList.toggle('vpos', tipo==='receita');
-    s.querySelector('#chipsWrap').innerHTML = chipsCategorias(tipo, null); wireChips();
+    s.querySelector('#chipsWrap').innerHTML = chipsCategorias(tipo, catSel); wireChips();
     atualizaHint();
   });
   const atualizaHint = () => {
@@ -2463,11 +2521,12 @@ function freqDaChave(chave){
   return r ? r.freq : 'mensal';
 }
 
-function sheetRecorrente(r, alvo, tipoIni){
+function sheetRecorrente(r, alvo, tipoIni, hubIni){
   alvo = alvo || state.data.recorrentes;
   const isCen = alvo !== state.data.recorrentes;
   const novo = !r;
-  const val = novo ? {nome:'', tipo: tipoIni||'despesa', valor:'', categoriaId:null, freq:'mensal', dia:5, diaSemana:5, freqMeses:1, inicio: hojeISO(), fim:null, ativa:true} : {...r};
+  const catDoHub = t => hubIni ? (state.data.categorias.find(c => c.nome === hubIni && c.tipo === t)||{}).id || null : null;
+  const val = novo ? {nome: hubIni ? hubIni+' - ' : '', tipo: tipoIni||'despesa', valor:'', categoriaId: catDoHub(tipoIni||'despesa'), freq:'mensal', dia:5, diaSemana:5, freqMeses:1, inicio: hojeISO(), fim:null, ativa:true} : {...r};
   const s = openSheet(
     '<h3>'+(novo?'Nova fixa':'Editar fixa')+(novo?'':'<button class="del" data-act-x="excluir">Excluir</button>')+'</h3>'+
     '<div class="f-label">Nome</div><input class="f-input" id="rNome" placeholder="ex.: ROOSEVELT - Luz" value="'+esc(val.nome)+'">'+
@@ -2490,7 +2549,7 @@ function sheetRecorrente(r, alvo, tipoIni){
   s.querySelectorAll('#rTipo button').forEach(b => b.onclick = () => {
     tipo = b.dataset.v; catSel = null;
     s.querySelectorAll('#rTipo button').forEach(x => x.classList.toggle('on', x===b));
-    s.querySelector('#chipsWrap').innerHTML = chipsCategorias(tipo, null); wireChips();
+    s.querySelector('#chipsWrap').innerHTML = chipsCategorias(tipo, catSel); wireChips();
   });
   s.querySelector('#rFreq').onchange = e => {
     const f = e.target.value;
@@ -2581,7 +2640,7 @@ function sheetCategoria(c, tipo){
 
 function sheetMais(){
   const s = openSheet('<h3>Mais</h3><div class="list">'+
-    [['rel','Relatórios'],['cal','Calendário'],['cen','Cenários (Plano B)'],['metas','Metas'],['ajustes','Ajustes']].map(p =>
+    [['lanc','Histórico (buscar e editar)'],['cal','Calendário'],['cen','Cenários (Plano B)'],['metas','Metas'],['ajustes','Ajustes']].map(p =>
       '<button class="row" data-go="'+p[0]+'"><span class="mid"><span class="t1">'+p[1]+'</span></span><span class="muted">›</span></button>').join('')+
     '</div>'+
     '<button class="btn" id="mAI" style="margin-top:12px">✨ Assistente</button>'+
@@ -3097,7 +3156,9 @@ document.addEventListener('click', async e => {
   else if (act === 'set-exth') { state.extH = Number(el.dataset.v); renderExtrato(); }
   else if (act === 'set-extf') { state.extF = el.dataset.v; renderExtrato(); }
   else if (act === 'toggle-realizados') { state.extRealizados = !state.extRealizados; renderExtrato(); }
-  else if (act === 'set-fixafreq') { state.fixaFreq = el.dataset.v; renderFixas(); }
+  else if (act === 'hub-open') { state.hubSel = el.dataset.hub; renderFixas(); window.scrollTo({top:0}); }
+  else if (act === 'hub-back') { state.hubSel = null; renderFixas(); }
+  else if (act === 'new-rec-hub') { sheetRecorrente(null, null, 'despesa', el.dataset.hub); }
   else if (act === 'sheet-conta') { sheetConta(); }
   else if (act === 'anexo-importar') { anexoImportar(); }
   else if (act === 'anexo-ia') { anexoParaIA(); }
