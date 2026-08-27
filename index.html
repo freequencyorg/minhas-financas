@@ -103,7 +103,12 @@ nav#nav .nav-it kbd{margin-left:auto;font-family:inherit;font-size:11.5px;color:
 #syncPill:hover{background:var(--hover)}
 #syncPill .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
 #syncPill.ok .dot{background:var(--good)} #syncPill.saving .dot{background:var(--warn)}
-#syncPill.err .dot{background:var(--critical)} #syncPill.local .dot{background:var(--s1)}
+#syncPill.err .dot{background:var(--critical)} #syncPill.local .dot{background:var(--s1)} #syncPill.sim .dot{background:var(--s2)}
+#simBar{display:flex;align-items:center;gap:12px;margin:0 26px 0;padding:9px 16px;border:1.5px dashed color-mix(in srgb, var(--s2) 55%, transparent);background:color-mix(in srgb, var(--s2) 10%, transparent);border-radius:12px;font-size:13px;color:var(--ink)}
+#simBar.hidden{display:none}
+#simBar b{color:var(--s2)}
+#simBar button{margin-left:auto;flex:none}
+@media (max-width:919px){ #simBar{margin:0 14px;flex-wrap:wrap} #simBar button{margin-left:0;width:100%} }
 .icon-sq{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--muted);flex:none}
 .icon-sq:hover{background:var(--hover);color:var(--ink-2)}
 .icon-sq svg{width:17px;height:17px}
@@ -747,6 +752,8 @@ nav.tabs{display:none}
       <button class="btn-primary" id="newBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Novo</button>
     </header>
 
+    <div id="simBar" class="hidden"><span>🔭 Simulando <b id="simNome"></b> — visão hipotética, <u>nada aqui é salvo</u></span><button class="btn-sm" data-act="sim-sair">Sair da simulação</button></div>
+
     <main>
       <section class="panel active" id="panel-inicio"></section>
       <section class="panel" id="panel-extrato"></section>
@@ -877,7 +884,9 @@ const state = {
   sel: new Set(),
   editCell: null,
   horizonte: 12,
-  cenAtivo: null
+  cenAtivo: null,
+  simulacao: null,
+  dataReal: null
 };
 
 /* ---------------- utilitários ---------------- */
@@ -972,6 +981,7 @@ async function ghPut(cfg, data, sha, msg, arquivo){
 /* ---------------- sincronização ---------------- */
 function setSync(cls, txt){ const p = $('#syncPill'); p.className = cls; $('#syncTxt').textContent = txt; }
 function touch(){
+  if (state.simulacao){ setSync('sim', 'Simulação — nada salvo'); return; }
   state.data.atualizadoEm = new Date().toISOString();
   state.dirty = true;
   cacheData();
@@ -1003,7 +1013,7 @@ async function doSave(){
   }
 }
 async function loadRemote(silent){
-  if (state.cfg.modo === 'local') return;
+  if (state.cfg.modo === 'local' || state.simulacao) return;
   const esp = state.espaco, arq = ESPACOS[esp].arquivo;
   try {
     if (!silent) setSync('saving','Carregando…');
@@ -1426,6 +1436,7 @@ function renderAll(){
   if (!state.data) return;
   $('#mLabel').textContent = fmtMesLabel(state.month);
   $('#pageTitle').textContent = PAGES[state.page] || '';
+  const simB = $('#simBar'); if (simB){ simB.classList.toggle('hidden', !state.simulacao); if (state.simulacao) $('#simNome').textContent = state.simulacao.nome; }
   $('#monthNav').style.visibility = (state.page==='metas'||state.page==='ajustes'||state.page==='cen') ? 'hidden' : 'visible';
   $$('#nav .nav-it').forEach(b => b.classList.toggle('on', b.dataset.page === state.page));
   const sb = $('#setBtn'); if (sb) sb.classList.toggle('on', state.page === 'ajustes');
@@ -2169,7 +2180,44 @@ function novoCenario(){
   touch();
 }
 
+function entrarSimulacao(cenId){
+  const cen = state.data.cenarios.find(c => c.id === cenId);
+  if (!cen || state.simulacao) return;
+  const real = state.data;
+  /* casa cada fixa do plano com a fixa real de mesmo nome+tipo para reaproveitar o id —
+     assim baixas, ajustes e pulos já feitos continuam valendo dentro da simulação */
+  const porNomeTipo = new Map(real.recorrentes.map(r => [r.nome + '|' + r.tipo, r.id]));
+  const recs = cen.recorrentes.map(r => ({...r, id: porNomeTipo.get(r.nome + '|' + r.tipo) || r.id}));
+  state.dataReal = real;
+  state.data = migrar(structuredClone(real));
+  state.data.recorrentes = recs;
+  state.simulacao = { id: cen.id, nome: cen.nome };
+  state.page = 'inicio';
+  renderAll();
+  setSync('sim', 'Simulação — nada salvo');
+  toast('🔭 Dentro de "' + cen.nome + '" — explore à vontade, nada é salvo');
+}
+function sairSimulacao(){
+  if (!state.simulacao) return;
+  state.data = state.dataReal;
+  state.dataReal = null; state.simulacao = null;
+  renderAll();
+  if (state.cfg.modo === 'local') setSync('local', 'Neste aparelho');
+  else setSync(state.dirty ? 'saving' : 'ok', state.dirty ? 'Salvando…' : 'Sincronizado');
+  toast('De volta aos dados reais');
+}
+
 function renderCen(){
+  if (state.simulacao){
+    const nomeSim = state.simulacao.nome;
+    $('#panel-cen').innerHTML =
+      '<div class="card" style="max-width:560px;margin:40px auto;text-align:center;padding:38px 30px">'+
+      '<div style="font-size:30px;margin-bottom:10px">🔭</div>'+
+      '<div style="font-size:18px;font-weight:720;margin-bottom:8px">Você está dentro de \u201c'+esc(nomeSim)+'\u201d</div>'+
+      '<p class="sec" style="font-size:13.5px;line-height:1.6">Navegue pelo app inteiro — Visão geral, Extrato, Hubs, Relatórios, Calendário — tudo calculado como se este plano fosse o real. Nada do que você vê ou mexe aqui é salvo.</p>'+
+      '<button class="btn" data-act="sim-sair" style="max-width:280px;margin:20px auto 0">Sair e voltar aos dados reais</button></div>';
+    return;
+  }
   const cens = state.data.cenarios;
   if (!cens.length) {
     $('#panel-cen').innerHTML =
@@ -2213,6 +2261,7 @@ function renderCen(){
       cens.map(c => '<button class="chip'+(c.id===cen.id?' on':'')+'" data-act="cen-sel" data-id="'+c.id+'">'+esc(c.nome)+'</button>').join('')+
       '<button class="chip" data-act="cen-novo">+ novo cenário</button>'+
       '<span style="flex:1"></span>'+
+      '<button class="btn-sm" data-act="cen-simular" style="color:var(--s2);font-weight:700">🔭 Ver por dentro</button>'+
       '<button class="btn-sm" data-act="cen-rename">Renomear</button>'+
       '<button class="btn-sm" data-act="cen-apply" style="color:var(--accent)">Tornar plano principal</button>'+
       '<button class="btn-sm" data-act="cen-del" style="color:var(--critical)">Excluir</button>'+
@@ -3309,6 +3358,8 @@ document.addEventListener('click', async e => {
   else if (act === 'menu-occ') { const o = acharOcc(el.dataset.chave); if (o) sheetOccAcoes(o); }
   else if (act === 'cen-novo') { novoCenario(); state.page='cen'; renderAll(); toast('Cenário criado — mexa à vontade, seus dados reais ficam intactos'); }
   else if (act === 'cen-sel') { state.cenAtivo = el.dataset.id; renderCen(); }
+  else if (act === 'cen-simular') { const c = cenAtual(); if (c) entrarSimulacao(c.id); }
+  else if (act === 'sim-sair') { sairSimulacao(); }
   else if (act === 'cen-toggle') { const cen = cenAtual(); const r = cen && cen.recorrentes.find(x=>x.id===el.dataset.id); if (r) { r.ativa = !r.ativa; touch(); renderCen(); } }
   else if (act === 'cen-edit') { const cen = cenAtual(); const r = cen && cen.recorrentes.find(x=>x.id===el.dataset.id); if (r) sheetRecorrente(r, cen.recorrentes); }
   else if (act === 'cen-add') { const cen = cenAtual(); if (cen) sheetRecorrente(null, cen.recorrentes, el.dataset.tipo); }
@@ -3449,6 +3500,7 @@ function aplicarEspacoUI(){
 }
 async function trocarEspaco(esp){
   if (!ESPACOS[esp] || esp === state.espaco || !state.cfg) return;
+  if (state.simulacao) sairSimulacao();
   clearTimeout(state.saveTimer);
   if (state.dirty && state.cfg.modo === 'github') await doSave();
   cacheData();
