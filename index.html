@@ -1053,8 +1053,15 @@ function saldoEmConta(ate){
   const c = state.data.conta;
   if (!c) return null;
   let s = c.saldo;
-  for (const l of state.data.lancamentos)
-    if (l.data > c.data && l.data <= ate) s += (l.tipo === 'receita' ? l.valor : -l.valor);
+  if (ate >= c.data){
+    /* para frente: soma o que aconteceu depois da conferência */
+    for (const l of state.data.lancamentos)
+      if (l.data > c.data && l.data <= ate) s += (l.tipo === 'receita' ? l.valor : -l.valor);
+  } else {
+    /* para trás: o saldo conferido já inclui esses movimentos — desfaz até a data pedida */
+    for (const l of state.data.lancamentos)
+      if (l.data > ate && l.data <= c.data) s -= (l.tipo === 'receita' ? l.valor : -l.valor);
+  }
   return s;
 }
 function saldoHoje(){ return saldoEmConta(hojeISO()); }
