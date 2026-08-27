@@ -1862,6 +1862,14 @@ function renderFixas(){
     if (l.tipo === 'receita') g.entra += l.valor; else g.sai += l.valor;
   }
   for (const r of state.data.recorrentes) pega(hubDe(r.categoriaId)).fixas++;
+  /* avulsos em meses futuros (parcelamentos etc.) — senão ficam invisíveis no mês atual */
+  const futurosHub = new Map();
+  for (const l of state.data.lancamentos){
+    if (l.recChave || mesDe(l.data) <= ym) continue;
+    const n = hubDe(l.categoriaId);
+    futurosHub.set(n, (futurosHub.get(n)||0)+1);
+    if (!hubs.has(n)) pega(n);
+  }
   const catDoHub = nome => state.data.categorias.find(c => c.nome === nome);
 
   const lista = Array.from(hubs.values()).sort((a,b) => (b.entra+b.sai) - (a.entra+a.sai));
@@ -1877,7 +1885,7 @@ function renderFixas(){
         (g.entra ? '<span>entra <b class="pos amt num">'+compacto(g.entra)+'</b></span>' : '')+
         (g.sai ? '<span>sai <b class="amt num">'+compacto(g.sai)+'</b></span>' : '')+
       '</div>'+
-      '<div class="hc-foot"><span>'+(g.occs ? g.pagas+' de '+g.occs+' no mês' : 'sem contas no mês')+'</span><span class="muted">'+g.fixas+' fixa'+(g.fixas===1?'':'s')+'</span></div>'+
+      '<div class="hc-foot"><span>'+(g.occs ? g.pagas+' de '+g.occs+' no mês' : 'sem contas no mês')+(futurosHub.get(g.nome) ? ' · '+futurosHub.get(g.nome)+' futuro'+(futurosHub.get(g.nome)===1?'':'s') : '')+'</span><span class="muted">'+g.fixas+' fixa'+(g.fixas===1?'':'s')+'</span></div>'+
       (g.occs ? '<div class="hc-bar"><i style="width:'+Math.round(g.pagas/g.occs*100)+'%"></i></div>' : '')+
     '</button>';
   }).join('');
@@ -1900,6 +1908,11 @@ function renderHubDetalhe(nome){
   const cor = c0 ? corVar(c0) : 'var(--s0)';
   const occs = ocorrencias(ym).filter(o => cats.includes(o.rec.categoriaId));
   const avulsos = lancsDoMes(ym).filter(l => !l.recChave && cats.includes(l.categoriaId));
+  const futuros = state.data.lancamentos.filter(l => !l.recChave && cats.includes(l.categoriaId) && mesDe(l.data) > ym)
+    .sort((a,b) => a.data.localeCompare(b.data));
+  const resFut = futuros.reduce((s,l) => s + (l.tipo==='receita' ? l.valor : -l.valor), 0);
+  /* tira o prefixo só quando é o próprio hub — "CONDOMÍNIO SP - Parcela 1/2" dentro de DÍVIDAS fica inteiro */
+  const semPrefixo = s => { s = s || 'sem descrição'; const i = s.indexOf(' - '); return i > 0 && s.slice(0, i) === nome ? s.slice(i + 3) : s; };
   const fixasHub = state.data.recorrentes.filter(r => cats.includes(r.categoriaId))
     .sort((a,b) => (b.ativa?1:0)-(a.ativa?1:0) || a.nome.localeCompare(b.nome,'pt-BR'));
   let entra = 0, sai = 0;
@@ -1910,7 +1923,7 @@ function renderHubDetalhe(nome){
   const gerHtml = fixasHub.map(r => {
     const freqTxt = r.freq==='semanal' ? 'toda '+DIAS_SEM[r.diaSemana] : r.freq==='diaria' ? 'todos os dias' : (r.freqMeses>1 ? 'a cada '+r.freqMeses+' meses' : 'todo dia '+r.dia);
     return '<button class="row" data-act="edit-rec" data-id="'+r.id+'" style="'+(r.ativa?'':'opacity:.55')+'">'+
-      '<span class="mid"><span class="t1">'+esc(r.nome.indexOf(' - ')>0 ? r.nome.slice(r.nome.indexOf(' - ')+3) : r.nome)+(r.ativa?'':' · encerrada')+'</span><span class="t2">'+freqTxt+'</span></span>'+
+      '<span class="mid"><span class="t1">'+esc(semPrefixo(r.nome))+(r.ativa?'':' · encerrada')+'</span><span class="t2">'+freqTxt+'</span></span>'+
       '<span class="amt num '+(r.tipo==='receita'?'pos':'out')+'">'+(r.tipo==='receita'?'+':'−')+R(r.valor).replace('R$','R$ ')+'</span></button>';
   }).join('');
 
@@ -1925,7 +1938,11 @@ function renderHubDetalhe(nome){
       '<div class="list">'+(occs.map(rowOcc).join('') || '<div class="empty">Nenhuma conta fixa deste hub em '+fmtMesLabel(ym)+'.</div>')+
       (avulsos.length ? '<div class="sec-head"><h3>Avulsos do mês</h3></div>'+avulsos.map(l =>
         '<button class="row" data-act="edit-lanc" data-id="'+l.id+'">'+
-        '<span class="mid"><span class="t1">'+esc((l.descricao||'').indexOf(' - ')>0 ? l.descricao.slice(l.descricao.indexOf(' - ')+3) : (l.descricao||'sem descrição'))+'</span><span class="t2">'+fmtDataCurta(l.data)+'</span></span>'+
+        '<span class="mid"><span class="t1">'+esc(semPrefixo(l.descricao))+'</span><span class="t2">'+fmtDataCurta(l.data)+'</span></span>'+
+        '<span class="amt num '+(l.tipo==='receita'?'pos':'out')+'">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</span></button>').join('') : '')+
+      (futuros.length ? '<div class="sec-head" style="margin-top:14px"><h3>Lançamentos futuros</h3><span class="sum num amt '+(resFut>0?'pos':'')+'">'+Rs(resFut)+'</span></div>'+futuros.map(l =>
+        '<button class="row" data-act="edit-lanc" data-id="'+l.id+'">'+
+        '<span class="mid"><span class="t1">'+esc(semPrefixo(l.descricao))+'</span><span class="t2">'+fmtDataCurta(l.data)+'</span></span>'+
         '<span class="amt num '+(l.tipo==='receita'?'pos':'out')+'">'+(l.tipo==='receita'?'+':'−')+R(l.valor).replace('R$','R$ ')+'</span></button>').join('') : '')+
       '</div></div>'+
       '<div><div class="sec-head"><h3>Fixas deste hub</h3><button class="link-btn" data-act="new-rec-hub" data-hub="'+esc(nome)+'">+ nova fixa</button></div>'+
