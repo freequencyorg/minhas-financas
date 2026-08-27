@@ -1037,7 +1037,9 @@ function extrato(hMeses){
   const fim = fimYm + '-' + pad2(diasNoMes(fimYm));
   const verRealizados = !!state.extRealizados;
   /* tudo que já foi realizado até hoje sai da lista e entra no saldo de abertura */
-  const jaAconteceu = l => !verRealizados && l.data <= hoje;
+  /* some da lista: o que já passou E toda baixa de fixa (pagar adiantado também é resolvido).
+     Lançamento avulso com data futura continua visível — é compromisso agendado, não pagamento feito. */
+  const jaAconteceu = l => !verRealizados && (l.data <= hoje || !!l.recChave);
   const itens = [];
   let embutido = 0, nEmbutidos = 0;
   for (const l of state.data.lancamentos){
@@ -1045,7 +1047,7 @@ function extrato(hMeses){
     const v = l.tipo === 'receita' ? l.valor : -l.valor;
     if (jaAconteceu(l)) { embutido += v; nEmbutidos++; continue; }
     itens.push({ data:l.data, nome: l.descricao || catById(l.categoriaId).nome, catId:l.categoriaId,
-      valor: v, real:true, id:l.id });
+      valor: v, real:true, baixa: !!l.recChave, id:l.id });
   }
   for (let i = 0; i < hMeses; i++)
     for (const o of ocorrencias(addMeses(state.month, i)))
@@ -1637,7 +1639,7 @@ function renderExtrato(){
       if (!hojeMarcado.feito && it.data >= hoje){ hojeMarcado.feito = true; linhas += '<div class="ext-hoje"><span>hoje · '+fmtDataCurta(hoje)+'</span></div>'; }
       const vermelho = it.saldo < 0;
       const virada = e.primeiroVermelho && it === e.primeiroVermelho;
-      const feito = it.real && it.data <= hoje;
+      const feito = it.real && (it.data <= hoje || it.baixa);
       linhas += '<div class="ext-linha">'+
         '<button class="ext-row'+(it.real?'':' prev')+(feito?' feito':'')+(vermelho?' vermelho':'')+(virada?' virada':'')+'"'+
         (it.real ? ' data-act="abrir-lanc" data-id="'+it.id+'"' : ' data-act="pay-occ" data-chave="'+it.chave+'"')+'>'+
