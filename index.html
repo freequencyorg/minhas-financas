@@ -340,6 +340,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
 .ext-strip .es .l{font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
 .ext-strip .es .v{font-size:19px;font-weight:780;letter-spacing:-.015em}
 .ext-strip .es-seta{color:var(--baseline);font-size:15px}
+.ext-strip .es-sub{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
 .es-alerta{flex-basis:100%;font-size:13px;color:var(--critical);background:color-mix(in srgb, var(--critical) 8%, transparent);border:1px solid color-mix(in srgb, var(--critical) 25%, transparent);border-radius:10px;padding:8px 13px;line-height:1.5}
 .es-alerta .amt{font-weight:750}
 .ext-top{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
@@ -1070,11 +1071,11 @@ function extrato(hMeses){
      Lançamento avulso com data futura continua visível — é compromisso agendado, não pagamento feito. */
   const jaAconteceu = l => !verRealizados && (l.data <= hoje || !!l.recChave);
   const itens = [];
-  let embutido = 0, nEmbutidos = 0;
+  let embutido = 0, nEmbutidos = 0, embutidoEntrou = 0, embutidoSaiu = 0;
   for (const l of state.data.lancamentos){
     if (l.data < inicio || l.data > fim) continue;
     const v = l.tipo === 'receita' ? l.valor : -l.valor;
-    if (jaAconteceu(l)) { embutido += v; nEmbutidos++; continue; }
+    if (jaAconteceu(l)) { embutido += v; nEmbutidos++; if (v >= 0) embutidoEntrou += v; else embutidoSaiu += -v; continue; }
     itens.push({ data:l.data, nome: l.descricao || catById(l.categoriaId).nome, catId:l.categoriaId,
       valor: v, real:true, baixa: !!l.recChave, id:l.id });
   }
@@ -1105,7 +1106,7 @@ function extrato(hMeses){
     if (it.valor >= 0) g.entrou += it.valor; else g.saiu += -it.valor;
     g.fecha = it.saldo;
   }
-  return { itens, meses, abertura, pior, primeiroVermelho, ancorado: !!c, embutido, nEmbutidos, verRealizados,
+  return { itens, meses, abertura, pior, primeiroVermelho, ancorado: !!c, embutido, nEmbutidos, embutidoEntrou, embutidoSaiu, verRealizados,
     fim: itens.length ? itens[itens.length-1].saldo : abertura };
 }
 
@@ -1717,6 +1718,11 @@ function renderExtrato(){
   const aviso = e.ancorado ? '' :
     '<div class="ext-aviso"><span>O extrato está partindo do <b>zero</b>. Informe quanto você tem hoje na conta e ele passa a mostrar o saldo de verdade — e o dia exato em que fica no vermelho.</span><button class="btn-sm" data-act="sheet-conta">Informar saldo em conta</button></div>';
 
+  const foraDoMes = state.month === mesAtual() ? '' :
+    '<div class="ext-aviso"><span>Extrato mostrando a partir de <b>'+fmtMesLabel(state.month)+'</b>'+
+    (state.month > mesAtual() ? ' — o que já aconteceu antes disso (incluindo '+fmtMesLabel(mesAtual())+') está fora da lista, mas contado no "abre com"' : '')+
+    '.</span><button class="btn-sm" data-act="mes-hoje">Voltar para '+fmtMesLabel(mesAtual())+'</button></div>';
+
   /* valor longo no desktop, compacto no celular */
   const dual = (v, comSinal) => '<span class="v-longo">'+(comSinal?Rs(v):R(v))+'</span><span class="v-curto">'+(comSinal?compacto(v):compacto(Math.abs(v)))+'</span>';
   const entrou = e.meses.reduce((s,m)=>s+m.entrou,0), saiu = e.meses.reduce((s,m)=>s+m.saiu,0);
@@ -1724,8 +1730,10 @@ function renderExtrato(){
     '<div class="card ext-strip">'+
       '<div class="es"><span class="l">Abre com</span><span class="v num amt">'+dual(e.abertura,true)+'</span></div>'+
       '<span class="es-seta">→</span>'+
-      '<div class="es"><span class="l">Entra</span><span class="v num amt pos">'+dual(entrou,false)+'</span></div>'+
-      '<div class="es"><span class="l">Sai</span><span class="v num amt">'+dual(saiu,false)+'</span></div>'+
+      '<div class="es"><span class="l">Entra</span><span class="v num amt pos">'+dual(entrou,false)+'</span>'+
+        (e.embutidoEntrou > 0 ? '<span class="es-sub amt num">já entrou '+R(e.embutidoEntrou)+' · no abre</span>' : '')+'</div>'+
+      '<div class="es"><span class="l">Sai</span><span class="v num amt">'+dual(saiu,false)+'</span>'+
+        (e.embutidoSaiu > 0 ? '<span class="es-sub amt num">já saiu '+R(e.embutidoSaiu)+' · no abre</span>' : '')+'</div>'+
       '<span class="es-seta">→</span>'+
       '<div class="es"><span class="l">Termina com</span><span class="v num amt '+(e.fim>=0?'pos':'neg')+'">'+dual(e.fim,true)+'</span></div>'+
       (e.primeiroVermelho
@@ -1746,7 +1754,7 @@ function renderExtrato(){
       '<span class="fecha '+(g.fecha>=0?'pos':'neg')+' amt num">fecha em '+Rs(g.fecha)+'</span></div>';
     for (const it of g.itens){
       if (!passa(it)) continue;
-      if (!hojeMarcado.feito && it.data >= hoje){ hojeMarcado.feito = true; linhas += '<div class="ext-hoje"><span>hoje · '+fmtDataCurta(hoje)+'</span></div>'; }
+      if (!hojeMarcado.feito && it.data >= hoje && hoje >= state.month + '-01'){ hojeMarcado.feito = true; linhas += '<div class="ext-hoje"><span>hoje · '+fmtDataCurta(hoje)+'</span></div>'; }
       const vermelho = it.saldo < 0;
       const virada = e.primeiroVermelho && it === e.primeiroVermelho;
       const feito = it.real && (it.data <= hoje || it.baixa);
@@ -1766,7 +1774,7 @@ function renderExtrato(){
     }
   }
 
-  $('#panel-extrato').innerHTML = aviso + kpis +
+  $('#panel-extrato').innerHTML = aviso + foraDoMes + kpis +
     (e.itens.length ? '<div class="card" style="margin-bottom:14px"><h2>Saldo ao longo do período</h2>'+extratoSVG(e)+'</div>' : '')+
     '<div class="toolbar"><div class="hz-chips">'+chips+'</div>'+
       '<div class="hz-chips" style="margin-left:14px">'+
@@ -2857,9 +2865,13 @@ function aiExec(name, inp){
       if (!inp.valor || inp.valor <= 0) return {erro:'valor inválido'};
       const cat = state.data.categorias.find(c=>c.id===inp.categoriaId) || state.data.categorias.find(c=>c.tipo===inp.tipo);
       if (!cat) return {erro:'categoria não encontrada'};
-      state.data.lancamentos.push({id:uid('l'), tipo:inp.tipo, valor:inp.valor, categoriaId:cat.id, descricao:inp.descricao||'', data:inp.data||hojeISO(), recChave:null, criadoEm:new Date().toISOString()});
+      let dt = String(inp.data || hojeISO()).trim();
+      const br = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/.exec(dt);
+      if (br) dt = (br[3] ? (br[3].length===2 ? '20'+br[3] : br[3]) : String(new Date().getFullYear())) + '-' + pad2(Number(br[2])) + '-' + pad2(Number(br[1]));
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dt)) dt = hojeISO();
+      state.data.lancamentos.push({id:uid('l'), tipo:inp.tipo, valor:inp.valor, categoriaId:cat.id, descricao:inp.descricao||'', data:dt, recChave:null, criadoEm:new Date().toISOString()});
       touch(); renderAll();
-      return {ok:true, resumo:(inp.tipo==='receita'?'+':'−')+R(inp.valor)+(inp.descricao?' · '+inp.descricao:'')+' em '+cat.nome};
+      return {ok:true, resumo:(inp.tipo==='receita'?'+':'−')+R(inp.valor)+(inp.descricao?' · '+inp.descricao:'')+' em '+cat.nome+' ('+dt+')'+(dt <= hojeISO() ? ' — já realizado: contabilizado no saldo e embutido no \u201cabre com\u201d do extrato (ligue \u201cMostrar realizados\u201d para ver na lista)' : '')};
     }
     if (name === 'dar_baixa'){
       const o = ocorrencias(mesAtual()).find(x=>x.chave===inp.chave && !x.lanc);
@@ -2892,7 +2904,7 @@ async function aiCall(messages){
     body: JSON.stringify({
       model: cfg.model || 'claude-haiku-4-5',
       max_tokens: 1200,
-      system: 'Você é o assistente do Minhas Finanças, o app de finanças pessoais do usuário (Brasil). Espaço ativo: '+ESPACOS[state.espaco].nome+(state.espaco==='freequency'?' — finanças da empresa/CNPJ Freequency.':state.espaco==='venancio'?' — operação da Casa Venâncio (caixa separado das finanças pessoais).':' — finanças pessoais (imóveis de aluguel).')+' Responda SEMPRE em português do Brasil, curto e direto, valores em R$. Hoje é '+hojeISO()+'. Quando o usuário pedir para registrar/lançar/pagar/receber/dar baixa, USE as ferramentas — prefira dar_baixa quando o pedido corresponder a uma pendência de pendentesEsteMes. Nunca invente números: use somente os dados fornecidos; se não souber, diga que não tem o dado. DADOS ATUAIS DO APP (JSON): '+aiContexto(),
+      system: 'Você é o assistente do Minhas Finanças, o app de finanças pessoais do usuário (Brasil). Espaço ativo: '+ESPACOS[state.espaco].nome+(state.espaco==='freequency'?' — finanças da empresa/CNPJ Freequency.':state.espaco==='venancio'?' — operação da Casa Venâncio (caixa separado das finanças pessoais).':' — finanças pessoais (imóveis de aluguel).')+' Responda SEMPRE em português do Brasil, curto e direto, valores em R$. Hoje é '+hojeISO()+'. Quando o usuário pedir para registrar/lançar/pagar/receber/dar baixa, USE as ferramentas — prefira dar_baixa quando o pedido corresponder a uma pendência de pendentesEsteMes. Nunca invente números: use somente os dados fornecidos; se não souber, diga que não tem o dado. REGRAS DO EXTRATO: lançamento com data até hoje (e toda baixa de fixa) é REALIZADO — sai da lista do extrato e fica embutido no saldo de abertura (\u201cabre com\u201d); o valor SEMPRE é contabilizado no saldo, mesmo sem aparecer na lista. A lista do extrato começa no mês exibido: meses anteriores ficam fora dela (mas dentro do abre). Se o usuário não achar um lançamento, explique isso e sugira ligar \u201cMostrar realizados\u201d e voltar ao mês atual. DADOS ATUAIS DO APP (JSON): '+aiContexto(),
       tools: AI_TOOLS,
       messages
     })
@@ -3277,6 +3289,7 @@ document.addEventListener('click', async e => {
   else if (act === 'set-exth') { state.extH = Number(el.dataset.v); renderExtrato(); }
   else if (act === 'set-extf') { state.extF = el.dataset.v; renderExtrato(); }
   else if (act === 'toggle-realizados') { state.extRealizados = !state.extRealizados; renderExtrato(); }
+  else if (act === 'mes-hoje') { state.month = mesAtual(); renderAll(); }
   else if (act === 'hub-open') { state.hubSel = el.dataset.hub; renderFixas(); window.scrollTo({top:0}); }
   else if (act === 'hub-back') { state.hubSel = null; renderFixas(); }
   else if (act === 'new-rec-hub') { sheetRecorrente(null, null, 'despesa', el.dataset.hub); }
