@@ -385,9 +385,9 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
 .ext-row.feito .nm{color:var(--muted)}
 .ext-row.feito .vl{opacity:.75}
 .tagp.ok{color:var(--up);border-color:color-mix(in srgb, var(--good) 45%, transparent)}
-.ext-hoje{display:flex;align-items:center;gap:12px;padding:0 18px;height:0;position:relative}
-.ext-hoje span{position:absolute;top:-9px;left:18px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);background:var(--surface);padding:0 8px;border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);border-radius:99px;z-index:2}
-.ext-hoje::before{content:"";position:absolute;left:0;right:0;top:-1px;border-top:1px dashed color-mix(in srgb, var(--accent) 55%, transparent)}
+.ext-hoje{display:flex;align-items:center;padding:5px 18px;position:relative}
+.ext-hoje span{position:relative;z-index:2;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);background:var(--surface);padding:1.5px 8px;border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);border-radius:99px}
+.ext-hoje::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed color-mix(in srgb, var(--accent) 55%, transparent)}
 .ext-aviso{display:flex;align-items:center;gap:11px;flex-wrap:wrap;background:var(--surface);border:1px dashed var(--baseline);border-radius:14px;padding:13px 16px;margin-bottom:14px;font-size:13.5px;color:var(--ink-2)}
 .ext-aviso b{color:var(--ink)}
 .ext-aviso .btn-sm{margin-left:auto}
