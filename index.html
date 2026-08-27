@@ -69,9 +69,8 @@ svg{display:block}
 .pos{color:var(--up)} .neg{color:var(--down)}
 /* saída de dinheiro: neutra — vermelho é reservado para alerta (atraso, saldo negativo) */
 .out{color:var(--ink)}
-.hub-tag{font-weight:760;letter-spacing:.03em;font-size:.92em}
-.hub-sep{color:var(--muted)}
-.ext-row.feito .hub-tag,.row.done .hub-tag{color:var(--muted)!important}
+.hub-tag{--hc:var(--muted);display:inline-block;font-size:.76em;font-weight:760;letter-spacing:.06em;color:var(--hc);background:color-mix(in srgb, var(--hc) 16%, transparent);padding:2px 8px;border-radius:6px;vertical-align:1px;margin-right:2px}
+.ext-row.feito .hub-tag,.row.done .hub-tag{opacity:.5}
 .num{font-variant-numeric:tabular-nums}
 body.private .amt,body.private .blur-priv{filter:blur(7px);transition:filter .2s}
 /* ================= shell ================= */
@@ -906,7 +905,7 @@ function nomeHtml(nome, categoriaId){
   if (i <= 0) return esc(s);
   const cat = categoriaId ? state.data.categorias.find(c => c.id === categoriaId) : null;
   const cor = cat ? corVar(cat) : null;
-  return '<span class="hub-tag"'+(cor ? ' style="color:'+cor+'"' : '')+'>'+esc(s.slice(0,i))+'</span><span class="hub-sep"> · </span>'+esc(s.slice(i+3));
+  return '<span class="hub-tag"'+(cor ? ' style="--hc:'+cor+'"' : '')+'>'+esc(s.slice(0,i))+'</span> '+esc(s.slice(i+3));
 }
 
 /* ---------------- armazenamento ---------------- */
