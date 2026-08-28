@@ -1042,6 +1042,7 @@ function migrar(d){
   d.categorias = d.categorias || []; d.lancamentos = d.lancamentos || [];
   d.recorrentes = d.recorrentes || []; d.orcamentos = d.orcamentos || {}; d.metas = d.metas || [];
   d.cenarios = d.cenarios || [];
+  d.remarcacoes = d.remarcacoes || {};
   if (d.conta === undefined) d.conta = null; /* {saldo, data} — âncora do saldo bancário */
   d.pulos = d.pulos || [];      /* chaves de ocorrências puladas ("esse mês não teve") */
   d.ajustes = d.ajustes || {};  /* chave -> valor diferente só naquela ocorrência */
@@ -1112,7 +1113,7 @@ function extrato(hMeses){
   for (let i = 0; i < hMeses; i++)
     for (const o of ocorrencias(addMeses(state.month, i)))
       if (!o.lanc && o.data >= inicio && o.data <= fim)
-        itens.push({ data:o.data, nome:o.rec.nome, catId:o.rec.categoriaId, ajustado: !!o.ajustado,
+        itens.push({ data:o.data, nome:o.rec.nome, catId:o.rec.categoriaId, ajustado: !!o.ajustado, remarcada: !!o.remarcada,
           valor: o.rec.tipo === 'receita' ? o.rec.valor : -o.rec.valor, real:false, chave:o.chave });
   itens.sort((a,b) => a.data === b.data ? (b.valor - a.valor) : (a.data < b.data ? -1 : 1));
   /* saldo de partida: âncora até a véspera do período + o que já foi realizado dentro dele */
@@ -1197,7 +1198,10 @@ function ocorrencias(ym){
     o.lanc = pagos.get(o.chave) || null;
     const aj = ajustes[o.chave];
     if (aj != null) { o.rec = Object.assign({}, o.rec, {valor: aj}); o.ajustado = true; }
+    const rm = (state.data.remarcacoes || {})[o.chave];
+    if (rm) { o.data = rm; o.remarcada = true; }
   }
+  out.sort((x, y) => x.data < y.data ? -1 : x.data > y.data ? 1 : 0);
   return out;
 }
 /* fluxo estrutural de uma lista de fixas (sem lançamentos) — usado nos cenários */
@@ -1796,6 +1800,7 @@ function renderExtrato(){
         '<span class="nm">'+nomeHtml(it.nome, it.catId)+'</span>'+
         (feito ? '<span class="tagp ok">✓ feito</span>' : '')+
         (it.ajustado ? '<span class="tagp aj">ajustado</span>' : '')+
+        (it.remarcada ? '<span class="tagp aj">remarcada</span>' : '')+
         '<span class="vl '+(it.valor>=0?'pos':'out')+' amt num">'+(it.valor>=0?'+':'−')+R(Math.abs(it.valor))+'</span>'+
         '<span class="sd amt num">'+Rs(it.saldo)+'</span></button>'+
         '<button class="ext-mais" aria-label="Opções" title="Opções" '+
@@ -2098,7 +2103,10 @@ function renderCal(){
   const ym = state.month, nd = diasNoMes(ym), hoje = hojeISO();
   const [a,m] = ym.split('-').map(Number);
   const primeiro = new Date(a, m-1, 1).getDay(); // 0=dom
-  const occs = ocorrencias(ym);
+  const occs = [];
+  for (const off of [-2, -1, 0, 1, 2])
+    for (const o of ocorrencias(addMeses(ym, off)))
+      if (mesDe(o.data) === ym) occs.push(o);
   const porDiaOcc = new Map(), porDiaLanc = new Map();
   for (const o of occs) { const d = Number(o.data.slice(8)); if (!porDiaOcc.has(d)) porDiaOcc.set(d, []); porDiaOcc.get(d).push(o); }
   for (const l of lancsDoMes(ym)) { if (l.recChave) continue; const d = Number(l.data.slice(8)); if (!porDiaLanc.has(d)) porDiaLanc.set(d, []); porDiaLanc.get(d).push(l); }
@@ -2596,13 +2604,14 @@ function sheetPagarOcc(o){
   const qual = rec.freq==='semanal' ? 'esta semana' : rec.freq==='diaria' ? 'este dia' : 'este mês';
   const outras = rec.freq==='semanal' ? 'as outras semanas' : rec.freq==='diaria' ? 'os outros dias' : 'os outros meses';
   const s = openSheet('<h3>'+(receita?'Confirmar recebimento':'Confirmar pagamento')+'</h3>'+
-    '<p class="sec" style="font-size:14px;margin-bottom:4px">'+esc(rec.nome)+' — '+(rec.freq==='semanal'?'semana de ':'')+fmtDataCurta(o.data)+'</p>'+
+    '<p class="sec" style="font-size:14px;margin-bottom:4px">'+esc(rec.nome)+' — '+(rec.freq==='semanal'?'semana de ':'')+fmtDataCurta(o.data)+(o.remarcada?' \u00b7 <span style="color:var(--accent)">remarcada (era '+fmtDataCurta(o.chave.split('@')[1])+')</span>':'')+'</p>'+
     '<div class="f-label">Valor '+(receita?'recebido':'pago')+'</div>'+
     '<input class="f-input valor-input" id="pValor" inputmode="decimal" value="'+mascaraViva(String(rec.valor).replace('.',','))+'">'+
     '<div class="rep-hint" id="pDelta">Vale só para '+qual+'. '+outras.charAt(0).toUpperCase()+outras.slice(1)+' seguem com <span class="amt">'+R(rec.valor)+'</span>.</div>'+
     '<div class="f-label">Data</div><input class="f-input" id="pData" type="date" value="'+o.data+'">'+
     '<button class="btn" id="pOk">'+(receita?'Recebi ✓':'Paguei ✓')+'</button>'+
-    '<button class="btn ghost" id="pSoAjuste">Só corrigir o previsto (sem dar baixa)</button>');
+    '<button class="btn ghost" id="pSoAjuste">Só corrigir o previsto (sem dar baixa)</button>'+
+    '<button class="btn ghost hidden" id="pMover"></button>');
   const inp = s.querySelector('#pValor');
   inp.addEventListener('input', () => {
     inp.value = mascaraViva(inp.value);
@@ -2612,6 +2621,25 @@ function sheetPagarOcc(o){
     else
       d.innerHTML = 'Vale só para '+qual+'. '+outras.charAt(0).toUpperCase()+outras.slice(1)+' seguem com <span class="amt">'+R(rec.valor)+'</span>.';
   });
+  const pd = s.querySelector('#pData'), pm = s.querySelector('#pMover');
+  pd.addEventListener('input', () => {
+    const mostra = pd.value && pd.value !== o.data;
+    pm.classList.toggle('hidden', !mostra);
+    if (mostra) pm.textContent = 'Mover para ' + fmtDataCurta(pd.value) + ' (sem pagar)';
+  });
+  pm.onclick = () => {
+    const nd = pd.value;
+    if (!nd) return;
+    const dataOrig = o.chave.split('@')[1];
+    const antes = state.data.remarcacoes[o.chave];
+    if (nd === dataOrig) delete state.data.remarcacoes[o.chave];
+    else state.data.remarcacoes[o.chave] = nd;
+    touch(); closeSheet(); renderAll();
+    toast('\u201c' + rec.nome + '\u201d movida para ' + fmtDataCurta(nd) + ' \u2014 continua pendente', () => {
+      if (antes) state.data.remarcacoes[o.chave] = antes; else delete state.data.remarcacoes[o.chave];
+      touch(); renderAll();
+    });
+  };
   setTimeout(() => { inp.focus(); inp.select && inp.select(); }, 120);
   s.querySelector('#pOk').onclick = () => {
     const v = parseValor(inp.value);
@@ -2637,6 +2665,7 @@ function sheetOccAcoes(o){
     '<div class="acao-lista">'+
       '<button class="acao" data-x="baixa"><b>'+(receita?'Marcar como recebido':'Marcar como pago')+'</b><span>vira um lançamento de verdade</span></button>'+
       '<button class="acao" data-x="valor"><b>Mudar o valor só '+(rec.freq==='semanal'?'desta semana':'desta vez')+'</b><span>não altera as outras vezes</span></button>'+
+      '<button class="acao" data-x="mover"><b>Mover para outro dia</b><span>s\u00f3 esta vez \u2014 continua pendente</span></button>'+
       '<button class="acao" data-x="pular"><b>Pular '+(rec.freq==='semanal'?'esta semana':rec.freq==='diaria'?'este dia':'este mês')+'</b><span>some do extrato e das pendências; a fixa continua nas outras vezes</span></button>'+
       '<button class="acao" data-x="fixa"><b>Editar a fixa</b><span>muda valor, dia e frequência de todos</span></button>'+
       '<button class="acao ruim" data-x="excluir"><b>Excluir a fixa inteira</b><span>apaga em todos os meses</span></button>'+
@@ -2647,6 +2676,7 @@ function sheetOccAcoes(o){
     if (x === 'baixa') return sheetPagarOcc(o);
     if (x === 'fixa') return sheetRecorrente(rec);
     if (x === 'valor') return sheetAjusteOcc(o);
+    if (x === 'mover') return sheetPagarOcc(o);
     if (x === 'pular'){
       state.data.pulos.push(o.chave);
       touch(); renderAll();
