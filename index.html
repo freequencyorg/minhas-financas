@@ -1076,18 +1076,24 @@ function diaEfetivo(l){
 function saldoEmConta(ate){
   const c = state.data.conta;
   if (!c) return null;
+  /* movimento registrado DEPOIS do instante da conferência, no mesmo dia dela,
+     ainda não estava no número informado */
+  const aposConferencia = l => c.em && l.criadoEm && l.criadoEm > c.em;
   let s = c.saldo;
   if (ate >= c.data){
     /* para frente: soma o que aconteceu depois da conferência */
     for (const l of state.data.lancamentos){
       const d = diaEfetivo(l);
-      if (d > c.data && d <= ate) s += (l.tipo === 'receita' ? l.valor : -l.valor);
+      const v = l.tipo === 'receita' ? l.valor : -l.valor;
+      if (d > c.data && d <= ate) s += v;
+      else if (d === c.data && aposConferencia(l)) s += v;
     }
   } else {
     /* para trás: o saldo conferido já inclui esses movimentos — desfaz até a data pedida */
     for (const l of state.data.lancamentos){
       const d = diaEfetivo(l);
-      if (d > ate && d <= c.data) s -= (l.tipo === 'receita' ? l.valor : -l.valor);
+      if (d > ate && d <= c.data && !(d === c.data && aposConferencia(l)))
+        s -= (l.tipo === 'receita' ? l.valor : -l.valor);
     }
   }
   return s;
@@ -1860,7 +1866,7 @@ function sheetConta(){
   s.querySelector('#contaOk').onclick = () => {
     const v = Number(String(inp.value).replace(/\./g,'').replace(',','.'));
     if (!isFinite(v)) return shake(inp);
-    state.data.conta = { saldo: v, data: s.querySelector('#contaData').value || hojeISO() };
+    state.data.conta = { saldo: v, data: s.querySelector('#contaData').value || hojeISO(), em: new Date().toISOString() };
     touch(); closeSheet(); renderAll(); toast('Saldo em conta salvo ✓');
   };
 }
@@ -2620,7 +2626,7 @@ function sheetPagarOcc(o){
     '<div class="f-label">Valor '+(receita?'recebido':'pago')+'</div>'+
     '<input class="f-input valor-input" id="pValor" inputmode="decimal" value="'+mascaraViva(String(rec.valor).replace('.',','))+'">'+
     '<div class="rep-hint" id="pDelta">Vale só para '+qual+'. '+outras.charAt(0).toUpperCase()+outras.slice(1)+' seguem com <span class="amt">'+R(rec.valor)+'</span>.</div>'+
-    '<div class="f-label">Data</div><input class="f-input" id="pData" type="date" value="'+o.data+'">'+
+    '<div class="f-label">Data</div><input class="f-input" id="pData" type="date" value="'+(o.data < hojeISO() ? hojeISO() : o.data)+'">'+
     '<button class="btn" id="pOk">'+(receita?'Recebi ✓':'Paguei ✓')+'</button>'+
     '<button class="btn ghost" id="pSoAjuste">Só corrigir o previsto (sem dar baixa)</button>'+
     '<button class="btn ghost hidden" id="pMover"></button>');
