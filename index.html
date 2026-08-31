@@ -1748,6 +1748,7 @@ function renderExtrato(){
   const h = state.extH || 6;
   const e = extrato(h);
   const hoje = hojeISO();
+  const vesperaISO = (() => { const [a,m] = state.month.split('-').map(Number); const v = new Date(a, m-1, 0); return v.getFullYear()+'-'+pad2(v.getMonth()+1)+'-'+pad2(v.getDate()); })();
   const chips = [3,6,12,24].map(n => '<button class="chip'+(h===n?' on':'')+'" data-act="set-exth" data-v="'+n+'">'+n+' meses</button>').join('');
 
   const aviso = e.ancorado ? '' :
@@ -1763,7 +1764,7 @@ function renderExtrato(){
   const entrou = e.meses.reduce((s,m)=>s+m.entrou,0), saiu = e.meses.reduce((s,m)=>s+m.saiu,0);
   const kpis =
     '<div class="card ext-strip">'+
-      '<div class="es"><span class="l">Abre com</span><span class="v num amt">'+dual(e.abertura,true)+'</span></div>'+
+      '<div class="es"><span class="l">'+(e.verRealizados ? 'Saldo em '+fmtDataCurta(vesperaISO) : 'Abre com')+'</span><span class="v num amt">'+dual(e.abertura,true)+'</span></div>'+
       '<span class="es-seta">→</span>'+
       '<div class="es"><span class="l">Entra</span><span class="v num amt pos">'+dual(entrou,false)+'</span>'+
         (e.embutidoEntrou > 0 ? '<span class="es-sub amt num">já entrou '+R(e.embutidoEntrou)+' · no abre</span>' : '')+'</div>'+
@@ -1823,8 +1824,10 @@ function renderExtrato(){
       '<button class="btn-sm" data-act="sheet-conta" style="margin-left:auto">'+(e.ancorado ? 'Ajustar saldo em conta' : 'Informar saldo em conta')+'</button></div>'+
     '<div class="ext-card">'+
       '<div class="ext-head"><span class="dia">Data</span><span class="nm">Movimento</span><span class="vl">Valor</span><span class="sd">Saldo</span></div>'+
-      '<div class="ext-abertura"><span>Saldo de abertura'+
-        (e.nEmbutidos ? '<em>inclui '+e.nEmbutidos+' já '+(e.nEmbutidos===1?'realizado':'realizados')+' · <span class="amt">'+Rs(e.embutido)+'</span></em>' : '')+
+      '<div class="ext-abertura"><span>'+(e.verRealizados ? 'Saldo em '+fmtDataCurta(vesperaISO) : 'Saldo de abertura')+
+        (e.verRealizados
+          ? (e.ancorado ? '<em>reconstru\u00eddo a partir do saldo informado em '+fmtDataCurta(state.data.conta.data)+' \u2014 os realizados abaixo j\u00e1 est\u00e3o dentro dele</em>' : '')
+          : (e.nEmbutidos ? '<em>inclui '+e.nEmbutidos+' j\u00e1 '+(e.nEmbutidos===1?'realizado':'realizados')+' \u00b7 <span class="amt">'+Rs(e.embutido)+'</span></em>' : ''))+
         '</span><span class="sd '+(e.abertura>=0?'pos':'neg')+' amt num">'+Rs(e.abertura)+'</span></div>'+
       (linhas || '<div class="empty">Nada previsto nesse período.</div>')+
     '</div>';
