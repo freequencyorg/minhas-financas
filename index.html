@@ -81,7 +81,7 @@ aside#side{
 }
 .side-brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;letter-spacing:.01em;padding:4px 10px 12px}
 .sp-switch{display:flex;background:var(--page);border:1px solid var(--border-soft);border-radius:10px;padding:3px;gap:3px;margin:0 4px 14px}
-.sp-switch button{flex:1 1 auto;min-width:0;padding:6.5px 5px;border-radius:7px;font-size:11.5px;letter-spacing:-.01em;font-weight:620;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-switch button{flex:1 1 auto;min-width:0;padding:6.5px 3px;border-radius:7px;font-size:11.5px;letter-spacing:-.01em;font-weight:620;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp-switch button.on{background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
 body.fq{--accent:var(--fq);--accent-soft:color-mix(in srgb, var(--fq) 12%, transparent);--accent-soft-2:color-mix(in srgb, var(--fq) 18%, transparent);--on-accent:#fff;--accent-grad:linear-gradient(160deg,color-mix(in srgb, var(--fq) 82%, #fff),color-mix(in srgb, var(--fq) 84%, #000))}
 body.ven{--accent:var(--ven);--accent-soft:color-mix(in srgb, var(--ven) 12%, transparent);--accent-soft-2:color-mix(in srgb, var(--ven) 18%, transparent);--on-accent:var(--ven-on);--accent-grad:linear-gradient(160deg,color-mix(in srgb, var(--ven) 82%, #fff),color-mix(in srgb, var(--ven) 84%, #000))}
@@ -723,6 +723,10 @@ nav.tabs{display:none}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h5l3.5 6L16 18h4"/><path d="M4 18h5l2-3.4"/><path d="M13.5 8.6 16 6h4"/><path d="M17.5 3.5 20 6l-2.5 2.5M17.5 15.5 20 18l-2.5 2.5"/></svg>
         Cenários <kbd>5</kbd>
       </button>
+      <button class="nav-it" data-page="integrado">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+        Integrado <kbd>6</kbd>
+      </button>
     </nav>
     <div class="side-foot">
       <div class="side-mini">
@@ -766,6 +770,7 @@ nav.tabs{display:none}
       <section class="panel" id="panel-cal"></section>
       <section class="panel" id="panel-rel"></section>
       <section class="panel" id="panel-cen"></section>
+      <section class="panel" id="panel-integrado"></section>
       <section class="panel" id="panel-metas"></section>
       <section class="panel" id="panel-ajustes"></section>
     </main>
@@ -824,7 +829,7 @@ const ESPACOS = { pessoal: {nome:'Pessoal', logo:'R$', arquivo:'dados.json'}, ve
 const SLOT = { 0:'--s0',1:'--s1',2:'--s2',3:'--s3',4:'--s4',5:'--s5',6:'--s6',7:'--s7',8:'--s8' };
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DIAS_SEM = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
-const PAGES = { inicio:'Visão geral', extrato:'Extrato', fixas:'Hubs', rel:'Relatórios', cen:'Cenários', lanc:'Histórico', cal:'Calendário', metas:'Metas', ajustes:'Ajustes' };
+const PAGES = { inicio:'Visão geral', extrato:'Extrato', fixas:'Hubs', rel:'Relatórios', cen:'Cenários', integrado:'Integrado', lanc:'Histórico', cal:'Calendário', metas:'Metas', ajustes:'Ajustes' };
 
 const SEED = {
   versao: 1, moeda: 'BRL', atualizadoEm: null,
@@ -1470,7 +1475,7 @@ function renderAll(){
   $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.page === state.page || (b.dataset.page==='mais' && ['cal','cen','metas','ajustes','lanc'].includes(state.page))));
   $$('main section.panel').forEach(p => p.classList.remove('active'));
   $('#panel-' + state.page).classList.add('active');
-  ({inicio: renderInicio, extrato: renderExtrato, lanc: renderLanc, fixas: renderFixas, cal: renderCal, rel: renderRel, cen: renderCen, metas: renderMetas, ajustes: renderAjustes})[state.page]();
+  ({inicio: renderInicio, extrato: renderExtrato, lanc: renderLanc, fixas: renderFixas, cal: renderCal, rel: renderRel, cen: renderCen, metas: renderMetas, ajustes: renderAjustes, integrado: renderIntegrado})[state.page]();
 }
 
 let donutLegenda = [];
@@ -2114,6 +2119,112 @@ function renderHubDetalhe(nome){
       '<div><div class="sec-head"><h3>Fixas deste hub</h3><button class="link-btn" data-act="new-rec-hub" data-hub="'+esc(nome)+'">+ nova fixa</button></div>'+
       '<div class="list">'+(gerHtml || '<div class="empty">Nenhuma fixa ainda — crie a primeira.</div>')+'</div></div>'+
     '</div>';
+}
+
+/* ---------------- visão integrada (3 espaços, leitura) ---------------- */
+const ESP_COR = { pessoal: 'var(--accent)', venancio: 'var(--ven)', freequency: 'var(--fq)' };
+function dadosDoEspaco(esp){
+  if (esp === state.espaco) return state.data;
+  try { const c = JSON.parse(localStorage.getItem('mf_cache' + (esp === 'pessoal' ? '' : '_' + esp)) || 'null'); return c && c.data; } catch(e){ return null; }
+}
+async function intRecarregar(){
+  if (state.cfg.modo !== 'github') { if (state.page === 'integrado') renderIntegrado(); return; }
+  for (const esp of Object.keys(ESPACOS)){
+    if (esp === state.espaco) continue;
+    try {
+      const r = await ghLoad(state.cfg, ESPACOS[esp].arquivo);
+      if (!r.missing) try { localStorage.setItem('mf_cache' + (esp === 'pessoal' ? '' : '_' + esp), JSON.stringify({ data: r.data, sha: r.sha, em: Date.now() })) } catch(e){}
+    } catch(e){}
+  }
+  if (state.page === 'integrado') renderIntegrado(true);
+}
+function renderIntegrado(pos){
+  const h = state.intH || 6, hoje = hojeISO();
+  const real = state.data, verR = state.extRealizados;
+  state.extRealizados = false;
+  const por = {};
+  for (const esp of Object.keys(ESPACOS)){
+    const d = dadosDoEspaco(esp);
+    if (!d) continue;
+    state.data = esp === state.espaco ? real : migrar(structuredClone(d));
+    por[esp] = { e: extrato(h), saldoHj: state.data.conta ? saldoHoje() : null, em: d.atualizadoEm };
+  }
+  state.data = real; state.extRealizados = verR;
+
+  let abertura = 0, saldoTotal = 0, temSaldo = false, temAncora = false;
+  const itens = [];
+  for (const [esp, p] of Object.entries(por)){
+    abertura += p.e.abertura;
+    if (p.e.ancorado) temAncora = true;
+    if (p.saldoHj != null){ saldoTotal += p.saldoHj; temSaldo = true; }
+    for (const it of p.e.itens) itens.push({ data: it.data, nome: it.nome, valor: it.valor, esp });
+  }
+  itens.sort((a, b) => a.data === b.data ? b.valor - a.valor : (a.data < b.data ? -1 : 1));
+  let saldo = abertura, pior = null, primeiroVermelho = null;
+  for (const it of itens){ saldo += it.valor; it.saldo = saldo; if (!pior || it.saldo < pior.saldo) pior = it; if (saldo < 0 && !primeiroVermelho) primeiroVermelho = it; }
+  const fim = itens.length ? saldo : abertura;
+  const meses = [];
+  for (const it of itens){
+    const ym = mesDe(it.data);
+    let g = meses[meses.length - 1];
+    if (!g || g.ym !== ym){ g = { ym, entrou: 0, saiu: 0, fecha: 0, itens: [] }; meses.push(g); }
+    g.itens.push(it);
+    if (it.valor >= 0) g.entrou += it.valor; else g.saiu += -it.valor;
+    g.fecha = it.saldo;
+  }
+  const eFake = { itens, abertura, fim, pior, primeiroVermelho, ancorado: temAncora, meses, verRealizados: false, embutido: 0, nEmbutidos: 0 };
+  const entrou = meses.reduce((x, m) => x + m.entrou, 0), saiu = meses.reduce((x, m) => x + m.saiu, 0);
+  const dual = (v, sinal) => '<span class="v-longo">' + (sinal ? Rs(v) : R(v)) + '</span><span class="v-curto">' + (sinal ? compacto(v) : compacto(Math.abs(v))) + '</span>';
+  const chip = esp => '<span class="hub-tag" style="--hc:' + ESP_COR[esp] + '">' + ESPACOS[esp].nome + '</span>';
+
+  const tiles = Object.entries(por).map(([esp, p]) =>
+    '<div class="tile"><div class="label"><span class="dot" style="background:' + ESP_COR[esp] + '"></span>' + ESPACOS[esp].nome + '</div>' +
+    '<div class="value num amt ' + ((p.saldoHj ?? 0) >= 0 ? 'pos' : 'neg') + '">' + (p.saldoHj != null ? Rs(p.saldoHj) : '\u2014') + '</div>' +
+    '<div class="sub">termina o per\u00edodo em <span class="amt num">' + compacto(p.e.fim) + '</span></div></div>').join('');
+
+  let linhas = '';
+  const hm = { feito: false };
+  const divisorHoje = '<div class="ext-hoje"><span>hoje \u00b7 ' + fmtDataCurta(hoje) + '</span></div>';
+  for (const g of meses){
+    if (!hm.feito && hoje >= state.month + '-01' && hoje < g.ym + '-01'){ hm.feito = true; linhas += divisorHoje; }
+    linhas += '<div class="ext-mes-top">' + fmtMesLabel(g.ym) + '</div>';
+    for (const it of g.itens){
+      if (!hm.feito && it.data >= hoje && hoje >= state.month + '-01'){ hm.feito = true; linhas += divisorHoje; }
+      linhas += '<div class="ext-linha"><div class="ext-row" style="cursor:default">' +
+        '<span class="dia">' + fmtDataCurta(it.data) + '</span>' +
+        '<span class="nm">' + chip(it.esp) + ' ' + esc(it.nome) + '</span>' +
+        '<span class="vl ' + (it.valor >= 0 ? 'pos' : 'out') + ' amt num">' + (it.valor >= 0 ? '+' : '\u2212') + R(Math.abs(it.valor)) + '</span>' +
+        '<span class="sd amt num' + (it.saldo < 0 ? ' neg' : '') + '">' + Rs(it.saldo) + '</span></div></div>';
+    }
+    const res = g.entrou - g.saiu;
+    linhas += '<div class="ext-mes foot"><span class="m">' + fmtMesLabel(g.ym) + '</span>' +
+      '<span class="kv">entrou <b class="pos amt num">' + R(g.entrou) + '</b></span>' +
+      '<span class="kv">saiu <b class="amt num">' + R(g.saiu) + '</b></span>' +
+      '<span class="kv">resultado <b class="' + (res >= 0 ? 'pos' : 'neg') + ' amt num">' + Rs(res) + '</b></span>' +
+      '<span class="fecha ' + (g.fecha >= 0 ? 'pos' : 'neg') + ' amt num">fecha em ' + Rs(g.fecha) + '</span></div>';
+  }
+
+  $('#panel-integrado').innerHTML =
+    '<div class="ext-aviso" style="margin-bottom:14px"><span>\ud83d\udd2d Vis\u00e3o <b>integrada</b> \u2014 os 3 espa\u00e7os somados, s\u00f3 leitura. Para lan\u00e7ar ou editar, volte ao espa\u00e7o dono do dado.</span><button class="btn-sm" data-act="int-reload">\u21bb Atualizar espa\u00e7os</button></div>' +
+    '<div class="card ext-strip">' +
+      '<div class="es"><span class="l">Em conta agora \u00b7 soma</span><span class="v num amt ' + (saldoTotal >= 0 ? 'pos' : 'neg') + '">' + (temSaldo ? dual(saldoTotal, true) : '\u2014') + '</span></div>' +
+      '<span class="es-seta">\u2192</span>' +
+      '<div class="es"><span class="l">Entra</span><span class="v num amt pos">' + dual(entrou, false) + '</span></div>' +
+      '<div class="es"><span class="l">Sai</span><span class="v num amt">' + dual(saiu, false) + '</span></div>' +
+      '<span class="es-seta">\u2192</span>' +
+      '<div class="es"><span class="l">Termina com</span><span class="v num amt ' + (fim >= 0 ? 'pos' : 'neg') + '">' + dual(fim, true) + '</span></div>' +
+      (primeiroVermelho ? '<div class="es-alerta"><b>O total fica no vermelho em ' + fmtDataCurta(primeiroVermelho.data) + '</b> (' + esc(primeiroVermelho.nome) + ')</div>' : '') +
+    '</div>' +
+    '<div class="grid c4" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">' + tiles + '</div>' +
+    (itens.length ? '<div class="card" style="margin-bottom:14px"><h2>Saldo total ao longo do per\u00edodo</h2>' + extratoSVG(eFake) + '</div>' : '') +
+    '<div class="toolbar"><div class="hz-chips">' + [3, 6, 12].map(n => '<button class="chip' + (h === n ? ' on' : '') + '" data-act="set-inth" data-v="' + n + '">' + n + ' meses</button>').join('') + '</div></div>' +
+    '<div class="ext-card">' +
+      '<div class="ext-head"><span class="dia">Data</span><span class="nm">Movimento</span><span class="vl">Valor</span><span class="sd">Saldo</span></div>' +
+      '<div class="ext-abertura"><span>Saldo de abertura \u00b7 soma dos 3</span><span class="sd ' + (abertura >= 0 ? 'pos' : 'neg') + ' amt num">' + Rs(abertura) + '</span></div>' +
+      (linhas || '<div class="empty">Nada previsto nesse per\u00edodo.</div>') +
+    '</div>';
+
+  if (!pos && (!state.intLoadTs || Date.now() - state.intLoadTs > 60000)){ state.intLoadTs = Date.now(); intRecarregar(); }
 }
 
 /* ---------------- calendário ---------------- */
@@ -2886,7 +2997,7 @@ function sheetCategoria(c, tipo){
 
 function sheetMais(){
   const s = openSheet('<h3>Mais</h3><div class="list">'+
-    [['lanc','Histórico (buscar e editar)'],['cal','Calendário'],['cen','Cenários (Plano B)'],['metas','Metas'],['ajustes','Ajustes']].map(p =>
+    [['lanc','Histórico (buscar e editar)'],['cal','Calendário'],['integrado','Integrado (3 espaços somados)'],['cen','Cenários (Plano B)'],['metas','Metas'],['ajustes','Ajustes']].map(p =>
       '<button class="row" data-go="'+p[0]+'"><span class="mid"><span class="t1">'+p[1]+'</span></span><span class="muted">›</span></button>').join('')+
     '</div>'+
     '<button class="btn" id="mAI" style="margin-top:12px">✨ Assistente</button>'+
@@ -3407,6 +3518,8 @@ document.addEventListener('click', async e => {
   else if (act === 'set-extf') { state.extF = el.dataset.v; renderExtrato(); }
   else if (act === 'toggle-realizados') { state.extRealizados = !state.extRealizados; renderExtrato(); }
   else if (act === 'mes-hoje') { state.month = mesAtual(); renderAll(); }
+  else if (act === 'set-inth') { state.intH = Number(el.dataset.v); renderIntegrado(true); }
+  else if (act === 'int-reload') { state.intLoadTs = Date.now(); toast('Atualizando os 3 espa\u00e7os\u2026'); intRecarregar(); }
   else if (act === 'hub-open') { state.hubSel = el.dataset.hub; renderFixas(); window.scrollTo({top:0}); }
   else if (act === 'hub-back') { state.hubSel = null; renderFixas(); }
   else if (act === 'new-rec-hub') { sheetRecorrente(null, null, 'despesa', el.dataset.hub); }
