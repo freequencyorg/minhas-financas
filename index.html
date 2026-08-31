@@ -359,6 +359,9 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
 .ext-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
 .ext-mes{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:13px 18px;background:var(--page);border-bottom:1px solid var(--grid);border-top:1px solid var(--grid);position:sticky;top:64px;z-index:5}
 .ext-mes:first-child{border-top:none}
+.ext-mes.foot{position:static;top:auto;border-top:1px solid var(--grid);border-bottom:1px solid var(--grid);background:color-mix(in srgb, var(--accent) 5%, var(--surface))}
+.ext-mes-top{padding:9px 18px 4px;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:var(--page);border-top:1px solid var(--grid);position:sticky;top:64px;z-index:5}
+.ext-mes-top:first-child{border-top:none}
 .ext-mes .m{font-size:13.5px;font-weight:750;text-transform:capitalize;letter-spacing:-.01em}
 .ext-mes .kv{font-size:12.5px;color:var(--muted)}
 .ext-mes .kv b{font-weight:700}
@@ -427,6 +430,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
   .ext-head .sd{display:none}
   .ext-head .vl{width:auto;margin-left:auto}
   .ext-mes{position:static;padding:12px 14px;gap:9px}
+  .ext-mes-top{position:static;padding:8px 14px 3px}
   .ext-mes .m{width:100%}
   .ext-mes .fecha{margin-left:0;width:100%}
   .ext-abertura{padding:12px 14px}
@@ -1602,13 +1606,13 @@ function renderInicio(){
       (state.data.conta
         ? '<div class="h-label">Você tem em conta</div>'+
           '<div class="h-value num amt '+(saldoHoje()>0?'pos':saldoHoje()<0?'neg':'')+'">'+Rs(saldoHoje())+'</div>'+
-          '<div class="h-sub">Saldo de '+fmtMesLabel(ym)+': <strong class="amt '+(t.saldo>=0?'pos':'neg')+'">'+Rs(t.saldo)+'</strong>'+
-            (ehAtualOuFuturo && (prev.recPend || prev.despPend) ? ' · com as fixas pendentes fecha em <strong class="amt '+(prev.saldo>=0?'pos':'neg')+'">'+Rs(prev.saldo)+'</strong>' : '')+'</div>'+
+          '<div class="h-sub">Resultado de '+fmtMesLabel(ym)+' at\u00e9 agora: <strong class="amt '+(t.saldo>=0?'pos':'neg')+'">'+Rs(t.saldo)+'</strong>'+
+            (ehAtualOuFuturo && (prev.recPend || prev.despPend) ? ' \u00b7 com as pendentes: <strong class="amt '+(prev.saldo>=0?'pos':'neg')+'">'+Rs(prev.saldo)+'</strong>' : '')+'</div>'+
           '<div class="h-sub"><button class="link-btn" data-act="goto" data-page="extrato">Ver o extrato completo →</button></div>'
-        : '<div class="h-label">Saldo de '+fmtMesLabel(ym)+'</div>'+
+        : '<div class="h-label">Resultado de '+fmtMesLabel(ym)+'</div>'+
           '<div class="h-value num amt '+(t.saldo>0?'pos':t.saldo<0?'neg':'')+'">'+Rs(t.saldo)+'</div>'+
           (tAnt.rec||tAnt.desp ? '<span class="delta-chip '+(delta>=0?'up':'down')+'">'+(delta>=0?'↑':'↓')+' <span class="amt">'+R(Math.abs(delta))+'</span>&nbsp;vs '+fmtMesLabel(addMeses(ym,-1))+'</span>' : '')+
-          (ehAtualOuFuturo && (prev.recPend || prev.despPend) ? '<div class="h-sub">Com as fixas pendentes, termina em <strong class="amt '+(prev.saldo>=0?'pos':'neg')+'">'+Rs(prev.saldo)+'</strong></div>' : '')+
+          (ehAtualOuFuturo && (prev.recPend || prev.despPend) ? '<div class="h-sub">Com as pendentes, resultado previsto: <strong class="amt '+(prev.saldo>=0?'pos':'neg')+'">'+Rs(prev.saldo)+'</strong></div>' : '')+
           '<div class="h-sub"><button class="link-btn" data-act="sheet-conta">Informe seu saldo em conta</button> para ver dinheiro de verdade, não só o fluxo do mês</div>')+
       '</div>'+
       '<div>'+projecaoSVG(ym)+'</div>'+
@@ -1781,16 +1785,15 @@ function renderExtrato(){
   const passa = it => filtro === 'tudo' || (filtro === 'saidas' ? it.valor < 0 : it.valor >= 0);
   const hojeMarcado = { feito:false };
   let linhas = '';
+  const divisorHoje = '<div class="ext-hoje"><span>hoje \u00b7 '+fmtDataCurta(hoje)+'</span></div>';
   for (const g of e.meses){
     if (!g.itens.some(passa)) continue;
-    linhas += '<div class="ext-mes"><span class="m">'+fmtMesLabel(g.ym)+'</span>'+
-      '<span class="kv">entrou <b class="pos amt num">'+R(g.entrou)+'</b></span>'+
-      '<span class="kv">saiu <b class="amt num">'+R(g.saiu)+'</b></span>'+
-      '<span class="kv">sobra <b class="'+(g.entrou-g.saiu>=0?'pos':'neg')+' amt num">'+Rs(g.entrou-g.saiu)+'</b></span>'+
-      '<span class="fecha '+(g.fecha>=0?'pos':'neg')+' amt num">fecha em '+Rs(g.fecha)+'</span></div>';
+    /* hoje cai antes deste m\u00eas (ex.: 31/08 sem mais nada em agosto) \u2192 o divisor vem ANTES do t\u00edtulo do m\u00eas */
+    if (!hojeMarcado.feito && hoje >= state.month + '-01' && hoje < g.ym + '-01'){ hojeMarcado.feito = true; linhas += divisorHoje; }
+    linhas += '<div class="ext-mes-top">'+fmtMesLabel(g.ym)+'</div>';
     for (const it of g.itens){
       if (!passa(it)) continue;
-      if (!hojeMarcado.feito && it.data >= hoje && hoje >= state.month + '-01'){ hojeMarcado.feito = true; linhas += '<div class="ext-hoje"><span>hoje · '+fmtDataCurta(hoje)+'</span></div>'; }
+      if (!hojeMarcado.feito && it.data >= hoje && hoje >= state.month + '-01'){ hojeMarcado.feito = true; linhas += divisorHoje; }
       const vermelho = it.saldo < 0;
       const virada = e.primeiroVermelho && it === e.primeiroVermelho;
       const feito = it.real && (it.data <= hoje || it.baixa);
@@ -1809,6 +1812,12 @@ function renderExtrato(){
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>'+
         '</button></div>';
     }
+    const res = g.entrou - g.saiu;
+    linhas += '<div class="ext-mes foot"><span class="m">'+fmtMesLabel(g.ym)+'</span>'+
+      '<span class="kv">entrou <b class="pos amt num">'+R(g.entrou)+'</b></span>'+
+      '<span class="kv">saiu <b class="amt num">'+R(g.saiu)+'</b></span>'+
+      '<span class="kv">resultado <b class="'+(res>=0?'pos':'neg')+' amt num">'+Rs(res)+'</b></span>'+
+      '<span class="fecha '+(g.fecha>=0?'pos':'neg')+' amt num">fecha em '+Rs(g.fecha)+'</span></div>';
   }
 
   $('#panel-extrato').innerHTML = aviso + foraDoMes + kpis +
@@ -2135,7 +2144,7 @@ function renderCal(){
     '<div class="cal-card"><div class="cal-grid">'+
     ['dom','seg','ter','qua','qui','sex','sáb'].map(w => '<div class="cal-wd">'+w+'</div>').join('')+
     cells + '</div>'+
-    '<div class="cal-sum"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:5px"></span>a receber / recebido</span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--critical);margin-right:5px"></span>a pagar / pago</span><span style="margin-left:auto">Previsto no fim do mês: <strong class="num amt '+(prev.saldo>=0?'pos':'neg')+'">'+Rs(prev.saldo)+'</strong></span></div></div>';
+    '<div class="cal-sum"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:5px"></span>a receber / recebido</span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--critical);margin-right:5px"></span>a pagar / pago</span><span style="margin-left:auto">Resultado previsto do m\u00eas: <strong class="num amt '+(prev.saldo>=0?'pos':'neg')+'">'+Rs(prev.saldo)+'</strong></span></div></div>';
 }
 
 function sheetDia(iso){
