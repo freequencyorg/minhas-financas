@@ -1081,9 +1081,10 @@ function diaEfetivo(l){
 function saldoEmConta(ate){
   const c = state.data.conta;
   if (!c) return null;
-  /* movimento registrado DEPOIS do instante da conferência, no mesmo dia dela,
-     ainda não estava no número informado */
-  const aposConferencia = l => c.em && l.criadoEm && l.criadoEm > c.em;
+  /* movimento registrado DEPOIS do instante da conferência ainda não estava no número informado.
+     Conferência antiga sem horário: assume o fim do dia dela — tudo que for registrado depois debita. */
+  const emConf = c.em || (c.data + 'T23:59:59.999Z');
+  const aposConferencia = l => l.criadoEm && l.criadoEm > emConf;
   let s = c.saldo;
   if (ate >= c.data){
     /* para frente: soma o que aconteceu depois da conferência */
@@ -2224,7 +2225,7 @@ function renderIntegrado(pos){
       (linhas || '<div class="empty">Nada previsto nesse per\u00edodo.</div>') +
     '</div>';
 
-  if (!pos && (!state.intLoadTs || Date.now() - state.intLoadTs > 60000)){ state.intLoadTs = Date.now(); intRecarregar(); }
+  if (!pos && (!state.intLoadTs || Date.now() - state.intLoadTs > 15000)){ state.intLoadTs = Date.now(); intRecarregar(); }
 }
 
 /* ---------------- calendário ---------------- */
