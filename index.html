@@ -2612,7 +2612,7 @@ function sheetLancamento(l, dataIni, pre){
     }
     if (novo) state.data.lancamentos.push({id: uid('l'), tipo, valor: v, categoriaId: catSel, descricao: desc, data, recChave: null, criadoEm: new Date().toISOString()});
     else Object.assign(l, {tipo, valor: v, categoriaId: catSel, descricao: desc, data});
-    touch(); closeSheet(); renderAll(); toast(novo ? 'Lançamento salvo ✓' : 'Alterações salvas ✓');
+    touch(); closeSheet(); renderAll(); toast((novo ? 'Lan\u00e7amento salvo \u2713' : 'Altera\u00e7\u00f5es salvas \u2713') + (state.data.conta ? ' \u2014 em conta agora: ' + Rs(saldoHoje()) : ''));
   };
 }
 function shake(el){ el.style.borderColor='var(--critical)'; el.focus(); setTimeout(() => el.style.borderColor='', 1200); }
@@ -2663,7 +2663,7 @@ function sheetPagarOcc(o){
     const v = parseValor(inp.value);
     if (!v || v <= 0) return shake(inp);
     state.data.lancamentos.push({id: uid('l'), tipo: rec.tipo, valor: v, categoriaId: rec.categoriaId, descricao: rec.nome, data: s.querySelector('#pData').value || o.data, recChave: o.chave, criadoEm: new Date().toISOString()});
-    touch(); closeSheet(); renderAll(); toast(receita ? 'Recebimento registrado ✓' : 'Pagamento registrado ✓');
+    touch(); closeSheet(); renderAll(); toast((receita ? 'Recebido \u2713' : 'Pago \u2713') + (state.data.conta ? ' \u2014 em conta agora: ' + Rs(saldoHoje()) : ''));
   };
   /* guarda o novo valor apenas nesta ocorrência, mantendo-a pendente */
   s.querySelector('#pSoAjuste').onclick = () => {
