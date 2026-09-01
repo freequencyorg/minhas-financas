@@ -1052,6 +1052,10 @@ function migrar(d){
   d.recorrentes = d.recorrentes || []; d.orcamentos = d.orcamentos || {}; d.metas = d.metas || [];
   d.cenarios = d.cenarios || [];
   d.remarcacoes = d.remarcacoes || {};
+  /* lançamento avulso registrado ANTES da própria data foi agendado, não realizado:
+     só conta no saldo quando o usuário confirmar (v5.2) */
+  for (const l of d.lancamentos)
+    if (l.previsto === undefined && !l.recChave && l.criadoEm && l.data > l.criadoEm.slice(0, 10)) l.previsto = true;
   if (d.conta === undefined) d.conta = null; /* {saldo, data} — âncora do saldo bancário */
   d.pulos = d.pulos || [];      /* chaves de ocorrências puladas ("esse mês não teve") */
   d.ajustes = d.ajustes || {};  /* chave -> valor diferente só naquela ocorrência */
@@ -1084,11 +1088,12 @@ function saldoEmConta(ate){
   /* movimento registrado DEPOIS do instante da conferência ainda não estava no número informado.
      Conferência antiga sem horário: assume o fim do dia dela — tudo que for registrado depois debita. */
   const emConf = c.em || (c.data + 'T23:59:59.999Z');
-  const aposConferencia = l => l.criadoEm && l.criadoEm > emConf;
+  const aposConferencia = l => { const t = l.confirmadoEm || l.criadoEm; return t && t > emConf; };
   let s = c.saldo;
   if (ate >= c.data){
     /* para frente: soma o que aconteceu depois da conferência */
     for (const l of state.data.lancamentos){
+      if (l.previsto) continue;
       const d = diaEfetivo(l);
       const v = l.tipo === 'receita' ? l.valor : -l.valor;
       if (d > c.data && d <= ate) s += v;
@@ -1097,6 +1102,7 @@ function saldoEmConta(ate){
   } else {
     /* para trás: o saldo conferido já inclui esses movimentos — desfaz até a data pedida */
     for (const l of state.data.lancamentos){
+      if (l.previsto) continue;
       const d = diaEfetivo(l);
       if (d > ate && d <= c.data && !(d === c.data && aposConferencia(l)))
         s -= (l.tipo === 'receita' ? l.valor : -l.valor);
@@ -1117,13 +1123,22 @@ function extrato(hMeses){
   /* some da lista: o que já passou E toda baixa de fixa (pagar adiantado também é resolvido).
      Lançamento avulso com data futura continua visível — é compromisso agendado, não pagamento feito. */
   const jaAconteceu = l => !verRealizados && (l.data <= hoje || !!l.recChave);
+  const antes = inicio.slice(0,8) + '00'; /* dia 00 = véspera do primeiro dia */
   const itens = [];
   let embutido = 0, nEmbutidos = 0, embutidoEntrou = 0, embutidoSaiu = 0;
   for (const l of state.data.lancamentos){
-    if (l.data < inicio || l.data > fim) continue;
     const v = l.tipo === 'receita' ? l.valor : -l.valor;
+    if (l.previsto){
+      /* agendado: aparece como previsão (mesmo se a data já passou — fica atrasado) e nunca entra no saldo sozinho */
+      if (l.data > fim) continue;
+      itens.push({ data: l.data, nome: l.descricao || catById(l.categoriaId).nome, catId: l.categoriaId, valor: v, real: false, agendado: true, id: l.id });
+      continue;
+    }
+    /* realizado: o dia que importa é o dia em que o dinheiro se moveu (pagamento antecipado conta no dia do registro) */
+    const dEf = diaEfetivo(l);
+    if (dEf <= antes || dEf > fim) continue;
     if (jaAconteceu(l)) { embutido += v; nEmbutidos++; if (v >= 0) embutidoEntrou += v; else embutidoSaiu += -v; continue; }
-    itens.push({ data:l.data, nome: l.descricao || catById(l.categoriaId).nome, catId:l.categoriaId,
+    itens.push({ data: dEf, nome: l.descricao || catById(l.categoriaId).nome, catId:l.categoriaId,
       valor: v, real:true, baixa: !!l.recChave, id:l.id });
   }
   for (let i = 0; i < hMeses; i++)
@@ -1133,7 +1148,6 @@ function extrato(hMeses){
           valor: o.rec.tipo === 'receita' ? o.rec.valor : -o.rec.valor, real:false, chave:o.chave });
   itens.sort((a,b) => a.data === b.data ? (b.valor - a.valor) : (a.data < b.data ? -1 : 1));
   /* saldo de partida: âncora até a véspera do período + o que já foi realizado dentro dele */
-  const antes = inicio.slice(0,8) + '00'; /* dia 00 = véspera do primeiro dia */
   let saldo = (c ? saldoEmConta(antes) : 0) + embutido;
   const abertura = saldo;
   let pior = null, primeiroVermelho = null;
@@ -1161,8 +1175,15 @@ function extrato(hMeses){
 function lancsDoMes(ym){ return state.data.lancamentos.filter(l => mesDe(l.data) === ym); }
 function totaisDoMes(ym){
   let rec = 0, desp = 0;
-  for (const l of lancsDoMes(ym)) { if (l.tipo === 'receita') rec += l.valor; else desp += l.valor; }
+  for (const l of lancsDoMes(ym)) { if (l.previsto) continue; if (l.tipo === 'receita') rec += l.valor; else desp += l.valor; }
   return { rec, desp, saldo: rec - desp };
+}
+/* avulsos agendados do mês (ainda não confirmados), no formato de ocorrência para as listas de pendências */
+function agendadosDoMes(ym){
+  return lancsDoMes(ym).filter(l => l.previsto && !l.recChave).map(l => ({
+    data: l.data, chave: 'lanc:' + l.id, avulsoId: l.id, lanc: null, agendado: true,
+    rec: { id: null, nome: l.descricao || (catById(l.categoriaId) || {}).nome || 'lan\u00e7amento', tipo: l.tipo, valor: l.valor, categoriaId: l.categoriaId, freq: 'avulso' }
+  }));
 }
 function porCategoria(ym, tipo){
   const mapa = new Map();
@@ -1247,7 +1268,7 @@ function acharOcc(chave){
 function previstoDoMes(ym){
   const t = totaisDoMes(ym);
   let recPend = 0, despPend = 0;
-  for (const o of ocorrencias(ym)) if (!o.lanc) {
+  for (const o of ocorrencias(ym).concat(agendadosDoMes(ym))) if (!o.lanc) {
     if (o.rec.tipo === 'receita') recPend += o.rec.valor; else despPend += o.rec.valor;
   }
   return { rec: t.rec + recPend, desp: t.desp + despPend, saldo: t.rec + recPend - t.desp - despPend, recPend, despPend };
@@ -1565,7 +1586,7 @@ function renderInicio(){
 
   /* pendências (lista pro) */
   const hoje = hojeISO();
-  const pend = ocorrencias(ym).filter(o => !o.lanc);
+  const pend = ocorrencias(ym).filter(o => !o.lanc).concat(agendadosDoMes(ym)).sort((a,b) => a.data < b.data ? -1 : a.data > b.data ? 1 : 0);
   const ehMesAtual = ym === mesAtual();
   const atrasadas = ehMesAtual ? pend.filter(o => o.data < hoje) : [];
   const futuras = ehMesAtual ? pend.filter(o => o.data >= hoje) : pend;
@@ -1573,7 +1594,7 @@ function renderInicio(){
   const rowPend = o => {
     const late = ehMesAtual && o.data < hoje;
     const quando = o.rec.freq==='semanal' ? DIAS_SEM[o.rec.diaSemana].slice(0,3)+' '+Number(o.data.slice(8)) : 'dia '+Number(o.data.slice(8));
-    return '<button class="pend-row" data-act="pay-occ" data-chave="'+o.chave+'" title="'+(o.rec.tipo==='receita'?'Marcar como recebido':'Marcar como pago')+'">'+
+    return '<button class="pend-row" '+(o.agendado ? 'data-act="confirm-lanc" data-id="'+o.avulsoId+'"' : 'data-act="pay-occ" data-chave="'+o.chave+'"')+' title="'+(o.rec.tipo==='receita'?'Marcar como recebido':'Marcar como pago')+'">'+
       '<span class="nm">'+nomeHtml(o.rec.nome, o.rec.categoriaId)+'</span>'+
       '<span class="when'+(late?' late':'')+'">'+(late?'atrasada · ':'')+quando+'</span>'+
       '<span class="val num amt '+(o.rec.tipo==='receita'?'pos':'out')+'">'+(o.rec.tipo==='receita'?'+':'−')+R(o.rec.valor).replace('R$','R$ ')+'</span>'+
@@ -1811,16 +1832,17 @@ function renderExtrato(){
       const feito = it.real && (it.data <= hoje || it.baixa);
       linhas += '<div class="ext-linha">'+
         '<button class="ext-row'+(it.real?'':' prev')+(feito?' feito':'')+(vermelho?' vermelho':'')+(virada?' virada':'')+'"'+
-        (it.real ? ' data-act="abrir-lanc" data-id="'+it.id+'"' : ' data-act="pay-occ" data-chave="'+it.chave+'"')+'>'+
+        (it.agendado ? ' data-act="confirm-lanc" data-id="'+it.id+'"' : it.real ? ' data-act="abrir-lanc" data-id="'+it.id+'"' : ' data-act="pay-occ" data-chave="'+it.chave+'"')+'>'+
         '<span class="dia">'+fmtDataCurta(it.data)+'</span>'+
         '<span class="nm">'+nomeHtml(it.nome, it.catId)+'</span>'+
         (feito ? '<span class="tagp ok">✓ feito</span>' : '')+
         (it.ajustado ? '<span class="tagp aj">ajustado</span>' : '')+
         (it.remarcada ? '<span class="tagp aj">remarcada</span>' : '')+
+        (it.agendado ? '<span class="tagp aj">'+(it.data < hoje ? 'agendado \u00b7 atrasado' : 'agendado')+'</span>' : '')+
         '<span class="vl '+(it.valor>=0?'pos':'out')+' amt num">'+(it.valor>=0?'+':'−')+R(Math.abs(it.valor))+'</span>'+
         '<span class="sd amt num">'+Rs(it.saldo)+'</span></button>'+
         '<button class="ext-mais" aria-label="Opções" title="Opções" '+
-          (it.real ? 'data-act="menu-lanc" data-id="'+it.id+'"' : 'data-act="menu-occ" data-chave="'+it.chave+'"')+'>'+
+          (it.real || it.agendado ? 'data-act="menu-lanc" data-id="'+it.id+'"' : 'data-act="menu-occ" data-chave="'+it.chave+'"')+'>'+
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>'+
         '</button></div>';
     }
@@ -2625,7 +2647,7 @@ function parseRapido(texto){
 function commitRapido(p){
   const l = { id: uid('l'), tipo: p.tipo, valor: p.valor, categoriaId: p.categoriaId,
     descricao: p.descricao || catById(p.categoriaId).nome, data: p.data,
-    recChave: p.occ ? p.occ.chave : null, criadoEm: new Date().toISOString() };
+    recChave: p.occ ? p.occ.chave : null, previsto: !p.occ && p.data > hojeISO(), criadoEm: new Date().toISOString() };
   state.data.lancamentos.push(l);
   touch(); renderAll();
   toast((p.tipo==='receita'?'+':'−')+R(p.valor)+' lançado ✓'+(p.occ ? ' — '+esc(p.occ.rec.nome)+' baixada' : ''),
@@ -2722,7 +2744,7 @@ function sheetLancamento(l, dataIni, pre){
       toast('Salvo — e agora repete sozinho ✓');
       return;
     }
-    if (novo) state.data.lancamentos.push({id: uid('l'), tipo, valor: v, categoriaId: catSel, descricao: desc, data, recChave: null, criadoEm: new Date().toISOString()});
+    if (novo) state.data.lancamentos.push({id: uid('l'), tipo, valor: v, categoriaId: catSel, descricao: desc, data, recChave: null, previsto: data > hojeISO(), criadoEm: new Date().toISOString()});
     else Object.assign(l, {tipo, valor: v, categoriaId: catSel, descricao: desc, data});
     touch(); closeSheet(); renderAll(); toast((novo ? 'Lan\u00e7amento salvo \u2713' : 'Altera\u00e7\u00f5es salvas \u2713') + (state.data.conta ? ' \u2014 em conta agora: ' + Rs(saldoHoje()) : ''));
   };
@@ -2784,6 +2806,27 @@ function sheetPagarOcc(o){
     state.data.ajustes[o.chave] = v;
     touch(); closeSheet(); renderAll();
     toast('Previsto de '+fmtDataCurta(o.data)+' ajustado para '+R(v), () => { delete state.data.ajustes[o.chave]; touch(); renderAll(); });
+  };
+}
+
+/* confirma um lançamento agendado: vira dinheiro de verdade na data e valor informados */
+function sheetConfirmarLanc(l){
+  const receita = l.tipo === 'receita';
+  const s = openSheet('<h3>'+(receita?'Confirmar recebimento':'Confirmar pagamento')+'</h3>'+
+    '<p class="sec" style="font-size:14px;margin-bottom:4px">'+esc(l.descricao || catById(l.categoriaId).nome)+' \u2014 agendado para '+fmtDataCurta(l.data)+'</p>'+
+    '<div class="f-label">Valor '+(receita?'recebido':'pago')+'</div>'+
+    '<input class="f-input valor-input" id="cValor" inputmode="decimal" value="'+mascaraViva(String(l.valor).replace('.',','))+'">'+
+    '<div class="f-label">Data</div><input class="f-input" id="cData" type="date" value="'+(l.data < hojeISO() ? hojeISO() : l.data)+'">'+
+    '<button class="btn" id="cOk">'+(receita?'Recebi \u2713':'Paguei \u2713')+'</button>');
+  const inp = s.querySelector('#cValor');
+  inp.addEventListener('input', () => { inp.value = mascaraViva(inp.value); });
+  setTimeout(() => { inp.focus(); inp.select && inp.select(); }, 120);
+  s.querySelector('#cOk').onclick = () => {
+    const v = parseValor(inp.value);
+    if (!v || v <= 0) return shake(inp);
+    l.valor = v; l.data = s.querySelector('#cData').value || hojeISO(); l.previsto = false; l.confirmadoEm = new Date().toISOString();
+    touch(); closeSheet(); renderAll();
+    toast((receita ? 'Recebido \u2713' : 'Pago \u2713') + (state.data.conta ? ' \u2014 em conta agora: ' + Rs(saldoHoje()) : ''));
   };
 }
 
@@ -2850,6 +2893,7 @@ function sheetLancAcoes(l){
   const s = openSheet('<h3>'+esc(l.descricao || catById(l.categoriaId).nome)+'</h3>'+
     '<p class="sec" style="font-size:13.5px">'+fmtDataCurta(l.data)+' · '+(receita?'+':'−')+R(l.valor)+'</p>'+
     '<div class="acao-lista">'+
+      (l.previsto ? '<button class="acao" data-x="confirmar"><b>'+(receita?'Confirmar recebimento':'Confirmar pagamento')+'</b><span>agendado \u2014 s\u00f3 conta no saldo depois de confirmado</span></button>' : '')+
       '<button class="acao" data-x="editar"><b>Editar</b><span>valor, data, categoria e descrição</span></button>'+
       (l.recChave ? '<button class="acao" data-x="desfazer"><b>Desfazer a baixa</b><span>volta a aparecer como pendente</span></button>' : '')+
       (l.recChave ? '<button class="acao ruim" data-x="sumir"><b>Apagar '+(freqDaChave(l.recChave)==='semanal'?'desta semana':'deste mês')+'</b><span>tira o lançamento e a pendência; a fixa segue nas outras vezes</span></button>' : '')+
@@ -2859,6 +2903,7 @@ function sheetLancAcoes(l){
     const x = b.dataset.x;
     closeSheet();
     if (x === 'editar') return sheetLancamento(l);
+    if (x === 'confirmar') return sheetConfirmarLanc(l);
     const copia = {...l};
     state.data.lancamentos = state.data.lancamentos.filter(y => y.id !== l.id);
     if (x === 'sumir' && l.recChave) state.data.pulos.push(l.recChave);
@@ -3068,8 +3113,8 @@ function aiContexto(){
     saldoEmContaHoje: d.conta ? saldoHoje() : null,
     categorias: d.categorias.map(c=>({id:c.id, nome:c.nome, tipo:c.tipo})),
     fixasAtivas: d.recorrentes.filter(r=>r.ativa).map(r=>({nome:r.nome, tipo:r.tipo, valor:r.valor, freq:r.freq, dia:r.dia, diaSemana:r.diaSemana, fim:r.fim})),
-    pendentesEsteMes: ocorrencias(ym).filter(o=>!o.lanc).map(o=>({chave:o.chave, nome:o.rec.nome, tipo:o.rec.tipo, valor:o.rec.valor, data:o.data})),
-    lancamentosEsteMes: lancsDoMes(ym).map(l=>({tipo:l.tipo, valor:l.valor, categoria:catById(l.categoriaId).nome, descricao:l.descricao, data:l.data})),
+    pendentesEsteMes: ocorrencias(ym).filter(o=>!o.lanc).concat(agendadosDoMes(ym)).map(o=>({chave:o.chave, nome:o.rec.nome, tipo:o.rec.tipo, valor:o.rec.valor, data:o.data, agendado: !!o.agendado})),
+    lancamentosEsteMes: lancsDoMes(ym).map(l=>({tipo:l.tipo, valor:l.valor, categoria:catById(l.categoriaId).nome, descricao:l.descricao, data:l.data, agendado: !!l.previsto})),
     ultimos6Meses: hist,
     mesAtual: {receitas:t.rec, despesas:t.desp, saldo:t.saldo, previstoFimDoMes:prev.saldo},
     projecaoAcumulada12Meses: Math.round(proj.pts[proj.pts.length-1].acc),
@@ -3082,7 +3127,7 @@ function aiContexto(){
 const AI_TOOLS = [
   { name:'criar_lancamento', description:'Registra uma receita ou despesa avulsa no app.',
     input_schema:{ type:'object', properties:{ tipo:{type:'string',enum:['receita','despesa']}, valor:{type:'number'}, data:{type:'string',description:'YYYY-MM-DD'}, categoriaId:{type:'string',description:'id de uma categoria existente'}, descricao:{type:'string'} }, required:['tipo','valor','data','categoriaId'] } },
-  { name:'dar_baixa', description:'Marca uma fixa pendente do mês como paga/recebida. Use a chave exata de pendentesEsteMes. Prefira esta ferramenta quando o pedido corresponder a uma pendência.',
+  { name:'dar_baixa', description:'Marca uma pendência do mês (fixa ou lançamento agendado) como paga/recebida. Use a chave exata de pendentesEsteMes (chaves lanc:... são lançamentos agendados). Prefira esta ferramenta quando o pedido corresponder a uma pendência.',
     input_schema:{ type:'object', properties:{ chave:{type:'string'}, valor:{type:'number',description:'valor real, se diferente do previsto'}, data:{type:'string'} }, required:['chave'] } },
   { name:'criar_fixa', description:'Cria uma receita ou despesa recorrente (fixa).',
     input_schema:{ type:'object', properties:{ nome:{type:'string'}, tipo:{type:'string',enum:['receita','despesa']}, valor:{type:'number'}, categoriaId:{type:'string'}, freq:{type:'string',enum:['mensal','semanal','diaria']}, dia:{type:'number'}, diaSemana:{type:'number',description:'0=domingo…6=sábado'}, inicio:{type:'string'}, fim:{type:'string'} }, required:['nome','tipo','valor','categoriaId','freq'] } }
@@ -3098,11 +3143,19 @@ function aiExec(name, inp){
       const br = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/.exec(dt);
       if (br) dt = (br[3] ? (br[3].length===2 ? '20'+br[3] : br[3]) : String(new Date().getFullYear())) + '-' + pad2(Number(br[2])) + '-' + pad2(Number(br[1]));
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dt)) dt = hojeISO();
-      state.data.lancamentos.push({id:uid('l'), tipo:inp.tipo, valor:inp.valor, categoriaId:cat.id, descricao:inp.descricao||'', data:dt, recChave:null, criadoEm:new Date().toISOString()});
+      state.data.lancamentos.push({id:uid('l'), tipo:inp.tipo, valor:inp.valor, categoriaId:cat.id, descricao:inp.descricao||'', data:dt, recChave:null, previsto: dt > hojeISO(), criadoEm:new Date().toISOString()});
       touch(); renderAll();
-      return {ok:true, resumo:(inp.tipo==='receita'?'+':'−')+R(inp.valor)+(inp.descricao?' · '+inp.descricao:'')+' em '+cat.nome+' ('+dt+')'+(dt <= hojeISO() ? ' — já realizado: contabilizado no saldo e embutido no \u201cabre com\u201d do extrato (ligue \u201cMostrar realizados\u201d para ver na lista)' : '')};
+      return {ok:true, resumo:(inp.tipo==='receita'?'+':'−')+R(inp.valor)+(inp.descricao?' · '+inp.descricao:'')+' em '+cat.nome+' ('+dt+')'+(dt <= hojeISO() ? ' — já realizado: contabilizado no saldo e embutido no \u201cabre com\u201d do extrato (ligue \u201cMostrar realizados\u201d para ver na lista)' : ' — AGENDADO: aparece como previsão e só entra no saldo quando o usuário confirmar (Recebi/Paguei)')};
     }
     if (name === 'dar_baixa'){
+      if (String(inp.chave||'').startsWith('lanc:')){
+        const l = state.data.lancamentos.find(x => x.id === inp.chave.slice(5) && x.previsto);
+        if (!l) return {erro:'lançamento agendado não encontrado (talvez já confirmado)'};
+        if (inp.valor && inp.valor > 0) l.valor = inp.valor;
+        l.data = inp.data || hojeISO(); l.previsto = false; l.confirmadoEm = new Date().toISOString();
+        touch(); renderAll();
+        return {ok:true, resumo:(l.descricao||'lançamento')+' confirmado: '+(l.tipo==='receita'?'+':'−')+R(l.valor)+(state.data.conta ? ' · em conta agora '+Rs(saldoHoje()) : '')};
+      }
       const o = ocorrencias(mesAtual()).find(x=>x.chave===inp.chave && !x.lanc);
       if (!o) return {erro:'pendência não encontrada (confira a chave, talvez já foi baixada)'};
       const v = inp.valor && inp.valor > 0 ? inp.valor : o.rec.valor;
@@ -3133,7 +3186,7 @@ async function aiCall(messages){
     body: JSON.stringify({
       model: cfg.model || 'claude-haiku-4-5',
       max_tokens: 1200,
-      system: 'Você é o assistente do Minhas Finanças, o app de finanças pessoais do usuário (Brasil). Espaço ativo: '+ESPACOS[state.espaco].nome+(state.espaco==='freequency'?' — finanças da empresa/CNPJ Freequency.':state.espaco==='venancio'?' — operação da Casa Venâncio (caixa separado das finanças pessoais).':' — finanças pessoais (imóveis de aluguel).')+' Responda SEMPRE em português do Brasil, curto e direto, valores em R$. Hoje é '+hojeISO()+'. Quando o usuário pedir para registrar/lançar/pagar/receber/dar baixa, USE as ferramentas — prefira dar_baixa quando o pedido corresponder a uma pendência de pendentesEsteMes. Nunca invente números: use somente os dados fornecidos; se não souber, diga que não tem o dado. REGRAS DO EXTRATO: lançamento com data até hoje (e toda baixa de fixa) é REALIZADO — sai da lista do extrato e fica embutido no saldo de abertura (\u201cabre com\u201d); o valor SEMPRE é contabilizado no saldo, mesmo sem aparecer na lista. A lista do extrato começa no mês exibido: meses anteriores ficam fora dela (mas dentro do abre). Se o usuário não achar um lançamento, explique isso e sugira ligar \u201cMostrar realizados\u201d e voltar ao mês atual. DADOS ATUAIS DO APP (JSON): '+aiContexto(),
+      system: 'Você é o assistente do Minhas Finanças, o app de finanças pessoais do usuário (Brasil). Espaço ativo: '+ESPACOS[state.espaco].nome+(state.espaco==='freequency'?' — finanças da empresa/CNPJ Freequency.':state.espaco==='venancio'?' — operação da Casa Venâncio (caixa separado das finanças pessoais).':' — finanças pessoais (imóveis de aluguel).')+' Responda SEMPRE em português do Brasil, curto e direto, valores em R$. Hoje é '+hojeISO()+'. Quando o usuário pedir para registrar/lançar/pagar/receber/dar baixa, USE as ferramentas — prefira dar_baixa quando o pedido corresponder a uma pendência de pendentesEsteMes. Nunca invente números: use somente os dados fornecidos; se não souber, diga que não tem o dado. REGRAS DO EXTRATO: lançamento com data até hoje (e toda baixa de fixa) é REALIZADO — sai da lista do extrato e fica embutido no saldo de abertura (\u201cabre com\u201d); o valor SEMPRE é contabilizado no saldo, mesmo sem aparecer na lista. Lançamento avulso com data futura é AGENDADO (previsto=true): aparece como previsão e NÃO entra no saldo até o usuário confirmar (Recebi/Paguei) — nada vira dinheiro sozinho pela data. A lista do extrato começa no mês exibido: meses anteriores ficam fora dela (mas dentro do abre). Se o usuário não achar um lançamento, explique isso e sugira ligar \u201cMostrar realizados\u201d e voltar ao mês atual. DADOS ATUAIS DO APP (JSON): '+aiContexto(),
       tools: AI_TOOLS,
       messages
     })
@@ -3399,7 +3452,7 @@ function anexoImportar(){
       else if (/(rec|entrada|credito|crédito|receb|^c$|^e$)/.test(t)) tipo = 'receita';
     }
     const cat = acharCat(m.cat >= 0 ? l[m.cat] : '', tipo);
-    const lan = {id:uid('l'), tipo, valor:Math.abs(valor), categoriaId:cat.id, descricao:String(m.desc>=0 ? l[m.desc] : '').trim().slice(0,80), data, recChave:null, criadoEm:new Date().toISOString()};
+    const lan = {id:uid('l'), tipo, valor:Math.abs(valor), categoriaId:cat.id, descricao:String(m.desc>=0 ? l[m.desc] : '').trim().slice(0,80), data, recChave:null, previsto: data > hojeISO(), criadoEm:new Date().toISOString()};
     state.data.lancamentos.push(lan); desfazer.push(lan.id); criados++;
   }
   touch(); renderAll();
@@ -3529,6 +3582,7 @@ document.addEventListener('click', async e => {
   else if (act === 'anexo-ia') { anexoParaIA(); }
   else if (act === 'anexo-cancelar') { aiAnexo = null; aiRenderAll(); }
   else if (act === 'abrir-lanc') { const l = state.data.lancamentos.find(x => x.id === el.dataset.id); if (l) sheetLancamento(l); }
+  else if (act === 'confirm-lanc') { const l = state.data.lancamentos.find(x => x.id === el.dataset.id); if (l) sheetConfirmarLanc(l); }
   else if (act === 'menu-lanc') { const l = state.data.lancamentos.find(x => x.id === el.dataset.id); if (l) sheetLancAcoes(l); }
   else if (act === 'menu-occ') { const o = acharOcc(el.dataset.chave); if (o) sheetOccAcoes(o); }
   else if (act === 'cen-novo') { novoCenario(); state.page='cen'; renderAll(); toast('Cenário criado — mexa à vontade, seus dados reais ficam intactos'); }
