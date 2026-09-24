@@ -164,7 +164,7 @@ main section.panel.active{display:block}
 .hero-stats .hs:hover{border-color:var(--baseline)}
 .hero-stats .l{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .hero-stats .v{font-size:16px;font-weight:750;letter-spacing:-.01em}
-.pend-alerta{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:650;color:var(--critical);background:color-mix(in srgb, var(--critical) 8%, transparent);border:1px solid color-mix(in srgb, var(--critical) 25%, transparent);border-radius:10px;padding:8px 13px;margin-bottom:8px}
+.pend-alerta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;font-weight:650;color:var(--critical);background:color-mix(in srgb, var(--critical) 8%, transparent);border:1px solid color-mix(in srgb, var(--critical) 25%, transparent);border-radius:10px;padding:8px 13px;margin-bottom:8px}
 .hero .h-sub{font-size:13.5px;color:var(--muted);margin-top:8px;line-height:1.6}
 .hero .h-sub strong{font-weight:650}
 .delta-chip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:650;border-radius:99px;padding:2.5px 9px;margin-top:10px}
@@ -244,7 +244,7 @@ main section.panel.active{display:block}
 .radar-note .link-btn{margin-left:auto}
 .yr-pill{font-size:13px;background:var(--page);border:1px solid var(--border-soft);border-radius:9px;padding:5px 11px;color:var(--muted)}
 .yr-pill strong{font-weight:650;margin-left:5px}
-.cols-legend{display:flex;gap:14px;font-size:13px;color:var(--ink-2);margin-bottom:8px}
+.cols-legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px;color:var(--ink-2);margin-bottom:8px}
 .cols-legend span{display:flex;align-items:center;gap:5px}
 .cols-legend .sw{width:9px;height:9px;border-radius:3px}
 /* ================= table (desktop lançamentos) ================= */
@@ -588,8 +588,8 @@ nav.tabs{display:none}
 .set-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border-soft)}
 .set-row:last-child{border-bottom:none}
 .set-row .mid{flex:1;min-width:0}
-.set-row .t1{font-size:14.5px;font-weight:560}
-.set-row .t2{font-size:13px;color:var(--muted)}
+.set-row .t1{display:block;font-size:14.5px;font-weight:560}
+.set-row .t2{display:block;font-size:13px;color:var(--muted)}
 .set-row input.mini{width:110px;text-align:right;padding:7.5px 10px;border-radius:10px;border:1px solid var(--border);background:var(--page);outline:none}
 .set-row input.mini:focus{border-color:var(--accent)}
 .iconbtn{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--muted);background:var(--page);border:1px solid var(--border-soft);flex:none}
@@ -653,6 +653,19 @@ nav.tabs{display:none}
 @media (max-width:560px){
   .grid.c4{grid-template-columns:1fr 1fr}
   .cal-day{min-height:56px}
+}
+/* v5.3 — telas estreitas não podem vazar de largura (senão o celular encolhe o app inteiro) */
+.int-tiles{grid-template-columns:repeat(3,1fr)}
+@media (max-width:700px){
+  .grid.c2{grid-template-columns:minmax(0,1fr)}
+  .int-tiles{grid-template-columns:1fr}
+  .pend-row .val{min-width:0}
+  .pend-row{flex-wrap:wrap;row-gap:2px}
+  .pend-row .nm{flex-basis:100%}
+  .pend-row .val{margin-left:auto}
+  .rep-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .rep-table th,.rep-table td{padding:8px 6px}
+  .rep-table th:nth-child(3),.rep-table td:nth-child(3){display:none}
 }
 </style>
 </head>
@@ -731,7 +744,7 @@ nav.tabs{display:none}
     <div class="side-foot">
       <div class="side-mini">
         <button id="syncPill" title="Estado da sincronização"><span class="dot"></span><span id="syncTxt">…</span></button>
-        <button id="setBtn" class="icon-sq" title="Ajustes (9)">
+        <button id="setBtn" class="icon-sq" title="Ajustes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4.5 7.5h15M4.5 12h15M4.5 16.5h15"/><circle cx="9.5" cy="7.5" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="16.5" r="2" fill="var(--surface)"/></svg>
         </button>
         <button id="eyeBtn" class="icon-sq" title="Modo discreto (esconder valores)">
@@ -1000,19 +1013,29 @@ function touch(){
   state.saveTimer = setTimeout(doSave, 1200);
 }
 async function doSave(){
+  if (state.simulacao) return; /* v5.3: dentro de uma simulação NADA vai para o GitHub */
   if (state.saving) { state.pendingSave = true; return; }
   state.saving = true;
-  const arq = ESPACOS[state.espaco].arquivo;
+  /* v5.3: congela espaço e dados no início — trocar de espaço no meio não pode misturar os caixas */
+  const esp = state.espaco, arq = ESPACOS[esp].arquivo, dados = state.data;
+  const msg = () => 'Atualização ('+ESPACOS[esp].nome+') — ' + new Date().toLocaleString('pt-BR');
   try {
-    let r = await ghPut(state.cfg, state.data, state.sha, 'Atualização ('+ESPACOS[state.espaco].nome+') — ' + new Date().toLocaleString('pt-BR'), arq);
+    let r = await ghPut(state.cfg, dados, state.espaco === esp ? state.sha : null, msg(), arq);
     if (r.conflict) {
       const fresh = await ghLoad(state.cfg, arq);
-      state.sha = fresh.missing ? null : fresh.sha;
-      r = await ghPut(state.cfg, state.data, state.sha, 'Atualização ('+ESPACOS[state.espaco].nome+') — ' + new Date().toLocaleString('pt-BR'), arq);
+      const shaFresco = fresh.missing ? null : fresh.sha;
+      if (state.espaco === esp) state.sha = shaFresco;
+      r = await ghPut(state.cfg, dados, shaFresco, msg(), arq);
       if (r.conflict) throw new Error('Conflito ao salvar. Recarregue a página.');
     }
-    state.sha = r.sha; state.dirty = false; cacheData();
-    setSync('ok','Sincronizado');
+    if (state.espaco === esp) {
+      state.sha = r.sha; state.dirty = false; cacheData();
+      setSync('ok','Sincronizado');
+    } else {
+      /* espaço trocou no meio: registra o sha novo direto no cache do espaço antigo */
+      const k = LS_CACHE + (esp === 'pessoal' ? '' : '_' + esp);
+      try { localStorage.setItem(k, JSON.stringify({data: dados, sha: r.sha, em: Date.now()})) } catch(e){}
+    }
   } catch(e) {
     setSync('err','Não salvo — tocar p/ tentar');
     console.warn('save falhou', e);
@@ -1184,6 +1207,17 @@ function agendadosDoMes(ym){
     data: l.data, chave: 'lanc:' + l.id, avulsoId: l.id, lanc: null, agendado: true,
     rec: { id: null, nome: l.descricao || (catById(l.categoriaId) || {}).nome || 'lan\u00e7amento', tipo: l.tipo, valor: l.valor, categoriaId: l.categoriaId, freq: 'avulso' }
   }));
+}
+/* v5.3: pendências não pagas de meses ANTERIORES ao exibido — sem isso elas somem do app quando o mês vira */
+function pendenciasAntigas(ym){
+  const out = [];
+  for (let i = 1; i <= 12; i++)
+    for (const o of ocorrencias(addMeses(ym, -i))) if (!o.lanc) out.push(o);
+  for (const l of state.data.lancamentos)
+    if (l.previsto && !l.recChave && mesDe(l.data) < ym)
+      out.push({ data: l.data, chave: 'lanc:' + l.id, avulsoId: l.id, lanc: null, agendado: true,
+        rec: { id: null, nome: l.descricao || (catById(l.categoriaId) || {}).nome || 'lançamento', tipo: l.tipo, valor: l.valor, categoriaId: l.categoriaId, freq: 'avulso' } });
+  return out;
 }
 function porCategoria(ym, tipo){
   const mapa = new Map();
@@ -1520,8 +1554,11 @@ async function fxAtualizar(force){
     ['BCE', 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL', j => j.rates && j.rates.BRL]
   ];
   for (const [fonte, url, pega] of fontes){
+    /* v5.3: timeout que funciona em qualquer navegador — sem ele o Safari podia pendurar em "buscando…" para sempre */
+    const ac = new AbortController();
+    const tm = setTimeout(() => ac.abort(), 6000);
     try {
-      const r = await fetch(url, { signal: (AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined) });
+      const r = await fetch(url, { signal: ac.signal });
       if (!r.ok) continue;
       const v = pega(await r.json());
       if (v > 0){
@@ -1529,7 +1566,7 @@ async function fxAtualizar(force){
         try { localStorage.setItem(LS_FX, JSON.stringify({ rate: fx.rate, ts: fx.ts, fonte: fx.fonte })) } catch(e){}
         break;
       }
-    } catch(e){}
+    } catch(e){} finally { clearTimeout(tm); }
   }
   fx.buscando = false; fxPinta(); fxRecalc();
 }
@@ -1586,14 +1623,18 @@ function renderInicio(){
 
   /* pendências (lista pro) */
   const hoje = hojeISO();
-  const pend = ocorrencias(ym).filter(o => !o.lanc).concat(agendadosDoMes(ym)).sort((a,b) => a.data < b.data ? -1 : a.data > b.data ? 1 : 0);
   const ehMesAtual = ym === mesAtual();
+  /* v5.3: no mês atual, o que ficou para trás em meses anteriores continua visível e clicável */
+  const antigas = ehMesAtual ? pendenciasAntigas(ym) : [];
+  const pend = antigas.concat(ocorrencias(ym).filter(o => !o.lanc)).concat(agendadosDoMes(ym)).sort((a,b) => a.data < b.data ? -1 : a.data > b.data ? 1 : 0);
   const atrasadas = ehMesAtual ? pend.filter(o => o.data < hoje) : [];
   const futuras = ehMesAtual ? pend.filter(o => o.data >= hoje) : pend;
   const somaPend = a => a.reduce((s,o) => s + (o.rec.tipo==='receita'? o.rec.valor : -o.rec.valor), 0);
   const rowPend = o => {
     const late = ehMesAtual && o.data < hoje;
-    const quando = o.rec.freq==='semanal' ? DIAS_SEM[o.rec.diaSemana].slice(0,3)+' '+Number(o.data.slice(8)) : 'dia '+Number(o.data.slice(8));
+    const foraDoMes = mesDe(o.data) !== ym;
+    const quando = foraDoMes ? fmtDataCurta(o.data)
+      : o.rec.freq==='semanal' ? DIAS_SEM[o.rec.diaSemana].slice(0,3)+' '+Number(o.data.slice(8)) : 'dia '+Number(o.data.slice(8));
     return '<button class="pend-row" '+(o.agendado ? 'data-act="confirm-lanc" data-id="'+o.avulsoId+'"' : 'data-act="pay-occ" data-chave="'+o.chave+'"')+' title="'+(o.rec.tipo==='receita'?'Marcar como recebido':'Marcar como pago')+'">'+
       '<span class="nm">'+nomeHtml(o.rec.nome, o.rec.categoriaId)+'</span>'+
       '<span class="when'+(late?' late':'')+'">'+(late?'atrasada · ':'')+quando+'</span>'+
@@ -1803,12 +1844,12 @@ function renderExtrato(){
     '<div class="card ext-strip">'+
       '<div class="es"><span class="l">'+(e.verRealizados ? 'Saldo em '+fmtDataCurta(vesperaISO) : 'Abre com')+'</span><span class="v num amt">'+dual(e.abertura,true)+'</span></div>'+
       '<span class="es-seta">→</span>'+
-      '<div class="es"><span class="l">Entra</span><span class="v num amt pos">'+dual(entrou,false)+'</span>'+
+      '<div class="es"><span class="l">Entra · '+h+' meses</span><span class="v num amt pos">'+dual(entrou,false)+'</span>'+
         (e.embutidoEntrou > 0 ? '<span class="es-sub amt num">já entrou '+R(e.embutidoEntrou)+' · no abre</span>' : '')+'</div>'+
-      '<div class="es"><span class="l">Sai</span><span class="v num amt">'+dual(saiu,false)+'</span>'+
+      '<div class="es"><span class="l">Sai · '+h+' meses</span><span class="v num amt">'+dual(saiu,false)+'</span>'+
         (e.embutidoSaiu > 0 ? '<span class="es-sub amt num">já saiu '+R(e.embutidoSaiu)+' · no abre</span>' : '')+'</div>'+
       '<span class="es-seta">→</span>'+
-      '<div class="es"><span class="l">Termina com</span><span class="v num amt '+(e.fim>=0?'pos':'neg')+'">'+dual(e.fim,true)+'</span></div>'+
+      '<div class="es"><span class="l">Termina com · '+fmtMesLabel(addMeses(state.month, h-1))+'</span><span class="v num amt '+(e.fim>=0?'pos':'neg')+'">'+dual(e.fim,true)+'</span></div>'+
       (e.primeiroVermelho
         ? '<div class="es-alerta"><b>Fica no vermelho em '+fmtDataCurta(e.primeiroVermelho.data)+'</b> ('+esc(e.primeiroVermelho.nome)+') · pior momento <span class="amt num">'+Rs(e.pior.saldo)+'</span> em '+fmtDataCurta(e.pior.data)+'</div>'
         : '')+
@@ -2002,9 +2043,9 @@ function menuCategoria(anchor, tipo, onPick){
 function rowOcc(o){
   const hoje = hojeISO();
   const pago = !!o.lanc;
-  const atrasada = !pago && o.data < hoje && mesDe(o.data) === mesAtual();
+  const atrasada = !pago && o.data < hoje && mesDe(o.data) <= mesAtual();
   const rotStatus = pago ? ((o.rec.tipo==='receita'?'Recebido':'Pago')+' em '+fmtDataCurta(o.lanc.data))
-    : atrasada ? ((o.rec.tipo==='receita'?'Esperado':'Venceu')+' dia '+Number(o.data.slice(8)))
+    : atrasada ? ((o.rec.tipo==='receita'?'Esperado':'Venceu')+(mesDe(o.data)===mesAtual() ? ' dia '+Number(o.data.slice(8)) : ' em '+fmtDataCurta(o.data)))
     : (o.rec.freq==='semanal' ? DIAS_SEM[o.rec.diaSemana]+' '+fmtDataCurta(o.data) : 'Dia '+Number(o.data.slice(8)));
   const c = catById(o.rec.categoriaId);
   return '<div class="row'+(pago?' done':'')+(atrasada?' overdue':'')+'" style="cursor:default">'+
@@ -2050,6 +2091,9 @@ function renderFixas(){
     g.occs++; if (o.lanc) g.pagas++;
     if (!o.lanc && o.data < hoje && ym === mesAtual()) g.atrasadas++;
   }
+  /* v5.3: atrasadas que ficaram em meses anteriores contam no aviso do hub */
+  if (ym === mesAtual())
+    for (const o of pendenciasAntigas(ym)) if (o.data < hoje) pega(hubDe(o.rec.categoriaId)).atrasadas++;
   for (const l of lancs){
     if (l.recChave) continue; /* baixas já contadas via occs */
     const g = pega(hubDe(l.categoriaId));
@@ -2101,6 +2145,8 @@ function renderHubDetalhe(nome){
   const c0 = state.data.categorias.find(c => c.nome === nome);
   const cor = c0 ? corVar(c0) : 'var(--s0)';
   const occs = ocorrencias(ym).filter(o => cats.includes(o.rec.categoriaId));
+  /* v5.3: pendências deixadas em meses anteriores aparecem no topo do hub */
+  const antigasHub = ym === mesAtual() ? pendenciasAntigas(ym).filter(o => !o.agendado && o.rec.categoriaId && cats.includes(o.rec.categoriaId) && o.data < hojeISO()) : [];
   const avulsos = lancsDoMes(ym).filter(l => !l.recChave && cats.includes(l.categoriaId));
   const futuros = state.data.lancamentos.filter(l => !l.recChave && cats.includes(l.categoriaId) && mesDe(l.data) > ym)
     .sort((a,b) => a.data.localeCompare(b.data));
@@ -2128,7 +2174,10 @@ function renderHubDetalhe(nome){
       '<span class="hh-res num amt '+(res>0?'pos':res<0?'neg':'')+'">'+Rs(res)+'<em>resultado de '+fmtMesLabel(ym)+'</em></span>'+
     '</div>'+
     '<div class="grid c2" style="align-items:start">'+
-      '<div><div class="sec-head"><h3>Contas de '+fmtMesLabel(ym)+'</h3><span class="sum num">'+occs.filter(o=>o.lanc).length+' de '+occs.length+'</span></div>'+
+      '<div>'+
+      (antigasHub.length ? '<div class="sec-head"><h3 style="color:var(--critical)">Ficou para trás</h3><span class="sum num">'+antigasHub.length+'</span></div>'+
+        '<div class="list" style="margin-bottom:14px">'+antigasHub.map(rowOcc).join('')+'</div>' : '')+
+      '<div class="sec-head"><h3>Contas de '+fmtMesLabel(ym)+'</h3><span class="sum num">'+occs.filter(o=>o.lanc).length+' de '+occs.length+'</span></div>'+
       '<div class="list">'+(occs.map(rowOcc).join('') || '<div class="empty">Nenhuma conta fixa deste hub em '+fmtMesLabel(ym)+'.</div>')+
       (avulsos.length ? '<div class="sec-head"><h3>Avulsos do mês</h3></div>'+avulsos.map(l =>
         '<button class="row" data-act="edit-lanc" data-id="'+l.id+'">'+
@@ -2166,13 +2215,16 @@ function renderIntegrado(pos){
   const real = state.data, verR = state.extRealizados;
   state.extRealizados = false;
   const por = {};
-  for (const esp of Object.keys(ESPACOS)){
-    const d = dadosDoEspaco(esp);
-    if (!d) continue;
-    state.data = esp === state.espaco ? real : migrar(structuredClone(d));
-    por[esp] = { e: extrato(h), saldoHj: state.data.conta ? saldoHoje() : null, em: d.atualizadoEm };
+  try { /* v5.3: aconteça o que acontecer, state.data volta a ser o espaço verdadeiro */
+    for (const esp of Object.keys(ESPACOS)){
+      const d = dadosDoEspaco(esp);
+      if (!d) continue;
+      state.data = esp === state.espaco ? real : migrar(structuredClone(d));
+      por[esp] = { e: extrato(h), saldoHj: state.data.conta ? saldoHoje() : null, em: d.atualizadoEm };
+    }
+  } finally {
+    state.data = real; state.extRealizados = verR;
   }
-  state.data = real; state.extRealizados = verR;
 
   let abertura = 0, saldoTotal = 0, temSaldo = false, temAncora = false;
   const itens = [];
@@ -2180,7 +2232,7 @@ function renderIntegrado(pos){
     abertura += p.e.abertura;
     if (p.e.ancorado) temAncora = true;
     if (p.saldoHj != null){ saldoTotal += p.saldoHj; temSaldo = true; }
-    for (const it of p.e.itens) itens.push({ data: it.data, nome: it.nome, valor: it.valor, esp });
+    for (const it of p.e.itens) itens.push({ data: it.data, nome: it.nome, valor: it.valor, esp, agendado: !!it.agendado, remarcada: !!it.remarcada, ajustado: !!it.ajustado });
   }
   itens.sort((a, b) => a.data === b.data ? b.valor - a.valor : (a.data < b.data ? -1 : 1));
   let saldo = abertura, pior = null, primeiroVermelho = null;
@@ -2216,6 +2268,9 @@ function renderIntegrado(pos){
       linhas += '<div class="ext-linha"><div class="ext-row" style="cursor:default">' +
         '<span class="dia">' + fmtDataCurta(it.data) + '</span>' +
         '<span class="nm">' + chip(it.esp) + ' ' + esc(it.nome) + '</span>' +
+        (it.agendado ? '<span class="tagp aj">' + (it.data < hoje ? 'agendado · atrasado' : 'agendado') + '</span>' : '') +
+        (it.remarcada ? '<span class="tagp aj">remarcada</span>' : '') +
+        (it.ajustado ? '<span class="tagp aj">ajustado</span>' : '') +
         '<span class="vl ' + (it.valor >= 0 ? 'pos' : 'out') + ' amt num">' + (it.valor >= 0 ? '+' : '\u2212') + R(Math.abs(it.valor)) + '</span>' +
         '<span class="sd amt num' + (it.saldo < 0 ? ' neg' : '') + '">' + Rs(it.saldo) + '</span></div></div>';
     }
@@ -2232,13 +2287,13 @@ function renderIntegrado(pos){
     '<div class="card ext-strip">' +
       '<div class="es"><span class="l">Em conta agora \u00b7 soma</span><span class="v num amt ' + (saldoTotal >= 0 ? 'pos' : 'neg') + '">' + (temSaldo ? dual(saldoTotal, true) : '\u2014') + '</span></div>' +
       '<span class="es-seta">\u2192</span>' +
-      '<div class="es"><span class="l">Entra</span><span class="v num amt pos">' + dual(entrou, false) + '</span></div>' +
-      '<div class="es"><span class="l">Sai</span><span class="v num amt">' + dual(saiu, false) + '</span></div>' +
+      '<div class="es"><span class="l">Entra \u00b7 ' + h + ' meses</span><span class="v num amt pos">' + dual(entrou, false) + '</span></div>' +
+      '<div class="es"><span class="l">Sai \u00b7 ' + h + ' meses</span><span class="v num amt">' + dual(saiu, false) + '</span></div>' +
       '<span class="es-seta">\u2192</span>' +
-      '<div class="es"><span class="l">Termina com</span><span class="v num amt ' + (fim >= 0 ? 'pos' : 'neg') + '">' + dual(fim, true) + '</span></div>' +
+      '<div class="es"><span class="l">Termina com \u00b7 ' + fmtMesLabel(addMeses(state.month, h - 1)) + '</span><span class="v num amt ' + (fim >= 0 ? 'pos' : 'neg') + '">' + dual(fim, true) + '</span></div>' +
       (primeiroVermelho ? '<div class="es-alerta"><b>O total fica no vermelho em ' + fmtDataCurta(primeiroVermelho.data) + '</b> (' + esc(primeiroVermelho.nome) + ')</div>' : '') +
     '</div>' +
-    '<div class="grid c4" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">' + tiles + '</div>' +
+    '<div class="grid c4 int-tiles" style="margin-bottom:14px">' + tiles + '</div>' +
     (itens.length ? '<div class="card" style="margin-bottom:14px"><h2>Saldo total ao longo do per\u00edodo</h2>' + extratoSVG(eFake) + '</div>' : '') +
     '<div class="toolbar"><div class="hz-chips">' + [3, 6, 12].map(n => '<button class="chip' + (h === n ? ' on' : '') + '" data-act="set-inth" data-v="' + n + '">' + n + ' meses</button>').join('') + '</div></div>' +
     '<div class="ext-card">' +
@@ -2361,6 +2416,9 @@ function entrarSimulacao(cenId){
      assim baixas, ajustes e pulos já feitos continuam valendo dentro da simulação */
   const porNomeTipo = new Map(real.recorrentes.map(r => [r.nome + '|' + r.tipo, r.id]));
   const recs = cen.recorrentes.map(r => ({...r, id: porNomeTipo.get(r.nome + '|' + r.tipo) || r.id}));
+  /* v5.3: cancela qualquer salvamento agendado — daqui pra frente nada pode ir para o GitHub */
+  clearTimeout(state.saveTimer);
+  state.pendingSave = false;
   state.dataReal = real;
   state.data = migrar(structuredClone(real));
   state.data.recorrentes = recs;
@@ -2368,7 +2426,7 @@ function entrarSimulacao(cenId){
   state.page = 'inicio';
   renderAll();
   setSync('sim', 'Simulação — nada salvo');
-  toast('🔭 Dentro de "' + cen.nome + '" — explore à vontade, nada é salvo');
+  toast('🔭 Dentro de "' + esc(cen.nome) + '" — explore à vontade, nada é salvo');
 }
 function sairSimulacao(){
   if (!state.simulacao) return;
@@ -2377,6 +2435,8 @@ function sairSimulacao(){
   renderAll();
   if (state.cfg.modo === 'local') setSync('local', 'Neste aparelho');
   else setSync(state.dirty ? 'saving' : 'ok', state.dirty ? 'Salvando…' : 'Sincronizado');
+  /* v5.3: se havia edição real pendente antes de entrar, agora ela volta a ser salva */
+  if (state.dirty && state.cfg.modo === 'github'){ clearTimeout(state.saveTimer); state.saveTimer = setTimeout(doSave, 600); }
   toast('De volta aos dados reais');
 }
 
@@ -2526,7 +2586,7 @@ function renderAjustes(){
     '<input type="file" id="importFile" accept="application/json" class="hidden">'+
     '<p class="muted" style="font-size:12px;margin-top:10px">'+(d.atualizadoEm ? 'Última alteração: '+new Date(d.atualizadoEm).toLocaleString('pt-BR')+'.' : '')+'</p></div>'+
     '<div class="card"><h2>Atalhos de teclado</h2>'+
-      [['Paleta de comandos','⌘K'],['Assistente (IA)','A'],['Novo lançamento','N'],['Lance rápido (caixa inteligente)','L'],['Buscar','/'],['Mês anterior / próximo','← →'],['Trocar de página','1–8'],['Fechar','Esc']].map(k=>'<div class="kbd-row"><span>'+k[0]+'</span><kbd>'+k[1]+'</kbd></div>').join('')+
+      [['Paleta de comandos','⌘K'],['Assistente (IA)','A'],['Novo lançamento','N'],['Lance rápido (caixa inteligente)','L'],['Buscar','/'],['Mês anterior / próximo','← →'],['Trocar de página','1–9'],['Fechar','Esc']].map(k=>'<div class="kbd-row"><span>'+k[0]+'</span><kbd>'+k[1]+'</kbd></div>').join('')+
     '</div>'+
     '</div>'+
     '<div>'+
@@ -2633,7 +2693,8 @@ function parseRapido(texto){
     for (const c of state.data.categorias) if (c.tipo === tipo && palavras.some(w => w.length > 3 && semAcento(c.nome).includes(w))) { categoriaId = c.id; break; }
   if (!categoriaId && tipo === 'despesa'){
     const frase = ' '+palavras.join(' ')+' ';
-    for (const k of Q_KEYWORDS) if (k.re.test(frase)) { categoriaId = k.cat; break; }
+    /* v5.3: só usa o atalho se a categoria existir NESTE espaço — senão criava categoria fantasma */
+    for (const k of Q_KEYWORDS) if (k.re.test(frase) && state.data.categorias.some(c => c.id === k.cat)) { categoriaId = k.cat; break; }
   }
   if (!categoriaId){
     const cats = state.data.categorias.filter(c => c.tipo === tipo);
@@ -2670,6 +2731,7 @@ function sheetLancamento(l, dataIni, pre){
   const val = novo ? Object.assign({tipo:'despesa', valor:'', categoriaId:null, descricao:'', data: dataIni || (state.month===mesAtual()? hojeISO() : state.month+'-01')}, pre || {}) : {...l};
   const s = openSheet(
     '<h3>'+(novo?'Novo lançamento':'Editar lançamento')+(novo?'':'<button class="del" data-act-x="excluir">Excluir</button>')+'</h3>'+
+    '<p class="muted" style="font-size:12px;margin:-6px 0 8px">no espaço <b style="color:var(--accent)">'+esc(ESPACOS[state.espaco].nome)+'</b>'+(state.simulacao?' · simulação':'')+'</p>'+
     '<div class="amount-box"><span class="cur">R$</span><input class="valor-input '+(val.tipo==='despesa'?'vneg':'vpos')+'" id="fValor" inputmode="decimal" placeholder="0,00" value="'+(val.valor===''?'':mascaraViva(String(val.valor).replace('.',',')))+'"></div>'+
     '<div class="seg" id="fTipo" style="margin-top:8px">'+
       '<button class="desp'+(val.tipo==='despesa'?' on':'')+'" data-v="despesa"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14m-6-6 6 6 6-6"/></svg>Despesa</button>'+
@@ -2678,6 +2740,7 @@ function sheetLancamento(l, dataIni, pre){
     '<div class="f-label">Categoria</div><div id="chipsWrap">'+chipsCategorias(val.tipo, val.categoriaId)+'</div>'+
     '<div class="f-row"><div><div class="f-label">Data</div><input class="f-input" id="fData" type="date" value="'+val.data+'"></div>'+
     '<div><div class="f-label">Descrição <span style="text-transform:none;letter-spacing:0">(opcional)</span></div><input class="f-input" id="fDesc" placeholder="ex.: GASTOS FAMÍLIA - Mercado" value="'+esc(val.descricao||'')+'"></div></div>'+
+    '<div class="rep-hint hidden" id="fAgHint">📅 Data futura: entra como <b>agendado</b> — só mexe no saldo quando você confirmar.</div>'+
     (novo ?
       '<div class="rep-head"><div class="t"><b>Repete</b><span>cria uma fixa que se repete sozinha</span></div><button class="sw-toggle" id="fRep" role="switch" aria-checked="false"></button></div>'+
       '<div id="repBox" class="hidden"><div class="rep-box">'+
@@ -2688,6 +2751,13 @@ function sheetLancamento(l, dataIni, pre){
     '<button class="btn" id="fSalvar">Salvar</button>');
 
   let tipo = val.tipo, catSel = val.categoriaId, repete = false;
+  /* v5.3: avisa quando a data escolhida cria um agendado (não debita até confirmar) */
+  const agHint = () => {
+    const el = s.querySelector('#fAgHint'); if (!el) return;
+    const d = s.querySelector('#fData').value;
+    el.classList.toggle('hidden', !(novo && !repete && d && d > hojeISO()));
+  };
+  s.querySelector('#fData').addEventListener('input', agHint);
   const vInp = s.querySelector('#fValor');
   vInp.addEventListener('input', () => { const p = vInp.selectionStart, antes = vInp.value.length; vInp.value = mascaraViva(vInp.value); vInp.setSelectionRange(Math.max(0,p + vInp.value.length - antes), Math.max(0,p + vInp.value.length - antes)); });
   const wireChips = () => s.querySelectorAll('#catChips .cat-chip').forEach(ch => ch.onclick = () => { catSel = ch.dataset.cat; s.querySelectorAll('.cat-chip').forEach(x => x.classList.toggle('on', x===ch)); });
@@ -2710,12 +2780,13 @@ function sheetLancamento(l, dataIni, pre){
   };
   if (novo) {
     const sw = s.querySelector('#fRep');
-    sw.onclick = () => { repete = !repete; sw.classList.toggle('on', repete); sw.setAttribute('aria-checked', repete); s.querySelector('#repBox').classList.toggle('hidden', !repete); atualizaHint(); };
+    sw.onclick = () => { repete = !repete; sw.classList.toggle('on', repete); sw.setAttribute('aria-checked', repete); s.querySelector('#repBox').classList.toggle('hidden', !repete); atualizaHint(); agHint(); };
     s.querySelector('#fFreq').onchange = atualizaHint;
     s.querySelector('#fFim').onchange = atualizaHint;
     s.querySelector('#fData').addEventListener('change', atualizaHint);
     setTimeout(() => vInp.focus(), 120);
   }
+  agHint();
   if (!novo) s.querySelector('[data-act-x="excluir"]').onclick = async () => {
     if (await confirmSheet('Excluir lançamento?', 'Essa ação não tem volta.', 'Excluir', true)) {
       const copia = {...l};
@@ -2787,7 +2858,7 @@ function sheetPagarOcc(o){
     if (nd === dataOrig) delete state.data.remarcacoes[o.chave];
     else state.data.remarcacoes[o.chave] = nd;
     touch(); closeSheet(); renderAll();
-    toast('\u201c' + rec.nome + '\u201d movida para ' + fmtDataCurta(nd) + ' \u2014 continua pendente', () => {
+    toast('\u201c' + esc(rec.nome) + '\u201d movida para ' + fmtDataCurta(nd) + ' \u2014 continua pendente', () => {
       if (antes) state.data.remarcacoes[o.chave] = antes; else delete state.data.remarcacoes[o.chave];
       touch(); renderAll();
     });
@@ -2853,7 +2924,7 @@ function sheetOccAcoes(o){
     if (x === 'pular'){
       state.data.pulos.push(o.chave);
       touch(); renderAll();
-      return toast('“'+rec.nome+'” pulado em '+fmtDataCurta(o.data), () => {
+      return toast('“'+esc(rec.nome)+'” pulado em '+fmtDataCurta(o.data), () => {
         state.data.pulos = state.data.pulos.filter(k => k !== o.chave); touch(); renderAll();
       });
     }
@@ -3047,11 +3118,12 @@ function sheetMais(){
       '<button class="row" data-go="'+p[0]+'"><span class="mid"><span class="t1">'+p[1]+'</span></span><span class="muted">›</span></button>').join('')+
     '</div>'+
     '<button class="btn" id="mAI" style="margin-top:12px">✨ Assistente</button>'+
-    '<button class="btn ghost" id="mSp" style="margin-top:10px">⇄ Trocar para '+(state.espaco==='pessoal'?'Freequency (CNPJ)':'Pessoal')+'</button>'+
+    Object.keys(ESPACOS).filter(e => e !== state.espaco).map(e =>
+      '<button class="btn ghost" data-sp="'+e+'" style="margin-top:10px">⇄ Trocar para '+esc(ESPACOS[e].nome)+'</button>').join('')+
     '<button class="btn ghost" id="mPriv" style="margin-top:10px">'+(document.body.classList.contains('private')?'Mostrar valores':'Modo discreto (esconder valores)')+'</button>');
   s.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { closeSheet(); state.page = b.dataset.go; renderAll(); window.scrollTo({top:0}); });
   s.querySelector('#mAI').onclick = () => { closeSheet(); aiAbrir(); };
-  s.querySelector('#mSp').onclick = () => { closeSheet(); trocarEspaco(state.espaco === 'pessoal' ? 'freequency' : 'pessoal'); };
+  s.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { closeSheet(); trocarEspaco(b.dataset.sp); });
   s.querySelector('#mPriv').onclick = () => { closeSheet(); togglePriv(); };
 }
 
@@ -3731,7 +3803,11 @@ async function trocarEspaco(esp){
   if (!ESPACOS[esp] || esp === state.espaco || !state.cfg) return;
   if (state.simulacao) sairSimulacao();
   clearTimeout(state.saveTimer);
-  if (state.dirty && state.cfg.modo === 'github') await doSave();
+  if (state.cfg.modo === 'github'){
+    if (state.dirty) await doSave();
+    /* espera um save em voo terminar antes de trocar — nada de misturar caixas */
+    for (let i = 0; i < 100 && state.saving; i++) await new Promise(r => setTimeout(r, 100));
+  }
   cacheData();
   state.espaco = esp;
   localStorage.setItem(LS_ESP, esp);
