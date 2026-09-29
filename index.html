@@ -2649,6 +2649,8 @@ function parseRapido(texto){
   let t = ' ' + semAcento(bruto) + ' ';
   let tipo = 'despesa';
   if (/\+/.test(bruto) || /\b(recebi|recebido|recebimento|entrada|entrou|ganhei|receita|caiu)\b/.test(t)) tipo = 'receita';
+  /* v5.3.1: só entra como PAGO se o usuário disser que aconteceu ("paguei", "recebi"...) — senão fica pendente */
+  const feito = /\b(recebi|recebido|caiu|entrou|ganhei|paguei|pago|gastei|comprei)\b/.test(t);
   t = t.replace(/\b(recebi|recebido|recebimento|entrada|entrou|ganhei|receita|caiu|paguei|pago|pagamento|gastei|gasto|comprei|de|do|da|no|na|em|para|pra|o|a)\b/g,' ').replace(/\+/g,' ');
   /* data */
   const agora = new Date();
@@ -2703,15 +2705,20 @@ function parseRapido(texto){
   }
   if (!categoriaId) return null;
   descricao = descricao ? descricao.charAt(0).toUpperCase() + descricao.slice(1) : '';
-  return { tipo, valor, data, categoriaId, descricao, occ };
+  return { tipo, valor, data, categoriaId, descricao, occ, feito };
 }
 function commitRapido(p){
+  /* v5.3.1: lançar não mexe no saldo — só entra pago quando o usuário DISSE que pagou/recebeu (ou dá baixa numa pendência) */
+  const pago = !!p.occ || !!p.feito;
   const l = { id: uid('l'), tipo: p.tipo, valor: p.valor, categoriaId: p.categoriaId,
     descricao: p.descricao || catById(p.categoriaId).nome, data: p.data,
-    recChave: p.occ ? p.occ.chave : null, previsto: !p.occ && p.data > hojeISO(), criadoEm: new Date().toISOString() };
+    recChave: p.occ ? p.occ.chave : null, previsto: !pago, criadoEm: new Date().toISOString() };
+  if (p.feito && !p.occ) l.confirmadoEm = l.criadoEm;
   state.data.lancamentos.push(l);
   touch(); renderAll();
-  toast((p.tipo==='receita'?'+':'−')+R(p.valor)+' lançado ✓'+(p.occ ? ' — '+esc(p.occ.rec.nome)+' baixada' : ''),
+  toast((p.tipo==='receita'?'+':'−')+R(p.valor)+(pago
+      ? (p.occ ? ' pago ✓ — '+esc(p.occ.rec.nome)+' baixada' : (p.tipo==='receita'?' recebido ✓':' pago ✓')+(state.data.conta ? ' — em conta: '+Rs(saldoHoje()) : ''))
+      : ' no extrato como '+(p.tipo==='receita'?'a receber':'a pagar')+' — marque ✓ quando acontecer'),
     () => { state.data.lancamentos = state.data.lancamentos.filter(x => x.id !== l.id); touch(); renderAll(); });
 }
 function qPrevHtml(p){
@@ -2722,7 +2729,9 @@ function qPrevHtml(p){
     (p.descricao ? '<span class="q-chip">'+esc(p.descricao)+'</span>' : '')+
     '<span class="q-chip"><span style="width:7px;height:7px;border-radius:50%;background:'+corVar(c)+';display:inline-block"></span>'+esc(c.nome)+'</span>'+
     '<span class="q-chip">'+(p.data===hojeISO()?'hoje':fmtDataCurta(p.data))+'</span>'+
-    (p.occ ? '<span class="q-chip q-ok">✓ dá baixa em '+esc(p.occ.rec.nome)+'</span>' : '')+
+    (p.occ ? '<span class="q-chip q-ok">✓ dá baixa em '+esc(p.occ.rec.nome)+'</span>'
+      : p.feito ? '<span class="q-chip q-ok">✓ entra como '+(p.tipo==='receita'?'recebido':'pago')+'</span>'
+      : '<span class="q-chip">entra pendente — marque ✓ depois</span>')+
     '<span class="q-enter"><kbd>↵</kbd> lança</span>';
 }
 
@@ -2740,7 +2749,7 @@ function sheetLancamento(l, dataIni, pre){
     '<div class="f-label">Categoria</div><div id="chipsWrap">'+chipsCategorias(val.tipo, val.categoriaId)+'</div>'+
     '<div class="f-row"><div><div class="f-label">Data</div><input class="f-input" id="fData" type="date" value="'+val.data+'"></div>'+
     '<div><div class="f-label">Descrição <span style="text-transform:none;letter-spacing:0">(opcional)</span></div><input class="f-input" id="fDesc" placeholder="ex.: GASTOS FAMÍLIA - Mercado" value="'+esc(val.descricao||'')+'"></div></div>'+
-    '<div class="rep-hint hidden" id="fAgHint">📅 Data futura: entra como <b>agendado</b> — só mexe no saldo quando você confirmar.</div>'+
+    '<div class="rep-hint hidden" id="fAgHint">📌 Entra no extrato como <b>pendente</b> — o saldo só muda quando você marcar como '+(val.tipo==='receita'?'recebido':'pago')+' ✓.</div>'+
     (novo ?
       '<div class="rep-head"><div class="t"><b>Repete</b><span>cria uma fixa que se repete sozinha</span></div><button class="sw-toggle" id="fRep" role="switch" aria-checked="false"></button></div>'+
       '<div id="repBox" class="hidden"><div class="rep-box">'+
@@ -2751,11 +2760,10 @@ function sheetLancamento(l, dataIni, pre){
     '<button class="btn" id="fSalvar">Salvar</button>');
 
   let tipo = val.tipo, catSel = val.categoriaId, repete = false;
-  /* v5.3: avisa quando a data escolhida cria um agendado (não debita até confirmar) */
+  /* v5.3.1: lançamento novo sempre nasce pendente — o aviso fica visível sempre que não é fixa */
   const agHint = () => {
     const el = s.querySelector('#fAgHint'); if (!el) return;
-    const d = s.querySelector('#fData').value;
-    el.classList.toggle('hidden', !(novo && !repete && d && d > hojeISO()));
+    el.classList.toggle('hidden', !(novo && !repete));
   };
   s.querySelector('#fData').addEventListener('input', agHint);
   const vInp = s.querySelector('#fValor');
@@ -2815,9 +2823,13 @@ function sheetLancamento(l, dataIni, pre){
       toast('Salvo — e agora repete sozinho ✓');
       return;
     }
-    if (novo) state.data.lancamentos.push({id: uid('l'), tipo, valor: v, categoriaId: catSel, descricao: desc, data, recChave: null, previsto: data > hojeISO(), criadoEm: new Date().toISOString()});
+    /* v5.3.1: lan\u00e7ar NUNCA mexe no saldo \u2014 entra pendente e o usu\u00e1rio marca \u2713 quando pagar/receber */
+    if (novo) state.data.lancamentos.push({id: uid('l'), tipo, valor: v, categoriaId: catSel, descricao: desc, data, recChave: null, previsto: true, criadoEm: new Date().toISOString()});
     else Object.assign(l, {tipo, valor: v, categoriaId: catSel, descricao: desc, data});
-    touch(); closeSheet(); renderAll(); toast((novo ? 'Lan\u00e7amento salvo \u2713' : 'Altera\u00e7\u00f5es salvas \u2713') + (state.data.conta ? ' \u2014 em conta agora: ' + Rs(saldoHoje()) : ''));
+    touch(); closeSheet(); renderAll();
+    toast(novo
+      ? 'No extrato como '+(tipo==='receita'?'a receber':'a pagar')+' \u2014 marque \u2713 quando acontecer'
+      : 'Altera\u00e7\u00f5es salvas \u2713' + (state.data.conta ? ' \u2014 em conta agora: ' + Rs(saldoHoje()) : ''));
   };
 }
 function shake(el){ el.style.borderColor='var(--critical)'; el.focus(); setTimeout(() => el.style.borderColor='', 1200); }
@@ -2887,7 +2899,8 @@ function sheetConfirmarLanc(l){
     '<p class="sec" style="font-size:14px;margin-bottom:4px">'+esc(l.descricao || catById(l.categoriaId).nome)+' \u2014 agendado para '+fmtDataCurta(l.data)+'</p>'+
     '<div class="f-label">Valor '+(receita?'recebido':'pago')+'</div>'+
     '<input class="f-input valor-input" id="cValor" inputmode="decimal" value="'+mascaraViva(String(l.valor).replace('.',','))+'">'+
-    '<div class="f-label">Data</div><input class="f-input" id="cData" type="date" value="'+(l.data < hojeISO() ? hojeISO() : l.data)+'">'+
+    '<div class="f-label">Data</div><input class="f-input" id="cData" type="date" value="'+hojeISO()+'">'+
+    '<div class="rep-hint">Com data de hoje, entra no saldo agora. Com data futura, s\u00f3 desconta naquele dia.</div>'+
     '<button class="btn" id="cOk">'+(receita?'Recebi \u2713':'Paguei \u2713')+'</button>');
   const inp = s.querySelector('#cValor');
   inp.addEventListener('input', () => { inp.value = mascaraViva(inp.value); });
@@ -3197,8 +3210,8 @@ function aiContexto(){
 }
 
 const AI_TOOLS = [
-  { name:'criar_lancamento', description:'Registra uma receita ou despesa avulsa no app.',
-    input_schema:{ type:'object', properties:{ tipo:{type:'string',enum:['receita','despesa']}, valor:{type:'number'}, data:{type:'string',description:'YYYY-MM-DD'}, categoriaId:{type:'string',description:'id de uma categoria existente'}, descricao:{type:'string'} }, required:['tipo','valor','data','categoriaId'] } },
+  { name:'criar_lancamento', description:'Registra uma receita ou despesa avulsa no app. Por padrão entra como PENDENTE (não mexe no saldo até o usuário confirmar). Só passe pago:true se o usuário disse explicitamente que JÁ pagou/recebeu (ex.: "paguei", "recebi", "caiu na conta").',
+    input_schema:{ type:'object', properties:{ tipo:{type:'string',enum:['receita','despesa']}, valor:{type:'number'}, data:{type:'string',description:'YYYY-MM-DD'}, categoriaId:{type:'string',description:'id de uma categoria existente'}, descricao:{type:'string'}, pago:{type:'boolean',description:'true SOMENTE se o usuário disse que já pagou/recebeu'} }, required:['tipo','valor','data','categoriaId'] } },
   { name:'dar_baixa', description:'Marca uma pendência do mês (fixa ou lançamento agendado) como paga/recebida. Use a chave exata de pendentesEsteMes (chaves lanc:... são lançamentos agendados). Prefira esta ferramenta quando o pedido corresponder a uma pendência.',
     input_schema:{ type:'object', properties:{ chave:{type:'string'}, valor:{type:'number',description:'valor real, se diferente do previsto'}, data:{type:'string'} }, required:['chave'] } },
   { name:'criar_fixa', description:'Cria uma receita ou despesa recorrente (fixa).',
@@ -3215,9 +3228,13 @@ function aiExec(name, inp){
       const br = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/.exec(dt);
       if (br) dt = (br[3] ? (br[3].length===2 ? '20'+br[3] : br[3]) : String(new Date().getFullYear())) + '-' + pad2(Number(br[2])) + '-' + pad2(Number(br[1]));
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dt)) dt = hojeISO();
-      state.data.lancamentos.push({id:uid('l'), tipo:inp.tipo, valor:inp.valor, categoriaId:cat.id, descricao:inp.descricao||'', data:dt, recChave:null, previsto: dt > hojeISO(), criadoEm:new Date().toISOString()});
+      /* v5.3.1: nasce pendente, salvo quando o usuário afirmou que já pagou/recebeu (pago:true) */
+      const agoraIso = new Date().toISOString();
+      const lanNovo = {id:uid('l'), tipo:inp.tipo, valor:inp.valor, categoriaId:cat.id, descricao:inp.descricao||'', data:dt, recChave:null, previsto: !inp.pago, criadoEm:agoraIso};
+      if (inp.pago) lanNovo.confirmadoEm = agoraIso;
+      state.data.lancamentos.push(lanNovo);
       touch(); renderAll();
-      return {ok:true, resumo:(inp.tipo==='receita'?'+':'−')+R(inp.valor)+(inp.descricao?' · '+inp.descricao:'')+' em '+cat.nome+' ('+dt+')'+(dt <= hojeISO() ? ' — já realizado: contabilizado no saldo e embutido no \u201cabre com\u201d do extrato (ligue \u201cMostrar realizados\u201d para ver na lista)' : ' — AGENDADO: aparece como previsão e só entra no saldo quando o usuário confirmar (Recebi/Paguei)')};
+      return {ok:true, resumo:(inp.tipo==='receita'?'+':'−')+R(inp.valor)+(inp.descricao?' · '+inp.descricao:'')+' em '+cat.nome+' ('+dt+')'+(inp.pago ? ' — PAGO/RECEBIDO: já contabilizado no saldo'+(state.data.conta?' (em conta agora '+Rs(saldoHoje())+')':'') : ' — PENDENTE: aparece no extrato e só entra no saldo quando o usuário confirmar (Recebi/Paguei)')};
     }
     if (name === 'dar_baixa'){
       if (String(inp.chave||'').startsWith('lanc:')){
@@ -3258,7 +3275,7 @@ async function aiCall(messages){
     body: JSON.stringify({
       model: cfg.model || 'claude-haiku-4-5',
       max_tokens: 1200,
-      system: 'Você é o assistente do Minhas Finanças, o app de finanças pessoais do usuário (Brasil). Espaço ativo: '+ESPACOS[state.espaco].nome+(state.espaco==='freequency'?' — finanças da empresa/CNPJ Freequency.':state.espaco==='venancio'?' — operação da Casa Venâncio (caixa separado das finanças pessoais).':' — finanças pessoais (imóveis de aluguel).')+' Responda SEMPRE em português do Brasil, curto e direto, valores em R$. Hoje é '+hojeISO()+'. Quando o usuário pedir para registrar/lançar/pagar/receber/dar baixa, USE as ferramentas — prefira dar_baixa quando o pedido corresponder a uma pendência de pendentesEsteMes. Nunca invente números: use somente os dados fornecidos; se não souber, diga que não tem o dado. REGRAS DO EXTRATO: lançamento com data até hoje (e toda baixa de fixa) é REALIZADO — sai da lista do extrato e fica embutido no saldo de abertura (\u201cabre com\u201d); o valor SEMPRE é contabilizado no saldo, mesmo sem aparecer na lista. Lançamento avulso com data futura é AGENDADO (previsto=true): aparece como previsão e NÃO entra no saldo até o usuário confirmar (Recebi/Paguei) — nada vira dinheiro sozinho pela data. A lista do extrato começa no mês exibido: meses anteriores ficam fora dela (mas dentro do abre). Se o usuário não achar um lançamento, explique isso e sugira ligar \u201cMostrar realizados\u201d e voltar ao mês atual. DADOS ATUAIS DO APP (JSON): '+aiContexto(),
+      system: 'Você é o assistente do Minhas Finanças, o app de finanças pessoais do usuário (Brasil). Espaço ativo: '+ESPACOS[state.espaco].nome+(state.espaco==='freequency'?' — finanças da empresa/CNPJ Freequency.':state.espaco==='venancio'?' — operação da Casa Venâncio (caixa separado das finanças pessoais).':' — finanças pessoais (imóveis de aluguel).')+' Responda SEMPRE em português do Brasil, curto e direto, valores em R$. Hoje é '+hojeISO()+'. Quando o usuário pedir para registrar/lançar/pagar/receber/dar baixa, USE as ferramentas — prefira dar_baixa quando o pedido corresponder a uma pendência de pendentesEsteMes. REGRA DE OURO (escolha do usuário): lançar NÃO mexe no saldo — todo criar_lancamento nasce PENDENTE por padrão; só passe pago:true quando o usuário disser explicitamente que JÁ pagou/recebeu (“paguei”, “recebi”, “caiu”). Nunca invente números: use somente os dados fornecidos; se não souber, diga que não tem o dado. REGRAS DO EXTRATO: lançamento JÁ CONFIRMADO/pago (e toda baixa de fixa) é REALIZADO — sai da lista do extrato e fica embutido no saldo de abertura (\u201cabre com\u201d); o valor SEMPRE é contabilizado no saldo, mesmo sem aparecer na lista. Lançamento avulso ainda não confirmado é PENDENTE (previsto=true), qualquer que seja a data: aparece como previsão e NÃO entra no saldo até o usuário confirmar (Recebi/Paguei) — nada vira dinheiro sozinho pela data. A lista do extrato começa no mês exibido: meses anteriores ficam fora dela (mas dentro do abre). Se o usuário não achar um lançamento, explique isso e sugira ligar \u201cMostrar realizados\u201d e voltar ao mês atual. DADOS ATUAIS DO APP (JSON): '+aiContexto(),
       tools: AI_TOOLS,
       messages
     })
