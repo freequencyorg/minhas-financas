@@ -3028,11 +3028,30 @@ function sheetRecorrente(r, alvo, tipoIni, hubIni){
         : DIAS_SEM.map((d,i)=>'<option value="'+i+'"'+((val.diaSemana??5)===i?' selected':'')+'>'+d+'</option>').join(''))+'</select></div>'+
     '<div class="f-row"><div><div class="f-label">Começa em</div><input class="f-input" id="rIni" type="date" value="'+val.inicio+'"></div>'+
     '<div><div class="f-label">Termina em <span class="muted" style="font-weight:400">(opcional)</span></div><input class="f-input" id="rFim" type="date" value="'+(val.fim||'')+'"></div></div>'+
+    '<div class="rep-hint" id="rPrim"></div>'+
     (novo ? '' : '<label class="set-row" style="border:none;margin-top:6px;cursor:pointer"><input type="checkbox" id="rAtiva" '+(val.ativa?'checked':'')+' style="width:18px;height:18px;accent-color:var(--accent)"><span class="mid"><span class="t1">Ativa</span><span class="t2">desative para encerrar sem perder o histórico</span></span></label>')+
     '<button class="btn" id="rSalvar">Salvar</button>');
   let tipo = val.tipo, catSel = val.categoriaId;
   const wireChips = () => s.querySelectorAll('#catChips .cat-chip').forEach(ch => ch.onclick = () => { catSel = ch.dataset.cat; s.querySelectorAll('.cat-chip').forEach(x => x.classList.toggle('on', x===ch)); });
   wireChips();
+  /* v5.3.2: mostra na hora quando cai a PRIMEIRA cobrança — evita "dia 7 começando em 14/10" pular o mês sem avisar */
+  const primeiraVez = () => {
+    const el = s.querySelector('#rPrim'); if (!el) return;
+    const freq = s.querySelector('#rFreq').value, diaSel = Number(s.querySelector('#rDia').value);
+    const inicio = s.querySelector('#rIni').value, fim = s.querySelector('#rFim').value || null;
+    if (!inicio) { el.textContent = ''; return; }
+    const tmp = { id:'tmp', nome:'x', tipo, valor:1, categoriaId:catSel, freq, dia: freq==='mensal'?(diaSel||5):null, diaSemana: freq==='semanal'?(isNaN(diaSel)?5:diaSel):null, freqMeses: novo?1:(r.freqMeses||1), inicio, fim, ativa:true };
+    let prim = null;
+    for (let i = 0; i < 14 && !prim; i++){
+      const oc = gerarOcorrencias([tmp], addMeses(mesDe(inicio), i));
+      if (oc.length) prim = oc[0].data;
+    }
+    el.innerHTML = prim
+      ? '📅 Primeira vez: <b>'+fmtDataCurta(prim)+'</b>'+(freq==='mensal' && mesDe(prim)!==mesDe(inicio) ? ' — o dia '+diaSel+' cai antes de '+fmtDataCurta(inicio)+', então o primeiro mês é pulado. Se quiser começar antes, ajuste o dia ou o "começa em".' : '')
+      : '⚠️ Nenhuma cobrança no próximo ano — confira o dia, o começo e o término.';
+  };
+  ['rDia','rIni','rFim'].forEach(id => { const el = s.querySelector('#'+id); el.addEventListener('change', primeiraVez); el.addEventListener('input', primeiraVez); });
+  primeiraVez();
   s.querySelectorAll('#rTipo button').forEach(b => b.onclick = () => {
     tipo = b.dataset.v; catSel = null;
     s.querySelectorAll('#rTipo button').forEach(x => x.classList.toggle('on', x===b));
@@ -3045,6 +3064,7 @@ function sheetRecorrente(r, alvo, tipoIni, hubIni){
     if (f !== 'diaria') rd.innerHTML = f==='mensal'
       ? Array.from({length:31},(_,i)=>'<option value="'+(i+1)+'"'+(i+1===5?' selected':'')+'>dia '+(i+1)+'</option>').join('')
       : DIAS_SEM.map((d,i)=>'<option value="'+i+'"'+(i===5?' selected':'')+'>'+d+'</option>').join('');
+    primeiraVez();
   };
   if (!novo) s.querySelector('[data-act-x="excluir"]').onclick = async () => {
     const msg = isCen ? 'Remove este item apenas deste cenário.' : 'Os lançamentos já registrados <strong>não</strong> serão apagados. Se ela só acabou, prefira desmarcar "Ativa".';
