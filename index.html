@@ -973,8 +973,26 @@ function nomeHtml(nome, categoriaId){
 function loadCfg(){ try { return JSON.parse(localStorage.getItem(LS_CFG)) } catch(e){ return null } }
 function saveCfg(c){ localStorage.setItem(LS_CFG, JSON.stringify(c)); state.cfg = c; }
 const cacheKey = () => LS_CACHE + (state.espaco === 'pessoal' ? '' : '_' + state.espaco);
-function cacheData(){ try { localStorage.setItem(cacheKey(), JSON.stringify({data: state.data, sha: state.sha, em: Date.now()})) } catch(e){} }
+function cacheData(){ try { localStorage.setItem(cacheKey(), JSON.stringify({data: state.data, sha: state.sha, em: Date.now(), dirty: !!state.dirty})) } catch(e){} }
 function readCache(){ try { return JSON.parse(localStorage.getItem(cacheKey())) } catch(e){ return null } }
+/* v5.4: junta alterações feitas em dois lugares SEM perder nada — união dos itens; no mesmo id, vale o deste aparelho */
+function mesclarDados(local, remoto){
+  const unir = (la, ra) => { const m = new Map((ra||[]).map(x=>[x.id,x])); for (const x of (la||[])) m.set(x.id, x); return [...m.values()]; };
+  const d = structuredClone(remoto);
+  d.lancamentos = unir(local.lancamentos, remoto.lancamentos);
+  d.recorrentes = unir(local.recorrentes, remoto.recorrentes);
+  d.categorias  = unir(local.categorias,  remoto.categorias);
+  d.metas       = unir(local.metas,       remoto.metas);
+  d.cenarios    = unir(local.cenarios,    remoto.cenarios);
+  d.pulos = [...new Set([...(remoto.pulos||[]), ...(local.pulos||[])])];
+  d.ajustes = Object.assign({}, remoto.ajustes, local.ajustes);
+  d.remarcacoes = Object.assign({}, remoto.remarcacoes, local.remarcacoes);
+  d.orcamentos = Object.assign({}, remoto.orcamentos, local.orcamentos);
+  const emDe = c => c ? (c.em || c.data || '') : '';
+  d.conta = !remoto.conta ? local.conta : !local.conta ? remoto.conta : (emDe(local.conta) >= emDe(remoto.conta) ? local.conta : remoto.conta);
+  d.atualizadoEm = new Date().toISOString();
+  return migrar(d);
+}
 
 /* ---------------- GitHub API ---------------- */
 function b64enc(str){ const b = new TextEncoder().encode(str); let s=''; b.forEach(c => s += String.fromCharCode(c)); return btoa(s); }
@@ -1018,14 +1036,20 @@ async function doSave(){
   state.saving = true;
   /* v5.3: congela espaço e dados no início — trocar de espaço no meio não pode misturar os caixas */
   const esp = state.espaco, arq = ESPACOS[esp].arquivo, dados = state.data;
+  let dadosEnvio = dados;
   const msg = () => 'Atualização ('+ESPACOS[esp].nome+') — ' + new Date().toLocaleString('pt-BR');
   try {
     let r = await ghPut(state.cfg, dados, state.espaco === esp ? state.sha : null, msg(), arq);
     if (r.conflict) {
+      /* v5.4: outro aparelho salvou quase junto — JUNTA as duas alterações em vez de sobrescrever */
       const fresh = await ghLoad(state.cfg, arq);
       const shaFresco = fresh.missing ? null : fresh.sha;
+      if (!fresh.missing){
+        dadosEnvio = mesclarDados(dados, migrar(fresh.data));
+        if (state.espaco === esp){ state.data = dadosEnvio; renderAll(); toast('🔀 Outro aparelho salvou junto — juntei as duas alterações'); }
+      }
       if (state.espaco === esp) state.sha = shaFresco;
-      r = await ghPut(state.cfg, dados, shaFresco, msg(), arq);
+      r = await ghPut(state.cfg, dadosEnvio, shaFresco, msg(), arq);
       if (r.conflict) throw new Error('Conflito ao salvar. Recarregue a página.');
     }
     if (state.espaco === esp) {
@@ -1034,11 +1058,14 @@ async function doSave(){
     } else {
       /* espaço trocou no meio: registra o sha novo direto no cache do espaço antigo */
       const k = LS_CACHE + (esp === 'pessoal' ? '' : '_' + esp);
-      try { localStorage.setItem(k, JSON.stringify({data: dados, sha: r.sha, em: Date.now()})) } catch(e){}
+      try { localStorage.setItem(k, JSON.stringify({data: dadosEnvio, sha: r.sha, em: Date.now(), dirty: false})) } catch(e){}
     }
   } catch(e) {
-    setSync('err','Não salvo — tocar p/ tentar');
+    /* v5.4: falha de gravação nunca fica parada — tenta de novo sozinho a cada 15s */
+    setSync('err','Não salvo — reenviando sozinho…');
     console.warn('save falhou', e);
+    clearTimeout(state.saveTimer);
+    state.saveTimer = setTimeout(() => { if (state.dirty && !state.simulacao) doSave(); }, 15000);
   } finally {
     state.saving = false;
     if (state.pendingSave) { state.pendingSave = false; doSave(); }
@@ -1060,7 +1087,18 @@ async function loadRemote(silent){
       const mudou = !state.data || (r.data.atualizadoEm !== state.data.atualizadoEm);
       state.data = migrar(r.data); state.sha = r.sha;
       if (mudou) renderAll();
-    } else { state.sha = r.sha; }
+    } else {
+      /* v5.4: há alterações locais NÃO enviadas — nunca deixar a nuvem passar por cima delas */
+      if (!state.sha || r.sha !== state.sha){
+        state.data = mesclarDados(state.data, migrar(r.data));
+        toast('🔀 Juntei as alterações deste aparelho com as da nuvem — nada se perdeu');
+        renderAll();
+      }
+      state.sha = r.sha;
+      clearTimeout(state.saveTimer);
+      state.saveTimer = setTimeout(doSave, 800);
+      setSync('saving','Salvando…');
+    }
     state.lastLoad = Date.now();
     cacheData();
     setSync('ok','Sincronizado');
@@ -3854,6 +3892,12 @@ async function trocarEspaco(esp){
   const cache = readCache();
   state.data = (cache && cache.data) ? migrar(cache.data) : (state.cfg.modo === 'local' ? seedDe(esp) : null);
   state.sha = (cache && cache.sha) || null;
+  /* v5.4: pendência não enviada deste espaço também é retomada ao voltar para ele */
+  if (cache && cache.dirty && state.cfg.modo === 'github') {
+    state.dirty = true;
+    clearTimeout(state.saveTimer);
+    state.saveTimer = setTimeout(doSave, 1500);
+  }
   if (state.data) {
     renderAll();
     if (state.cfg.modo === 'local') { cacheData(); setSync('local','Neste aparelho'); }
@@ -3940,6 +3984,13 @@ function bootUI(){
   if (!state.cfg) { $('#setup').classList.add('active'); return; }
   const cache = readCache();
   if (cache && cache.data) { state.data = migrar(cache.data); state.sha = cache.sha || null; }
+  /* v5.4: se a última sessão fechou com coisa não enviada, retoma o envio sozinho */
+  if (cache && cache.dirty && state.cfg.modo === 'github') {
+    state.dirty = true;
+    setSync('saving','Reenviando o que ficou pendente…');
+    clearTimeout(state.saveTimer);
+    state.saveTimer = setTimeout(doSave, 3000);
+  }
   if (state.cfg.modo === 'local') {
     if (!state.data) state.data = migrar(seedDe(state.espaco));
     bootUI(); setSync('local','Neste aparelho');
