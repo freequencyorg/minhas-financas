@@ -1897,9 +1897,9 @@ function renderExtrato(){
       '<div class="es"><span class="l">'+(e.verRealizados ? 'Saldo em '+fmtDataCurta(vesperaISO) : 'Abre com')+'</span><span class="v num amt">'+dual(e.abertura,true)+'</span></div>'+
       '<span class="es-seta">→</span>'+
       '<div class="es"><span class="l">Entra · '+h+' meses</span><span class="v num amt pos">'+dual(entrou,false)+'</span>'+
-        (e.embutidoEntrou > 0 ? '<span class="es-sub amt num">já entrou '+R(e.embutidoEntrou)+' · no abre</span>' : '')+'</div>'+
+        (e.embutidoEntrou > 0 ? '<span class="es-sub amt num">+ '+R(e.embutidoEntrou)+' que já entrou \u2014 está no \u201cabre com\u201d</span>' : '')+'</div>'+
       '<div class="es"><span class="l">Sai · '+h+' meses</span><span class="v num amt">'+dual(saiu,false)+'</span>'+
-        (e.embutidoSaiu > 0 ? '<span class="es-sub amt num">já saiu '+R(e.embutidoSaiu)+' · no abre</span>' : '')+'</div>'+
+        (e.embutidoSaiu > 0 ? '<span class="es-sub amt num">\u2212 '+R(e.embutidoSaiu)+' que já saiu \u2014 está no \u201cabre com\u201d</span>' : '')+'</div>'+
       '<span class="es-seta">→</span>'+
       '<div class="es"><span class="l">Termina com · '+fmtMesLabel(addMeses(state.month, h-1))+'</span><span class="v num amt '+(e.fim>=0?'pos':'neg')+'">'+dual(e.fim,true)+'</span></div>'+
       (e.primeiroVermelho
@@ -1967,7 +1967,7 @@ function renderExtrato(){
       '<div class="ext-abertura"><span>'+(e.verRealizados ? 'Saldo em '+fmtDataCurta(vesperaISO) : 'Saldo de abertura')+
         (e.verRealizados
           ? (e.ancorado ? '<em>reconstru\u00eddo a partir do saldo informado em '+fmtDataCurta(state.data.conta.data)+' \u2014 os realizados abaixo j\u00e1 est\u00e3o dentro dele</em>' : '')
-          : (e.nEmbutidos ? '<em>inclui '+e.nEmbutidos+' j\u00e1 '+(e.nEmbutidos===1?'realizado':'realizados')+' \u00b7 <span class="amt">'+Rs(e.embutido)+'</span></em>' : ''))+
+          : (e.nEmbutidos ? '<em><span class="amt">'+Rs(e.abertura - e.embutido)+'</span> antes do m\u00eas \u00b7 <span class="amt">'+Rs(e.embutido)+'</span> de '+e.nEmbutidos+' j\u00e1 '+(e.nEmbutidos===1?'realizado':'realizados')+' = <span class="amt">'+Rs(e.abertura)+'</span></em>' : ''))+
         '</span><span class="sd '+(e.abertura>=0?'pos':'neg')+' amt num">'+Rs(e.abertura)+'</span></div>'+
       (linhas || '<div class="empty">Nada previsto nesse período.</div>')+
     '</div>';
