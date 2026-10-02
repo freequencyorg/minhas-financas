@@ -375,6 +375,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
 @media (hover:none){ .ext-mais{opacity:.5} }
 .ext-row{display:flex;align-items:center;gap:12px;padding:11px 6px 11px 18px;border-bottom:none;flex:1;min-width:0;text-align:left;font-size:14px;background:none}
 .tagp.aj{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 45%, transparent)}
+.tagp.atr{color:var(--critical);border-color:color-mix(in srgb, var(--critical) 45%, transparent)}
 .row-mais{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:var(--muted);flex:none;margin-left:2px;opacity:.45;transition:.12s}
 .row:hover .row-mais{opacity:1}
 .row-mais:hover{color:var(--accent);background:var(--accent-soft)}
@@ -426,6 +427,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
   .ext-row .sd{width:100%;text-align:right;font-size:11.5px;color:var(--muted);margin-top:-4px}
   .ext-row .sd::before{content:"saldo ";font-size:10px;letter-spacing:.06em;text-transform:uppercase}
   .ext-row .tagp{display:none}
+  .ext-row .tagp.atr{display:inline-block}
   .ext-head{padding:9px 14px}
   .ext-head .sd{display:none}
   .ext-head .vl{width:auto;margin-left:auto}
@@ -1207,6 +1209,18 @@ function extrato(hMeses){
       if (!o.lanc && o.data >= inicio && o.data <= fim)
         itens.push({ data:o.data, nome:o.rec.nome, catId:o.rec.categoriaId, ajustado: !!o.ajustado, remarcada: !!o.remarcada,
           valor: o.rec.tipo === 'receita' ? o.rec.valor : -o.rec.valor, real:false, chave:o.chave });
+  /* v5.4.1: fixas de meses ANTERIORES ainda não pagas continuam no extrato —
+     (a) as remarcadas para dentro do período aparecem na data nova;
+     (b) olhando o mês atual, as vencidas e não pagas aparecem no topo como "atrasada" e pesam no saldo previsto */
+  const ehMesAtualExt = state.month === mesAtual();
+  for (let i = 1; i <= 12; i++)
+    for (const o of ocorrencias(addMeses(state.month, -i))){
+      if (o.lanc || o.data > fim) continue;
+      const dentro = o.data >= inicio;
+      if (!dentro && !ehMesAtualExt) continue;
+      itens.push({ data:o.data, nome:o.rec.nome, catId:o.rec.categoriaId, ajustado: !!o.ajustado, remarcada: !!o.remarcada,
+        antiga: !dentro, valor: o.rec.tipo === 'receita' ? o.rec.valor : -o.rec.valor, real:false, chave:o.chave });
+    }
   itens.sort((a,b) => a.data === b.data ? (b.valor - a.valor) : (a.data < b.data ? -1 : 1));
   /* saldo de partida: âncora até a véspera do período + o que já foi realizado dentro dele */
   let saldo = (c ? saldoEmConta(antes) : 0) + embutido;
@@ -1893,6 +1907,9 @@ function renderExtrato(){
         : '')+
     '</div>';
 
+  /* v5.4.1: avisa quando há contas de meses anteriores ainda em aberto (aparecem no topo da lista) */
+  const antigasExt = e.itens.filter(it => !it.real && !it.agendado && it.data < state.month + '-01');
+  const avisoAntigas = antigasExt.length ? '<div class="ext-aviso"><span>⚠️ <b>' + antigasExt.length + ' conta' + (antigasExt.length === 1 ? '' : 's') + ' de meses anteriores ainda em aberto</b> — estão no topo da lista e já contam no saldo previsto. Toque em cada uma para marcar como paga, mover ou pular.</span></div>' : '';
   const filtro = state.extF || 'tudo';
   const passa = it => filtro === 'tudo' || (filtro === 'saidas' ? it.valor < 0 : it.valor >= 0);
   const hojeMarcado = { feito:false };
@@ -1918,6 +1935,7 @@ function renderExtrato(){
         (it.ajustado ? '<span class="tagp aj">ajustado</span>' : '')+
         (it.remarcada ? '<span class="tagp aj">remarcada</span>' : '')+
         (it.agendado ? '<span class="tagp aj">'+(it.data < hoje ? 'agendado \u00b7 atrasado' : 'agendado')+'</span>' : '')+
+        (!it.real && !it.agendado && it.data < hoje ? '<span class="tagp atr">'+(it.valor >= 0 ? 'n\u00e3o recebida' : 'n\u00e3o paga')+'</span>' : '')+
         '<span class="vl '+(it.valor>=0?'pos':'out')+' amt num">'+(it.valor>=0?'+':'−')+R(Math.abs(it.valor))+'</span>'+
         '<span class="sd amt num">'+Rs(it.saldo)+'</span></button>'+
         '<button class="ext-mais" aria-label="Opções" title="Opções" '+
@@ -1933,7 +1951,7 @@ function renderExtrato(){
       '<span class="fecha '+(g.fecha>=0?'pos':'neg')+' amt num">fecha em '+Rs(g.fecha)+'</span></div>';
   }
 
-  $('#panel-extrato').innerHTML = aviso + foraDoMes + kpis +
+  $('#panel-extrato').innerHTML = aviso + foraDoMes + avisoAntigas + kpis +
     (e.itens.length ? '<div class="card" style="margin-bottom:14px"><h2>Saldo ao longo do período</h2>'+extratoSVG(e)+'</div>' : '')+
     '<div class="toolbar"><div class="hz-chips">'+chips+'</div>'+
       '<div class="hz-chips" style="margin-left:14px">'+
@@ -2270,7 +2288,7 @@ function renderIntegrado(pos){
     abertura += p.e.abertura;
     if (p.e.ancorado) temAncora = true;
     if (p.saldoHj != null){ saldoTotal += p.saldoHj; temSaldo = true; }
-    for (const it of p.e.itens) itens.push({ data: it.data, nome: it.nome, valor: it.valor, esp, agendado: !!it.agendado, remarcada: !!it.remarcada, ajustado: !!it.ajustado });
+    for (const it of p.e.itens) itens.push({ data: it.data, nome: it.nome, valor: it.valor, esp, agendado: !!it.agendado, remarcada: !!it.remarcada, ajustado: !!it.ajustado, naoPaga: !it.real && !it.agendado && it.data < hoje });
   }
   itens.sort((a, b) => a.data === b.data ? b.valor - a.valor : (a.data < b.data ? -1 : 1));
   let saldo = abertura, pior = null, primeiroVermelho = null;
@@ -2309,6 +2327,7 @@ function renderIntegrado(pos){
         (it.agendado ? '<span class="tagp aj">' + (it.data < hoje ? 'agendado · atrasado' : 'agendado') + '</span>' : '') +
         (it.remarcada ? '<span class="tagp aj">remarcada</span>' : '') +
         (it.ajustado ? '<span class="tagp aj">ajustado</span>' : '') +
+        (it.naoPaga ? '<span class="tagp atr">' + (it.valor >= 0 ? 'não recebida' : 'não paga') + '</span>' : '') +
         '<span class="vl ' + (it.valor >= 0 ? 'pos' : 'out') + ' amt num">' + (it.valor >= 0 ? '+' : '\u2212') + R(Math.abs(it.valor)) + '</span>' +
         '<span class="sd amt num' + (it.saldo < 0 ? ' neg' : '') + '">' + Rs(it.saldo) + '</span></div></div>';
     }
