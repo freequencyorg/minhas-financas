@@ -965,9 +965,14 @@ const corVar = c => 'var(' + (SLOT[c.cor ?? 0] || '--s0') + ')';
 function nomeHtml(nome, categoriaId){
   const s = String(nome || '');
   const i = s.indexOf(' - ');
-  if (i <= 0) return esc(s);
   const cat = categoriaId ? state.data.categorias.find(c => c.id === categoriaId) : null;
   const cor = cat ? corVar(cat) : null;
+  if (i <= 0){
+    /* v5.4.3: sem "HUB - " no nome, a etiqueta vem do hub cadastrado (hubs = categorias em MAIÚSCULAS) */
+    if (cat && cat.nome && cat.nome === cat.nome.toUpperCase() && /[A-ZÀ-Ý]/.test(cat.nome))
+      return '<span class="hub-tag" style="--hc:'+cor+'">'+esc(cat.nome)+'</span>'+(s.trim().toUpperCase() === cat.nome ? '' : ' '+esc(s));
+    return esc(s);
+  }
   return '<span class="hub-tag"'+(cor ? ' style="--hc:'+cor+'"' : '')+'>'+esc(s.slice(0,i))+'</span> '+esc(s.slice(i+3));
 }
 
