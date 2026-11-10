@@ -565,9 +565,9 @@ nav.tabs{display:none}
 .ai-sugg button{font-size:12.5px;padding:5px 10px;border-radius:99px;background:var(--page);border:1px solid var(--border-soft);color:var(--ink-2)}
 .ai-sugg button:hover{border-color:var(--accent);color:var(--accent)}
 .ai-setup{padding:20px 16px;font-size:14px;color:var(--ink-2);line-height:1.6}
-#aiBtn{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);color:var(--ink-2);font-size:14px;font-weight:600;padding:8.5px 13px;border-radius:11px;white-space:nowrap}
-#aiBtn:hover{border-color:var(--accent);color:var(--accent)}
-#aiBtn svg{width:15px;height:15px}
+#aiBtn,#bolBtn{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);color:var(--ink-2);font-size:14px;font-weight:600;padding:8.5px 13px;border-radius:11px;white-space:nowrap}
+#aiBtn:hover,#bolBtn:hover{border-color:var(--accent);color:var(--accent)}
+#aiBtn svg,#bolBtn svg{width:15px;height:15px}
 /* toasts */
 #toasts{position:fixed;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom));z-index:70;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
 .toast{pointer-events:auto;display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--page);font-size:14px;padding:10.5px 16px;border-radius:12px;box-shadow:var(--shadow-lg);animation:up .2s ease;max-width:92vw}
@@ -615,8 +615,8 @@ nav.tabs{display:none}
   #kbtn{display:none}
   .btn-primary{display:none}
   .month-nav{flex:1;justify-content:space-between}
-  #aiBtn{font-size:0;gap:0;padding:9px}
-  #aiBtn svg{width:17px;height:17px}
+  #aiBtn,#bolBtn{font-size:0;gap:0;padding:9px}
+  #aiBtn svg,#bolBtn svg{width:17px;height:17px}
   .grid.c2,.grid.c4{grid-template-columns:1fr 1fr}
   .grid.c4 .tile .value{font-size:17.5px}
   .hero-wrap{grid-template-columns:1fr;gap:14px}
@@ -762,6 +762,10 @@ nav.tabs{display:none}
       <button id="aiBtn" title="Assistente (A)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"/></svg>
         Assistente
+      </button>
+      <button id="bolBtn" title="Subir boleto (PDF ou foto)" aria-label="Subir boleto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6v12M6 6v12M9.5 6v12M12 6v12M15.5 6v12M18 6v12M21 6v12"/></svg>
+        Boleto
       </button>
       <button id="kbtn" title="Paleta de comandos">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -1703,12 +1707,12 @@ function renderInicio(){
   const LIM = 5;
   const proximas = atrasadas.concat(futuras);
   const pendCard = pend.length ?
-    '<div class="card"><div class="h-row"><h2>Próximas contas</h2><button class="link-btn" data-act="goto" data-page="extrato">ver extrato →</button></div>'+
+    '<div class="card"><div class="h-row"><h2>Próximas contas</h2><span style="display:flex;gap:14px"><button class="link-btn" data-act="subir-boleto">📄 subir boleto</button><button class="link-btn" data-act="goto" data-page="extrato">ver extrato →</button></span></div>'+
     (atrasadas.length ? '<div class="pend-alerta">'+atrasadas.length+' atrasada'+(atrasadas.length===1?'':'s')+' · <span class="amt num">'+Rs(somaPend(atrasadas))+'</span></div>' : '')+
     proximas.slice(0,LIM).map(rowPend).join('')+
     (proximas.length>LIM?'<button class="pend-more" data-act="goto" data-page="fixas">+ '+(proximas.length-LIM)+' no mês</button>':'')+
     '</div>'
-    : '<div class="card"><h2>Próximas contas</h2><div class="empty">✅ Tudo em dia — nada pendente em '+fmtMesLabel(ym)+'.</div></div>';
+    : '<div class="card"><div class="h-row"><h2>Próximas contas</h2><button class="link-btn" data-act="subir-boleto">📄 subir boleto</button></div><div class="empty">✅ Tudo em dia — nada pendente em '+fmtMesLabel(ym)+'.</div></div>';
 
   /* projeção de longo prazo */
   const proj = projLonga(state.horizonte);
@@ -4080,6 +4084,7 @@ document.addEventListener('click', async e => {
   else if (act === 'new-meta') sheetMeta(null);
   else if (act === 'edit-meta') { const m = state.data.metas.find(x => x.id === el.dataset.id); if (m) sheetMeta(m); }
   else if (act === 'aporte') { const m = state.data.metas.find(x => x.id === el.dataset.id); if (m) sheetAporte(m, Number(el.dataset.dir)); }
+  else if (act === 'subir-boleto') bolEscolherArquivo();
   else if (act === 'goto') { state.page = el.dataset.page; renderAll(); window.scrollTo({top:0}); }
   else if (act === 'drill-cat') { state.page = 'lanc'; state.filtroCat = el.dataset.cat; state.filtroTipo = 'despesa'; renderAll(); window.scrollTo({top:0}); }
   else if (act === 'drill-tipo') { state.page = 'lanc'; state.filtroTipo = el.dataset.v; state.filtroCat=''; renderAll(); window.scrollTo({top:0}); }
@@ -4287,6 +4292,7 @@ $('#mPrev').onclick = () => { state.month = addMeses(state.month, -1); renderAll
 $('#mNext').onclick = () => { state.month = addMeses(state.month, 1); renderAll(); };
 $('#mLabel').onclick = () => { state.month = mesAtual(); renderAll(); };
 $('#newBtn').onclick = () => sheetLancamento(null);
+$('#bolBtn').onclick = () => bolEscolherArquivo();
 $('#fab').onclick = () => sheetLancamento(null);
 $('#kbtn').onclick = abrirPaleta;
 $('#aiBtn').onclick = aiAbrir;
