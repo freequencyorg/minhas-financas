@@ -994,6 +994,7 @@ function mesclarDados(local, remoto){
   d.pulos = [...new Set([...(remoto.pulos||[]), ...(local.pulos||[])])];
   d.ajustes = Object.assign({}, remoto.ajustes, local.ajustes);
   d.remarcacoes = Object.assign({}, remoto.remarcacoes, local.remarcacoes);
+  d.boletos = Object.assign({}, remoto.boletos, local.boletos);
   d.orcamentos = Object.assign({}, remoto.orcamentos, local.orcamentos);
   const emDe = c => c ? (c.em || c.data || '') : '';
   d.conta = !remoto.conta ? local.conta : !local.conta ? remoto.conta : (emDe(local.conta) >= emDe(remoto.conta) ? local.conta : remoto.conta);
@@ -1120,6 +1121,7 @@ function migrar(d){
   d.recorrentes = d.recorrentes || []; d.orcamentos = d.orcamentos || {}; d.metas = d.metas || [];
   d.cenarios = d.cenarios || [];
   d.remarcacoes = d.remarcacoes || {};
+  d.boletos = d.boletos || {};   /* v5.5: chave da fixa -> código do boleto vinculado */
   /* lançamento avulso registrado ANTES da própria data foi agendado, não realizado:
      só conta no saldo quando o usuário confirmar (v5.2) */
   for (const l of d.lancamentos)
@@ -1918,6 +1920,7 @@ function renderExtrato(){
   const filtro = state.extF || 'tudo';
   const passa = it => filtro === 'tudo' || (filtro === 'saidas' ? it.valor < 0 : it.valor >= 0);
   const hojeMarcado = { feito:false };
+  const idsBoleto = new Set(state.data.lancamentos.filter(l => l.boleto).map(l => l.id)), bolFixas = state.data.boletos || {};
   let linhas = '';
   const divisorHoje = '<div class="ext-hoje"><span>hoje \u00b7 '+fmtDataCurta(hoje)+'</span></div>';
   for (const g of e.meses){
@@ -1941,6 +1944,7 @@ function renderExtrato(){
         (it.remarcada ? '<span class="tagp aj">remarcada</span>' : '')+
         (it.agendado ? '<span class="tagp aj">'+(it.data < hoje ? 'agendado \u00b7 atrasado' : 'agendado')+'</span>' : '')+
         (!it.real && !it.agendado && it.data < hoje ? '<span class="tagp atr">'+(it.valor >= 0 ? 'n\u00e3o recebida' : 'n\u00e3o paga')+'</span>' : '')+
+        ((it.id && idsBoleto.has(it.id)) || (it.chave && bolFixas[it.chave]) ? '<span class="tagp aj">boleto</span>' : '')+
         '<span class="vl '+(it.valor>=0?'pos':'out')+' amt num">'+(it.valor>=0?'+':'−')+R(Math.abs(it.valor))+'</span>'+
         '<span class="sd amt num">'+Rs(it.saldo)+'</span></button>'+
         '<button class="ext-mais" aria-label="Opções" title="Opções" '+
@@ -2803,6 +2807,7 @@ function sheetLancamento(l, dataIni, pre){
   const s = openSheet(
     '<h3>'+(novo?'Novo lançamento':'Editar lançamento')+(novo?'':'<button class="del" data-act-x="excluir">Excluir</button>')+'</h3>'+
     '<p class="muted" style="font-size:12px;margin:-6px 0 8px">no espaço <b style="color:var(--accent)">'+esc(ESPACOS[state.espaco].nome)+'</b>'+(state.simulacao?' · simulação':'')+'</p>'+
+    (novo && !state.simulacao ? '<button class="btn ghost" id="fBoleto" type="button" style="margin:0 0 10px">📄 Ler boleto (PDF ou foto)</button>' : '')+
     '<div class="amount-box"><span class="cur">R$</span><input class="valor-input '+(val.tipo==='despesa'?'vneg':'vpos')+'" id="fValor" inputmode="decimal" placeholder="0,00" value="'+(val.valor===''?'':mascaraViva(String(val.valor).replace('.',',')))+'"></div>'+
     '<div class="seg" id="fTipo" style="margin-top:8px">'+
       '<button class="desp'+(val.tipo==='despesa'?' on':'')+'" data-v="despesa"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14m-6-6 6 6 6-6"/></svg>Despesa</button>'+
@@ -2822,6 +2827,7 @@ function sheetLancamento(l, dataIni, pre){
     '<button class="btn" id="fSalvar">Salvar</button>');
 
   let tipo = val.tipo, catSel = val.categoriaId, repete = false;
+  { const fb = s.querySelector('#fBoleto'); if (fb) fb.onclick = () => { closeSheet(); bolEscolherArquivo(); }; }
   /* v5.3.1: lançamento novo sempre nasce pendente — o aviso fica visível sempre que não é fixa */
   const agHint = () => {
     const el = s.querySelector('#fAgHint'); if (!el) return;
@@ -2906,6 +2912,7 @@ function sheetPagarOcc(o){
     '<input class="f-input valor-input" id="pValor" inputmode="decimal" value="'+mascaraViva(String(rec.valor).replace('.',','))+'">'+
     '<div class="rep-hint" id="pDelta">Vale só para '+qual+'. '+outras.charAt(0).toUpperCase()+outras.slice(1)+' seguem com <span class="amt">'+R(rec.valor)+'</span>.</div>'+
     '<div class="f-label">Data</div><input class="f-input" id="pData" type="date" value="'+(o.data < hojeISO() ? hojeISO() : o.data)+'">'+
+    bolBlocoPagamento((state.data.boletos||{})[o.chave])+
     '<button class="btn" id="pOk">'+(receita?'Recebi ✓':'Paguei ✓')+'</button>'+
     '<button class="btn ghost" id="pSoAjuste">Só corrigir o previsto (sem dar baixa)</button>'+
     '<button class="btn ghost hidden" id="pMover"></button>');
@@ -2954,6 +2961,343 @@ function sheetPagarOcc(o){
   };
 }
 
+/* ---------------- boletos (v5.5): sobe PDF ou foto → lê → conferir → contas a pagar ---------------- */
+const BANCOS = {'001':'Banco do Brasil','004':'Banco do Nordeste','021':'Banestes','033':'Santander','041':'Banrisul','070':'BRB','077':'Inter','104':'Caixa','197':'Stone','208':'BTG Pactual','212':'Banco Original','237':'Bradesco','260':'Nubank','290':'PagBank','323':'Mercado Pago','336':'C6 Bank','341':'Itaú','380':'PicPay','389':'Mercantil','403':'Cora','422':'Safra','748':'Sicredi','756':'Sicoob'};
+const SEGMENTOS_ARREC = {'1':'Prefeitura','2':'Saneamento','3':'Energia / gás','4':'Telecomunicações','5':'Órgão público','6':'Carnê / convênio','7':'Multa de trânsito','9':'Convênio bancário'};
+const bolDigitos = s => String(s || '').replace(/\D/g, '');
+function bolMod10(num){
+  let soma = 0, peso = 2;
+  for (let i = num.length - 1; i >= 0; i--){ let p = Number(num[i]) * peso; if (p > 9) p = Math.floor(p / 10) + (p % 10); soma += p; peso = peso === 2 ? 1 : 2; }
+  const r = soma % 10; return r === 0 ? 0 : 10 - r;
+}
+function bolSoma11(num){ let soma = 0, peso = 2; for (let i = num.length - 1; i >= 0; i--){ soma += Number(num[i]) * peso; peso = peso === 9 ? 2 : peso + 1; } return soma; }
+function bolMod11Banco(num){ const r = 11 - (bolSoma11(num) % 11); return (r === 0 || r === 10 || r === 11) ? 1 : r; }
+function bolMod11Arrec(num){ const r = bolSoma11(num) % 11; return (r === 0 || r === 1) ? 0 : 11 - r; }
+/* fator de vencimento: dias desde 07/10/1997; chegou a 9999 em 21/02/2025 e recomeçou em 1000 no dia 22/02/2025 */
+function bolFatorParaData(fator){
+  if (!fator) return null;
+  const soma = (base, dias) => { const [a, m, d] = base.split('-').map(Number); const dt = new Date(Date.UTC(a, m - 1, d)); dt.setUTCDate(dt.getUTCDate() + dias); return dt.toISOString().slice(0, 10); };
+  const antiga = soma('1997-10-07', fator);
+  const nova = fator >= 1000 ? soma('2025-02-22', fator - 1000) : null;
+  const dist = d => Math.abs(Date.parse(d) - Date.parse(hojeISO()));
+  return (nova && dist(nova) < dist(antiga)) ? nova : antiga;
+}
+function bolFormatar(b){
+  const l = b.linha;
+  if (b.tipo === 'arrecadacao') return [0, 12, 24, 36].map(i => l.slice(i, i + 11) + '-' + l[i + 11]).join(' ');
+  return l.slice(0, 5) + '.' + l.slice(5, 10) + ' ' + l.slice(10, 15) + '.' + l.slice(15, 21) + ' ' + l.slice(21, 26) + '.' + l.slice(26, 32) + ' ' + l[32] + ' ' + l.slice(33);
+}
+/* aceita linha digitável (47 bancário / 48 concessionária) ou código de barras (44). Devolve null se não for boleto. */
+function bolDecodificar(entrada){
+  const d = bolDigitos(entrada);
+  let barra = null, camposOk = true;
+  if (d.length === 47){
+    const c1 = d.slice(0, 10), c2 = d.slice(10, 21), c3 = d.slice(21, 32);
+    camposOk = bolMod10(c1.slice(0, 9)) === +c1[9] && bolMod10(c2.slice(0, 10)) === +c2[10] && bolMod10(c3.slice(0, 10)) === +c3[10];
+    barra = c1.slice(0, 4) + d[32] + d.slice(33) + c1.slice(4, 9) + c2.slice(0, 10) + c3.slice(0, 10);
+  } else if (d.length === 48 && d[0] === '8'){
+    const blocos = [0, 12, 24, 36].map(i => d.slice(i, i + 12));
+    const usa10 = d[2] === '6' || d[2] === '7';
+    camposOk = blocos.every(b => (usa10 ? bolMod10(b.slice(0, 11)) : bolMod11Arrec(b.slice(0, 11))) === +b[11]);
+    barra = blocos.map(b => b.slice(0, 11)).join('');
+  } else if (d.length === 44){
+    barra = d;
+  } else return null;
+  if (barra[0] === '8'){
+    const id = barra[2];
+    if (!'6789'.includes(id)) return null;
+    const dvOk = (id === '6' || id === '7' ? bolMod10(barra.slice(0, 3) + barra.slice(4)) : bolMod11Arrec(barra.slice(0, 3) + barra.slice(4))) === +barra[3];
+    const usa10 = id === '6' || id === '7';
+    const linha = d.length === 48 ? d : [0, 11, 22, 33].map(i => { const b = barra.slice(i, i + 11); return b + (usa10 ? bolMod10(b) : bolMod11Arrec(b)); }).join('');
+    const valor = (id === '6' || id === '8') ? Number(barra.slice(4, 15)) / 100 : null;
+    return { tipo: 'arrecadacao', linha, barra, valor: valor || null, vencimento: null, banco: null, emissor: SEGMENTOS_ARREC[barra[1]] || 'Concessionária', valido: dvOk && camposOk };
+  }
+  const dvOk = bolMod11Banco(barra.slice(0, 4) + barra.slice(5)) === +barra[4];
+  const linha = d.length === 47 ? d : (() => {
+    const c1 = barra.slice(0, 4) + barra.slice(19, 24), c2 = barra.slice(24, 34), c3 = barra.slice(34, 44);
+    return c1 + bolMod10(c1) + c2 + bolMod10(c2) + c3 + bolMod10(c3) + barra[4] + barra.slice(5, 19);
+  })();
+  const banco = barra.slice(0, 3);
+  return { tipo: 'bancario', linha, barra, valor: Number(barra.slice(9, 19)) / 100 || null, vencimento: bolFatorParaData(Number(barra.slice(5, 9))),
+    banco, emissor: BANCOS[banco] || 'Banco ' + banco, valido: dvOk && camposOk };
+}
+/* procura a linha digitável num texto (PDF): primeiro com a pontuação de boleto, depois só pelos dígitos de cada trecho */
+function bolAcharNoTexto(texto){
+  const t = String(texto || '');
+  const padroes = [
+    /\d{5}[.\s]?\d{5}\s*\d{5}[.\s]?\d{6}\s*\d{5}[.\s]?\d{6}\s*\d\s*\d{14}/g,
+    /\d{11}[-\s]?\d\s*\d{11}[-\s]?\d\s*\d{11}[-\s]?\d\s*\d{11}[-\s]?\d/g,
+  ];
+  let reserva = null;
+  for (const re of padroes) for (const m of t.matchAll(re)){
+    const b = bolDecodificar(m[0]);
+    if (b && b.valido) return b;
+    if (b && !reserva) reserva = b;
+  }
+  for (const pedaco of t.split(/\n|\s{3,}/)){
+    const dg = bolDigitos(pedaco);
+    for (const n of [47, 48, 44]) if (dg.length >= n) for (let i = 0; i + n <= dg.length; i++){
+      const b = bolDecodificar(dg.slice(i, i + n));
+      if (b && b.valido) return b;
+    }
+  }
+  return reserva;
+}
+/* pistas do texto do PDF: vencimento, valor e quem cobra */
+function bolPistasTexto(texto){
+  const t = String(texto || '').replace(/\u00a0/g, ' ');
+  const out = {};
+  const dv = /vencimento[^\d]{0,40}(\d{2})\/(\d{2})\/(\d{4})/i.exec(t);
+  if (dv) out.vencimento = dv[3] + '-' + dv[2] + '-' + dv[1];
+  const vv = /(?:valor\s+(?:do\s+)?documento|valor\s+cobrado|total\s+a\s+pagar|valor\s+a\s+pagar)[^\d]{0,40}([\d.]{1,12},\d{2})/i.exec(t);
+  if (vv) out.valor = parseValor(vv[1]);
+  const bf = /(?:benefici[áa]rio(?:\s+final)?|cedente)\s*[:\-]?\s*([^\n]{3,90})/i.exec(t);
+  if (bf){
+    let nome = bf[1].replace(/(CNPJ|CPF|Ag[êe]ncia|C[óo]digo|Nosso)[\s\S]*$/i, '').replace(/[\d./-]{11,}/g, '').replace(/\s{2,}/g, ' ').trim();
+    if (nome.length >= 3 && !/^(endere|data|vencimento|sacado|pagador)/i.test(nome)) out.beneficiario = nome.slice(0, 60);
+  }
+  return out;
+}
+let _pdfjs = null;
+function carregarPdfJs(){
+  if (_pdfjs) return _pdfjs;
+  _pdfjs = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(window.pdfjsLib); };
+    s.onerror = () => { _pdfjs = null; rej(new Error('não consegui carregar o leitor de PDF (sem internet?)')); };
+    document.head.appendChild(s);
+  });
+  return _pdfjs;
+}
+async function bolLerPdf(file){
+  const lib = await carregarPdfJs();
+  const doc = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+  let texto = '';
+  for (let p = 1; p <= Math.min(doc.numPages, 3); p++){
+    const pg = await doc.getPage(p);
+    const tc = await pg.getTextContent();
+    texto += tc.items.map(i => i.str + (i.hasEOL ? '\n' : ' ')).join('') + '\n';
+  }
+  let codigo = bolAcharNoTexto(texto);
+  if (!codigo || !codigo.valido){
+    /* PDF escaneado (só imagem): desenha a página e procura o código de barras */
+    try {
+      const pg = await doc.getPage(1), vp = pg.getViewport({ scale: 2.5 });
+      const cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height;
+      await pg.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+      const c2 = await bolDetectarBarras(cv);
+      if (c2) codigo = c2;
+    } catch(e){}
+  }
+  return { texto, codigo, pistas: bolPistasTexto(texto) };
+}
+async function bolDetectarBarras(fonte){
+  if (!('BarcodeDetector' in window)) return null;
+  try {
+    const fmts = await BarcodeDetector.getSupportedFormats();
+    if (!fmts.includes('itf')) return null;
+    const achados = await new BarcodeDetector({ formats: ['itf'] }).detect(fonte);
+    for (const a of achados){ const b = bolDecodificar(a.rawValue); if (b && b.valido) return b; }
+  } catch(e){}
+  return null;
+}
+/* foto: reduz para no máx. 1600px em JPEG (a IA aceita até 5 MB) */
+async function bolImagemJpeg(file){
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+  cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+  return { bmp, b64: cv.toDataURL('image/jpeg', 0.85).split(',')[1] };
+}
+const bolB64 = file => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => rej(new Error('não consegui ler o arquivo')); fr.readAsDataURL(file); });
+async function bolIA(bloco){
+  const cfg = aiCfg();
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: cfg.model || 'claude-haiku-4-5', max_tokens: 400, messages: [{ role: 'user', content: [bloco, { type: 'text', text:
+      'Este é um boleto ou conta brasileira. Responda SOMENTE com um JSON, sem texto fora dele: ' +
+      '{"linha_digitavel": "só os dígitos da linha digitável (47 ou 48) ou null", "beneficiario": "nome de quem recebe o pagamento", ' +
+      '"valor": número em reais ou null, "vencimento": "AAAA-MM-DD" ou null, "descricao": "descrição curta, ex.: Conta de luz Enel"}. Use null no que não conseguir ler.' }] }] })
+  });
+  if (r.status === 401) throw new Error('a chave do Assistente foi recusada — confira em Ajustes');
+  if (!r.ok) throw new Error('a IA respondeu ' + r.status);
+  const j = await r.json();
+  const txt = (j.content || []).map(c => c.text || '').join('');
+  const m = txt.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('a IA não devolveu os dados');
+  return JSON.parse(m[0]);
+}
+/* fluxo completo: PDF → texto + código (grátis); foto → código de barras + IA; IA também quando o código não aparece */
+async function lerBoleto(file){
+  if (!file) return;
+  if (state.simulacao) return toast('Saia da simulação para lançar boletos');
+  const ehPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  const ehImg = /^image\//.test(file.type) || /\.(jpe?g|png|webp|heic)$/i.test(file.name);
+  if (!ehPdf && !ehImg) return toast('Mande o boleto em PDF ou uma foto (JPG/PNG)');
+  if (file.size > 15 * 1024 * 1024) return toast('Arquivo grande demais (máx. 15 MB)');
+  openSheet('<h3>Lendo o boleto…</h3><p class="sec" style="font-size:14px">' + esc(file.name) + '</p><div class="rep-hint">Procurando o código, o valor e o vencimento.</div>');
+  const dados = { codigo: null, pistas: {}, ia: null, avisos: [] };
+  try {
+    let blocoIA = null;
+    if (ehPdf){
+      const r = await bolLerPdf(file);
+      dados.codigo = r.codigo; dados.pistas = r.pistas;
+      if (!dados.codigo || !dados.codigo.valido) blocoIA = { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: await bolB64(file) } };
+    } else {
+      const { bmp, b64 } = await bolImagemJpeg(file);
+      dados.codigo = await bolDetectarBarras(bmp);
+      blocoIA = { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } };
+    }
+    if (blocoIA){
+      if (aiCfg().key){
+        try {
+          dados.ia = await bolIA(blocoIA);
+          const c = dados.ia && dados.ia.linha_digitavel ? bolDecodificar(dados.ia.linha_digitavel) : null;
+          if (c && c.valido && (!dados.codigo || !dados.codigo.valido)) dados.codigo = c;
+          else if (c && !c.valido && !dados.codigo) dados.avisos.push('A IA leu um código que não confere — confira o código abaixo.');
+        } catch(e){ dados.avisos.push('A IA não conseguiu ler (' + e.message + ').'); }
+      } else if (!dados.codigo){
+        dados.avisos.push(ehImg ? 'Para ler fotos automaticamente, ative o Assistente (IA) em Ajustes. Por enquanto, cole ou digite o código abaixo.' : 'Não achei o código neste PDF. Cole ou digite a linha digitável abaixo.');
+      }
+    }
+  } catch(e){
+    dados.avisos.push('Não consegui ler o arquivo (' + (e.message || 'erro') + '). Cole o código abaixo.');
+  }
+  sheetBoleto(dados);
+}
+/* fixas pendentes que podem ser este boleto (mesmo valor aproximado ou nome parecido), para não lançar em dobro */
+function bolFixasCandidatas(valor, venc, nome){
+  const base = venc || hojeISO(), ym = mesDe(base), out = [];
+  const nm = semAcento(String(nome || '')).split(/\W+/).filter(w => w.length > 3);
+  for (const m of [addMeses(ym, -1), ym, addMeses(ym, 1)])
+    for (const o of ocorrencias(m)){
+      if (o.lanc || o.rec.tipo !== 'despesa') continue;
+      const perto = valor && Math.abs(o.rec.valor - valor) <= Math.max(5, o.rec.valor * 0.35);
+      const nomeBate = nm.some(w => semAcento(o.rec.nome).includes(w));
+      if (perto || nomeBate) out.push({ o, score: (perto ? 2 : 0) + (nomeBate ? 2 : 0) - Math.abs(Date.parse(o.data) - Date.parse(base)) / 864e5 / 30 });
+    }
+  return out.sort((a, b) => b.score - a.score).slice(0, 4).map(x => x.o);
+}
+function bolJaLancado(linha){
+  if (!linha) return null;
+  const l = state.data.lancamentos.find(x => x.boleto && x.boleto.linha === linha);
+  if (l) return l.descricao || 'um lançamento';
+  const ch = Object.keys(state.data.boletos || {}).find(k => (state.data.boletos[k] || {}).linha === linha);
+  return ch ? 'a fixa de ' + fmtDataCurta(ch.split('@')[1]) : null;
+}
+function sheetBoleto(dados){
+  const c = dados.codigo, p = dados.pistas || {}, ia = dados.ia || {};
+  const valor0 = (c && c.valido && c.valor) || p.valor || (ia.valor > 0 ? ia.valor : null);
+  const venc0 = (c && c.valido && c.vencimento) || p.vencimento || (/^\d{4}-\d{2}-\d{2}$/.test(ia.vencimento || '') ? ia.vencimento : null);
+  const desc0 = p.beneficiario || ia.descricao || ia.beneficiario || (c ? c.emissor : '') || '';
+  const s = openSheet(
+    '<h3>Conta a pagar · boleto</h3>' +
+    '<p class="muted" style="font-size:12px;margin:-6px 0 8px">no espaço <b style="color:var(--accent)">' + esc(ESPACOS[state.espaco].nome) + '</b> · entra como pendente, só desconta quando você marcar Paguei ✓</p>' +
+    '<div id="bStatus" class="rep-hint"></div>' +
+    dados.avisos.map(a => '<div class="rep-hint" style="color:var(--warn)">⚠️ ' + esc(a) + '</div>').join('') +
+    '<div class="f-label">Código do boleto (linha digitável)</div>' +
+    '<div style="display:flex;gap:8px"><input class="f-input" id="bCod" inputmode="numeric" autocomplete="off" placeholder="cole ou digite os números" value="' + (c ? bolFormatar(c) : '') + '" style="flex:1;font-variant-numeric:tabular-nums;font-size:13px"><button class="btn-sm" id="bCopiar" type="button">Copiar</button></div>' +
+    '<div class="f-label">Descrição</div><input class="f-input" id="bDesc" placeholder="ex.: ROOSEVELT - Condomínio" value="' + esc(desc0) + '">' +
+    '<div class="f-row"><div><div class="f-label">Valor</div><input class="f-input valor-input" id="bValor" inputmode="decimal" placeholder="0,00" value="' + (valor0 ? mascaraViva(String(valor0.toFixed(2)).replace('.', ',')) : '') + '"></div>' +
+    '<div><div class="f-label">Vencimento</div><input class="f-input" id="bVenc" type="date" value="' + (venc0 || '') + '"></div></div>' +
+    '<div class="f-label">Categoria</div><div id="chipsWrap">' + chipsCategorias('despesa', null) + '</div>' +
+    '<div id="bFixas"></div>' +
+    '<button class="btn" id="bSalvar">Colocar em contas a pagar</button>');
+  let catSel = null, codigo = c && c.valido ? c : null, fixaSel = null;
+  s.querySelectorAll('#catChips .cat-chip').forEach(ch => ch.onclick = () => { catSel = ch.dataset.cat; s.querySelectorAll('.cat-chip').forEach(x => x.classList.toggle('on', x === ch)); });
+  const vInp = s.querySelector('#bValor'), cInp = s.querySelector('#bCod'), dInp = s.querySelector('#bVenc'), nInp = s.querySelector('#bDesc');
+  vInp.addEventListener('input', () => { vInp.value = mascaraViva(vInp.value); pintaFixas(); });
+  const pintaStatus = () => {
+    const st = s.querySelector('#bStatus');
+    if (codigo){
+      const dup = bolJaLancado(codigo.linha);
+      st.innerHTML = '✅ Código conferido · <b>' + esc(codigo.emissor) + '</b>' + (codigo.valor ? ' · ' + R(codigo.valor) : '') + (codigo.vencimento ? ' · vence ' + fmtDataCurta(codigo.vencimento) : '') +
+        (dup ? '<br><span style="color:var(--critical)">⚠️ Este boleto já foi lançado (' + esc(dup) + ').</span>' : '');
+    } else if (bolDigitos(cInp.value).length >= 44) st.innerHTML = '<span style="color:var(--critical)">Esse código não confere — confira os números.</span>';
+    else st.innerHTML = '';
+  };
+  const pintaFixas = () => {
+    const box = s.querySelector('#bFixas');
+    const cands = bolFixasCandidatas(parseValor(vInp.value), dInp.value, nInp.value);
+    if (!cands.length){ box.innerHTML = ''; fixaSel = null; return; }
+    if (fixaSel && !cands.some(o => o.chave === fixaSel.chave)) fixaSel = null;
+    box.innerHTML = '<div class="f-label">É uma conta fixa que já está no extrato?</div><div class="cat-grid">' +
+      '<button class="cat-chip' + (fixaSel ? '' : ' on') + '" data-fx="">Não, é conta avulsa</button>' +
+      cands.map(o => '<button class="cat-chip' + (fixaSel && fixaSel.chave === o.chave ? ' on' : '') + '" data-fx="' + esc(o.chave) + '">' + esc(o.rec.nome) + ' · ' + fmtDataCurta(o.data) + ' · ' + R(o.rec.valor) + '</button>').join('') + '</div>' +
+      '<div class="rep-hint">Escolhendo a fixa, o boleto <b>substitui</b> a conta prevista dela (valor e data do boleto) em vez de lançar em dobro.</div>';
+    box.querySelectorAll('[data-fx]').forEach(b => b.onclick = () => { fixaSel = cands.find(o => o.chave === b.dataset.fx) || null; pintaFixas(); });
+  };
+  cInp.addEventListener('input', () => {
+    const b = bolDecodificar(cInp.value);
+    codigo = b && b.valido ? b : null;
+    if (codigo){
+      if (codigo.valor) vInp.value = mascaraViva(codigo.valor.toFixed(2).replace('.', ','));
+      if (codigo.vencimento) dInp.value = codigo.vencimento;
+      if (!nInp.value.trim()) nInp.value = codigo.emissor;
+    }
+    pintaStatus(); pintaFixas();
+  });
+  dInp.addEventListener('change', pintaFixas); nInp.addEventListener('change', pintaFixas);
+  s.querySelector('#bCopiar').onclick = () => bolCopiar(codigo ? codigo.linha : bolDigitos(cInp.value));
+  pintaStatus(); pintaFixas();
+  s.querySelector('#bSalvar').onclick = () => {
+    const v = parseValor(vInp.value), venc = dInp.value, desc = nInp.value.trim();
+    if (!v || v <= 0) return shake(vInp);
+    if (!venc) return shake(dInp);
+    if (!desc) return shake(nInp);
+    const bol = codigo ? { linha: codigo.linha, tipo: codigo.tipo, emissor: codigo.emissor } : (bolDigitos(cInp.value).length >= 44 ? { linha: bolDigitos(cInp.value), tipo: 'nao-conferido' } : null);
+    if (fixaSel){
+      const ch = fixaSel.chave, dataOrig = ch.split('@')[1];
+      const antes = { aj: state.data.ajustes[ch], rm: state.data.remarcacoes[ch], bo: (state.data.boletos || {})[ch] };
+      state.data.ajustes[ch] = v;
+      if (venc !== dataOrig) state.data.remarcacoes[ch] = venc; else delete state.data.remarcacoes[ch];
+      if (bol) { state.data.boletos = state.data.boletos || {}; state.data.boletos[ch] = bol; }
+      touch(); closeSheet(); renderAll();
+      return toast('Boleto vinculado a ' + esc(fixaSel.rec.nome) + ' · ' + R(v) + ' em ' + fmtDataCurta(venc), () => {
+        if (antes.aj == null) delete state.data.ajustes[ch]; else state.data.ajustes[ch] = antes.aj;
+        if (antes.rm == null) delete state.data.remarcacoes[ch]; else state.data.remarcacoes[ch] = antes.rm;
+        if (antes.bo == null) delete state.data.boletos[ch]; else state.data.boletos[ch] = antes.bo;
+        touch(); renderAll();
+      });
+    }
+    if (!catSel){ const first = s.querySelector('#catChips .cat-chip'); if (first) catSel = first.dataset.cat; }
+    const l = { id: uid('l'), tipo: 'despesa', valor: v, categoriaId: catSel, descricao: desc, data: venc, recChave: null, previsto: true, criadoEm: new Date().toISOString() };
+    if (bol) l.boleto = bol;
+    state.data.lancamentos.push(l);
+    touch(); closeSheet(); renderAll();
+    toast('Boleto em contas a pagar · ' + R(v) + ' vence ' + fmtDataCurta(venc), () => { state.data.lancamentos = state.data.lancamentos.filter(x => x.id !== l.id); touch(); renderAll(); });
+  };
+}
+function bolCopiar(linha){
+  if (!linha) return toast('Sem código para copiar');
+  const ok = () => toast('Código copiado — cole no app do banco');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(linha).then(ok, () => prompt('Copie o código:', linha));
+  else prompt('Copie o código:', linha);
+}
+function bolEscolherArquivo(){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'application/pdf,image/*';
+  inp.onchange = () => { const f = inp.files && inp.files[0]; if (f) lerBoleto(f); };
+  inp.click();
+}
+/* bloco "código do boleto" para os sheets de pagamento */
+function bolBlocoPagamento(bol){
+  if (!bol || !bol.linha) return '';
+  return '<div class="f-label">Código do boleto</div><div style="display:flex;gap:8px;align-items:center"><code style="flex:1;font-size:12px;word-break:break-all;color:var(--ink-2)">' +
+    esc(bol.tipo === 'nao-conferido' ? bol.linha : bolFormatar(bol)) + '</code><button class="btn-sm" type="button" data-bol-copiar="' + esc(bol.linha) + '">Copiar</button></div>';
+}
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-bol-copiar]'); if (b) bolCopiar(b.dataset.bolCopiar); });
+/* arrastar um PDF ou foto para a janela também lê o boleto (computador) */
+window.addEventListener('dragover', e => { if (e.dataTransfer && [...(e.dataTransfer.items || [])].some(i => i.kind === 'file')) e.preventDefault(); });
+window.addEventListener('drop', e => {
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!f || !state.data || $('#shell').classList.contains('hidden')) return;
+  if (e.target.closest && e.target.closest('#aiDrawer')) return;
+  if (/pdf|image/.test(f.type) || /\.(pdf|jpe?g|png|webp)$/i.test(f.name)){ e.preventDefault(); lerBoleto(f); }
+});
+
 /* confirma um lançamento agendado: vira dinheiro de verdade na data e valor informados */
 function sheetConfirmarLanc(l){
   const receita = l.tipo === 'receita';
@@ -2963,6 +3307,7 @@ function sheetConfirmarLanc(l){
     '<input class="f-input valor-input" id="cValor" inputmode="decimal" value="'+mascaraViva(String(l.valor).replace('.',','))+'">'+
     '<div class="f-label">Data</div><input class="f-input" id="cData" type="date" value="'+hojeISO()+'">'+
     '<div class="rep-hint">Com data de hoje, entra no saldo agora. Com data futura, s\u00f3 desconta naquele dia.</div>'+
+    bolBlocoPagamento(l.boleto)+
     '<button class="btn" id="cOk">'+(receita?'Recebi \u2713':'Paguei \u2713')+'</button>');
   const inp = s.querySelector('#cValor');
   inp.addEventListener('input', () => { inp.value = mascaraViva(inp.value); });
@@ -3651,6 +3996,7 @@ function comandos(){
   Object.entries(PAGES).forEach(([id, nome]) => cmds.push({ic:'→', lbl:'Ir para '+nome, hint:String(Object.keys(PAGES).indexOf(id)+1), run:() => { state.page = id; renderAll(); }}));
   cmds.push({ic:'+', lbl:'Novo lançamento', hint:'N', run:() => sheetLancamento(null)});
   cmds.push({ic:'+', lbl:'Nova fixa', run:() => sheetRecorrente(null)});
+  cmds.push({ic:'📄', lbl:'Ler boleto (PDF ou foto)', run: bolEscolherArquivo});
   cmds.push({ic:'+', lbl:'Nova meta', run:() => sheetMeta(null)});
   cmds.push({ic:'👁', lbl: document.body.classList.contains('private') ? 'Mostrar valores' : 'Modo discreto (esconder valores)', run: togglePriv});
   cmds.push({ic:'↓', lbl:'Exportar backup', run: exportar});
